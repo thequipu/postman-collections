@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/websocket/datasource"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "eventType": "DATASOURCE_CREATED",
+      "dataSourceId": "1",
+      "realmId": "1",
+      "status": "READY"
+    }
+order: 1000

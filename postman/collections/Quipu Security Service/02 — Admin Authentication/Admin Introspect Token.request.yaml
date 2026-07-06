@@ -1,0 +1,13 @@
+$kind: http-request
+description: Introspects an admin access token. Returns token claims from Keycloak.
+url: "{{baseUrl}}/admin/introspect"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "access_token": "{{accessToken}}"
+    }
+order: 4000

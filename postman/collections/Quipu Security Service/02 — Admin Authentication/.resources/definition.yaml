@@ -1,0 +1,3 @@
+$kind: collection
+description: Admin-level authentication flow for platform operators. Uses /admin base path. No OTP required — direct credential login.
+order: 2000

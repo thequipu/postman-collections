@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/realm/cdc-active-realms"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+order: 9000

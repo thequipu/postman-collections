@@ -1,0 +1,34 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/ingestion/shape/parse"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "topic": "orders-topic",
+      "namespace": "public",
+      "shape": {
+        "prefix": "urn:order:",
+        "namespace": "public",
+        "nodes": [
+          {
+            "label": "Order",
+            "prefix": "urn:order:",
+            "uriJsonKey": "orderId",
+            "propertyToJsonKey": { "status": "orderStatus", "amount": "totalAmount" },
+            "edgeShapes": [
+              { "edgeType": "HAS_CUSTOMER", "targetNodeLabel": "Customer", "targetNodePrefix": "urn:customer:", "targetUriJsonKey": "customerId", "targetUriIteratePath": "" }
+            ]
+          }
+        ]
+      },
+      "topicShapeConstraints": [
+        { "@type": "required", "nodeLabel": "Order", "propertyKey": "orderId" },
+        { "@type": "rangeCondition", "nodeLabel": "Order", "propertyKey": "totalAmount", "min": 0, "max": null }
+      ],
+      "shapeQuery": ""
+    }
+order: 12000

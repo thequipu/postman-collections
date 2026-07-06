@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces/:name/disable"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  name: "{{namespace}}"
+order: 6000

@@ -1,0 +1,10 @@
+$kind: http-request
+name: Projection Control (Pause/Resume)
+url: "{{baseUrl}}/synapse/namespace/projection-control?name=ns1&pause=true"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  name: ns1
+  pause: "true"
+order: 10000

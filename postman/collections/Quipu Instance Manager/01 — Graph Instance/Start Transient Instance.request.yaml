@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/graph-instance/start-transient?fabricName=production-fabric"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  fabricName: production-fabric
+order: 3000

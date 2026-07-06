@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/consumer/resume?topic=orders-topic"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  topic: orders-topic
+order: 2000

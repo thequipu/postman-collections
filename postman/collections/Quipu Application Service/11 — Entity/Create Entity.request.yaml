@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/entity"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "label": "Customer",
+      "uri": "customer:acme-001",
+      "properties": {
+        "name": "Acme Corp",
+        "type": "B2B",
+        "industry": "Tech"
+      }
+    }
+order: 3000

@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/test-connection/upload-sample"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "dataSource": {
+        "id": 5,
+        "driverType": "POSTGRES",
+        "dbHostName": "localhost",
+        "dbPort": 5432,
+        "databaseName": "mydb",
+        "dbUserName": "user",
+        "dbPassword": "pass"
+      },
+      "tableUriMap": {
+        "customers": "s3://quipu-samples/customers.parquet"
+      },
+      "signatureModel": {
+        "datasourceId": 5,
+        "datasource": "postgres-prod",
+        "sampleSize": 1000,
+        "iterations": 3,
+        "readMultiplier": 2
+      }
+    }
+order: 4000

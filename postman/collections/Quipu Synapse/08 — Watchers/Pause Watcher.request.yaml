@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/watchers/:watcherId/pause"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  watcherId: "{{watcherId}}"
+order: 4000

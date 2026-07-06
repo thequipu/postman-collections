@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/smart-llm/generate-answer"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "model": "gpt-4o",
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant." },
+        { "role": "user", "content": "What entities are connected to Acme Corp?" }
+      ]
+    }
+order: 2000

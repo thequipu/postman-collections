@@ -1,0 +1,3 @@
+$kind: collection
+description: Vector ingestion and embedding fetch, dispatched through the load-balancer actor. Base path /vector-ingestion.
+order: 2000

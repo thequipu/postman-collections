@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource?page=0&size=20&sort=name,asc"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  page: "0"
+  size: "20"
+  sort: name,asc
+order: 2000

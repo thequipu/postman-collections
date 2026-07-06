@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/is-unique?datasourceName=my-datasource"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  datasourceName: my-datasource
+order: 10000

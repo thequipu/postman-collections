@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/entity/relationship?uri=customer:acme-001:rel:belongs-to:industry:tech"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  uri: customer:acme-001:rel:belongs-to:industry:tech
+order: 12000

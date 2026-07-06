@@ -1,0 +1,3 @@
+$kind: collection
+description: Event-sourced ingestion of atomic (DBT-NODE) streams into the journal/state pipeline. Base path /event.
+order: 1000

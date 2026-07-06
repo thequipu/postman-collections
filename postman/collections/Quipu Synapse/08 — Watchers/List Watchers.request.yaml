@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/watchers?namespace={{namespace}}"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  namespace: "{{namespace}}"
+order: 2000

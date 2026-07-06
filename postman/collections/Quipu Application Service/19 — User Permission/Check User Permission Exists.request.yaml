@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/exists?entityType=DATA_SOURCE&userIdentifier=user@example.com&permissionNames=VIEW,EDIT"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  entityType: DATA_SOURCE
+  userIdentifier: user@example.com
+  permissionNames: VIEW,EDIT
+order: 6000

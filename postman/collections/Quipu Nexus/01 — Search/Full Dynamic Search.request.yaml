@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/nexus/search"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "fabricId": "production-fabric",
+      "query": "customers who ordered from Acme Corp last quarter",
+      "topK": 15,
+      "skipUnstructured": false
+    }
+order: 1000

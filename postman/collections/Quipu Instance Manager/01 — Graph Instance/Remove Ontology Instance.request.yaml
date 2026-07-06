@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/graph-instance/remove-ontology"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+order: 5000

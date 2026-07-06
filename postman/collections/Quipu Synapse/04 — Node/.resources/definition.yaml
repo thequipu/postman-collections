@@ -1,0 +1,3 @@
+$kind: collection
+description: Direct access to individual graph nodes without a Cypher query. Base path /node.
+order: 4000

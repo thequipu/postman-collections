@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/tagging/add-vector-linker"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "realmName": "production-realm",
+      "schemaName": "prod_schema",
+      "versionId": 1
+    }
+order: 2000

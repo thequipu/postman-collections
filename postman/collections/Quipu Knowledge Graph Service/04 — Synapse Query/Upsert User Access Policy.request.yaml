@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/:userId/upsert-policy?namespace=public"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  namespace: public
+pathVariables:
+  userId: user-123
+body:
+  type: json
+  content: |-
+    {
+      "allowedPropertiesPerLabel": { "Order": ["orderId", "status"], "Customer": ["name"] },
+      "allowedEdges": [
+        { "sourceLabel": "Order", "edgeType": "HAS_CUSTOMER", "targetLabel": "Customer" }
+      ]
+    }
+order: 14000

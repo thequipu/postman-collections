@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/atomicIngestStream/create-streams"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    [
+      { "realmId": 1, "dataSourceId": 1, "streamName": "ingest-stream-1" },
+      { "realmId": 1, "dataSourceId": 2, "streamName": "ingest-stream-2" }
+    ]
+order: 2000

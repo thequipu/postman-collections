@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/tagging/nlp"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "page": 1,
+      "texts": ["Acme Corp signed a new contract with Beta LLC.", "The deal closes next quarter."],
+      "linkerName": "production-linker"
+    }
+order: 1000

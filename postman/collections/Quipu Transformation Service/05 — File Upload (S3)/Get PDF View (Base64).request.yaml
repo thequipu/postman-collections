@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/s3-upload/pdf-view?key=realm-1/annual-report.pdf"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  key: realm-1/annual-report.pdf
+order: 7000

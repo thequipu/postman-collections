@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/schema?schemaName=prod_schema"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  schemaName: prod_schema
+order: 5000

@@ -1,0 +1,27 @@
+$kind: http-request
+description: Authenticates a user with credentials and OTP. Returns Keycloak access_token and refresh_token. The test script auto-saves both tokens to collection variables.
+url: "{{baseUrl}}/user/login?isUserAdmin=false"
+method: POST
+headers:
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  - key: isUserAdmin
+    value: "false"
+    description: Set true for admin user login
+body:
+  type: json
+  content: |-
+    {
+      "username": "user@example.com",
+      "password": "your-password",
+      "otp": "123456"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.access_token)  pm.collectionVariables.set('accessToken',  res.access_token);
+      if (res.refresh_token) pm.collectionVariables.set('refreshToken', res.refresh_token);
+    language: text/javascript
+order: 2000

@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/query/cypher"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "MATCH (n:Person {uri: $uri})-[:KNOWS]->(m) RETURN n, m",
+      "parameters": { "uri": "urn:person:123" },
+      "namespace": "{{namespace}}",
+      "atTime": null,
+      "timeout": 30,
+      "graphLimit": { "nodes": 100, "edges": 200 }
+    }
+order: 1000

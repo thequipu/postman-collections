@@ -1,0 +1,7 @@
+$kind: http-request
+description: Issues a short-lived token using the service-account credentials configured via SHORT_LIVED_TOKEN_USERNAME and SHORT_LIVED_TOKEN_PASSWORD environment variables. Used for internal automated operations.
+url: "{{baseUrl}}/admin/short-lived-token"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 2000

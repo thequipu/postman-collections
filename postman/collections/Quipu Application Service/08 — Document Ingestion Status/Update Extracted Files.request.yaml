@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/document-ingestion-status/update-extracted-files?statusId=1"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  statusId: "1"
+body:
+  type: json
+  content: |-
+    {
+      "report.pdf": "s3://quipu-extracts/report_extracted.json"
+    }
+order: 2000

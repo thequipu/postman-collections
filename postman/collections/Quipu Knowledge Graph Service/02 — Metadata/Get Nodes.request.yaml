@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/nodes?schemaName=prod_schema&versionId=1&namedEntities=false&erEntities=false"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  schemaName: prod_schema
+  versionId: "1"
+  namedEntities: "false"
+  erEntities: "false"
+order: 3000

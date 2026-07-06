@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-resolution-s3?fileName=realm-1/documents/old-file.pdf"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  fileName: realm-1/documents/old-file.pdf
+order: 4000

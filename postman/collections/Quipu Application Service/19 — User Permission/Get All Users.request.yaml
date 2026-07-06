@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/get-all-users"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+order: 12000

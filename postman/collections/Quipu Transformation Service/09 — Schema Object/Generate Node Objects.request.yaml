@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/schema/generate/node-objects"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "graphData": "{\"directed\": true, \"multigraph\": false, \"graph\": {}, \"nodes\": [{\"id\": \"customers\"}], \"links\": []}"
+    }
+order: 1000

@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/tenant"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Acme Corp",
+      "code": "acme",
+      "email": "admin@acme.com",
+      "phone": "+1-555-0100",
+      "cloudProvider": "AWS",
+      "tenantAdminDetailsModel": {
+        "tenantAdminUsername": "acme-admin",
+        "tenantAdminPassword": "ChangeMe123!"
+      }
+    }
+order: 1000

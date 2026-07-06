@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/watchers"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "namespace": "public",
+      "condition": "MATCH (o:Order) WHERE o.status = 'PENDING' RETURN o",
+      "reaction": "MATCH (o:Order {orderId: $orderId}) SET o.status = 'FLAGGED'",
+      "reactionShape": null,
+      "compensation": null,
+      "budget": 100
+    }
+order: 1000

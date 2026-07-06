@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-graph/migrate?dataSourceId=1"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-Id: "{{tenantId}}"
+queryParams:
+  dataSourceId: "1"
+order: 5000

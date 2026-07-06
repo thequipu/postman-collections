@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/permission_by_userid?userId=user@example.com&page=0&size=20"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  userId: user@example.com
+  page: "0"
+  size: "20"
+order: 9000

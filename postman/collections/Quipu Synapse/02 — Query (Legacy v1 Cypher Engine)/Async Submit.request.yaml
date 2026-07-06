@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/query/cypher/async"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "MATCH (n:Person) RETURN n LIMIT 100",
+      "namespace": "{{namespace}}"
+    }
+order: 2000

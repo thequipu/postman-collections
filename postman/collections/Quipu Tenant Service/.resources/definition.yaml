@@ -1,0 +1,50 @@
+$kind: collection
+description: |-
+  Complete REST API collection for the Quipu Tenant Service microservice (port 3031, context path /admin). This is the multi-tenant management / provisioning control-plane: owns tenant lifecycle (create -> config -> activate/deactivate) and orchestrates Keycloak, Vault, per-tenant PostgreSQL, and audit ingestion.
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:3031/admin (note the /admin context path)
+  - {{token}}    — bearer JWT sent as Authorization header; also decoded server-side by JwtTokenFilter to populate the User-Id request attribute used by POST /tenant
+  - {{tenantId}} — tenant identifier (X-Tenant-ID header, used by /tenant/user-status)
+
+  Typical flow:
+  1. POST /tenant                      → create tenant (provisions Keycloak realm/client/user, emits TENANT_CREATED)
+  2. PUT  /tenant/config/{tenantId}    → configure tenant (Vault populate + Postgres DB creation)
+  3. PUT  /tenant/{tenantId}/{active}  → activate/deactivate tenant
+  4. GET  /tenant, /tenant/active, /tenant/{code} → lookups
+
+  Notes:
+  - All /tenant endpoints (except /tenant/users/{tenantCode} and /tenant/user-status) produce application/vnd.quipu.tenant+json;version=1.0.0.
+  - /audit endpoints produce application/vnd.quipu.audit+json;version=1.0.0.
+  - No bean validation — validation is manual server-side; there is no pagination on any list endpoint.
+variables:
+  baseUrl: http://localhost:3031/admin
+  token: ""
+  tenantId: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: c87d0770-2819-4abf-b52b-76a43b81e279
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

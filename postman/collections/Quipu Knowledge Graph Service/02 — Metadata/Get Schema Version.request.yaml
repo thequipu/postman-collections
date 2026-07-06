@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/get-schema-version?schemaName=prod_schema&schemaVersion=v1"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  schemaName: prod_schema
+  schemaVersion: v1
+order: 6000

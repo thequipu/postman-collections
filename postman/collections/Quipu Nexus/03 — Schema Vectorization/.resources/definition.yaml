@@ -1,0 +1,3 @@
+$kind: collection
+description: Milvus vectorization job lifecycle for a fabric's schema (entity/doc/vocab collections). Base path /schema.
+order: 3000

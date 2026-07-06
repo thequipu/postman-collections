@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/atomicIngestStream/:realmId/atomic/any-running"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  realmId: "1"
+order: 7000

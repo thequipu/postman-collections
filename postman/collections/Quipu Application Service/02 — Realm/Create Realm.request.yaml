@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/realm"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "name": "production-realm",
+      "schemaName": "prod_schema",
+      "description": "Production data fabric",
+      "deleted": false
+    }
+order: 1000

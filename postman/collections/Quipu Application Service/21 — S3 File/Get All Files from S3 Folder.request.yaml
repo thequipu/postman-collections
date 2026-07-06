@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-resolution-s3/get-files"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "bucketName": "quipu-er-files",
+      "folderPath": "realm-1/documents/"
+    }
+order: 3000

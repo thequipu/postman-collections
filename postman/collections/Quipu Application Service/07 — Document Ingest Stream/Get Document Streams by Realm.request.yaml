@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/documentIngestStream/get-document-stream/:realmId"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  realmId: "1"
+order: 2000

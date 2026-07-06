@@ -1,0 +1,21 @@
+$kind: http-request
+description: Authenticates a platform administrator via Keycloak. No OTP or X-Tenant-ID required. Test script auto-saves tokens.
+url: "{{baseUrl}}/admin/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "admin@quipu.io",
+      "password": "admin-password"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.access_token)  pm.collectionVariables.set('accessToken',  res.access_token);
+      if (res.refresh_token) pm.collectionVariables.set('refreshToken', res.refresh_token);
+    language: text/javascript
+order: 1000

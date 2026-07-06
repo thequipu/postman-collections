@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/watchers?namespace=public"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  namespace: public
+order: 2000

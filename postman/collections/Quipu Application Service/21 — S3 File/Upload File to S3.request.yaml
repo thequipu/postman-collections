@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-resolution-s3"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: ""
+      description: Binary file to upload
+    - type: text
+      key: data
+      value: '{"fileName": "entities.csv"}'
+      description: "JSON metadata: {fileName, url?}"
+order: 1000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/node?namespace={{namespace}}"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  namespace: "{{namespace}}"
+body:
+  type: json
+  content: |-
+    {
+      "uri": "urn:person/1",
+      "label": "Person",
+      "properties": { "name": "Alice", "age": "30" }
+    }
+order: 1000

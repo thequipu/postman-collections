@@ -1,0 +1,19 @@
+$kind: http-request
+description: Invalidates the user's session in Keycloak. Test script clears saved tokens from collection variables.
+url: "{{baseUrl}}/user/logout"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refresh_token": "{{refreshToken}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.collectionVariables.set('accessToken', '');
+      pm.collectionVariables.set('refreshToken', '');
+    language: text/javascript
+order: 7000

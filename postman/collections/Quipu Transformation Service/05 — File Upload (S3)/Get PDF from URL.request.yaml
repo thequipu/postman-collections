@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/s3-upload/getPdfFromUrl?datasourceName=reports-pdf"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/vnd.quipu.file-upload+json;version=1.0.0
+queryParams:
+  datasourceName: reports-pdf
+body:
+  type: json
+  content: |-
+    {
+      "url": "https://example.com/files/annual-report.pdf"
+    }
+order: 6000

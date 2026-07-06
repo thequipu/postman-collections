@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/test-connection/metadata"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "name": "postgres-prod",
+      "driverType": "POSTGRES",
+      "dbHostName": "db.example.com",
+      "dbPort": 5432,
+      "databaseName": "quipu_db",
+      "dbUserName": "quipu_user",
+      "dbPassword": "secret"
+    }
+order: 5000

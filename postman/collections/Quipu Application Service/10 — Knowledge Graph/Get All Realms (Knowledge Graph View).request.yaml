@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/knowledgeGraph?page=0&size=20"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  page: "0"
+  size: "20"
+order: 1000

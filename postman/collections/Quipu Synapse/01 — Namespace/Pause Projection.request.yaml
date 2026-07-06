@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces/:name/projection/pause"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  name: "{{namespace}}"
+order: 9000

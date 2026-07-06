@@ -1,0 +1,11 @@
+$kind: http-request
+description: Checks whether a given tenant code is valid and registered in the platform. Returns a boolean. Body is a plain-text tenant code string.
+url: "{{baseUrl}}/admin/validate-tenant"
+method: POST
+headers:
+  Content-Type: text/plain
+  Authorization: Bearer {{accessToken}}
+body:
+  type: text
+  content: your-tenant-code
+order: 5000

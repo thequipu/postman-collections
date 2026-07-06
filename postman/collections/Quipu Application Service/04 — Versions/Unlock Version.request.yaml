@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/versions/veriosn-unlock?versionId=1"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  versionId: "1"
+order: 6000

@@ -1,0 +1,44 @@
+$kind: http-request
+url: "{{baseUrl}}/trino-source/create-hive"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "dataSource": {
+        "id": 5,
+        "driverType": "POSTGRES",
+        "dbHostName": "localhost",
+        "dbPort": 5432,
+        "databaseName": "mydb"
+      },
+      "metadataTables": [
+        {
+          "name": { "name": "customers", "dataCatalogName": "customers", "ontologyName": "Customer" },
+          "type": "TABLE",
+          "namedEntity": true,
+          "erEntity": true,
+          "selected": true,
+          "datasourceName": "postgres-prod",
+          "properties": [
+            {
+              "name": { "name": "id", "dataCatalogName": "id" },
+              "type": "BIGINT",
+              "nullable": false,
+              "primaryKey": true,
+              "uniqueKey": false,
+              "datasourceName": "postgres-prod"
+            }
+          ],
+          "dataSetRelationShips": []
+        }
+      ],
+      "shape": {
+        "shape": {},
+        "constraints": []
+      }
+    }
+order: 1000

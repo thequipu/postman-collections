@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-resolution-s3/getCsvHeader"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "bucketName": "quipu-er-files",
+      "folderPath": "realm-1/mappings/",
+      "fileName": "entities.csv"
+    }
+order: 2000

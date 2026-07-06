@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/query/cypher/explain"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "MATCH (n:Person {uri: 'urn:person:123'})-[:KNOWS]->(m) RETURN m",
+      "namespace": "{{namespace}}"
+    }
+order: 4000

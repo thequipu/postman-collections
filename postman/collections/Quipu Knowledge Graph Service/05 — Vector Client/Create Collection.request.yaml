@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/vector-client/create-collection?collectionName=production_realm_embeddings"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  collectionName: production_realm_embeddings
+order: 1000

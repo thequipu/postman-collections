@@ -1,0 +1,7 @@
+$kind: http-request
+description: Returns all users registered in the Keycloak realm.
+url: "{{baseUrl}}/user/users"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 6000

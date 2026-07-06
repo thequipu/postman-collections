@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/document/status-update/:statusId/:status"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  statusId: "1"
+  status: COMPLETED
+order: 2000

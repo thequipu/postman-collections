@@ -1,0 +1,3 @@
+$kind: collection
+description: Reactive standing queries (Synapse Reactive State Watcher API), proxied verbatim. Base path /synapse/watchers.
+order: 6000

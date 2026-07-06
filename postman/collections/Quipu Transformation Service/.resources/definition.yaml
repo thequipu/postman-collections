@@ -1,0 +1,46 @@
+$kind: collection
+description: |-
+  Complete REST API collection for the Quipu Transformation Service microservice (port 3036). This is the ETL engine of the platform: extracts raw data from heterogeneous sources, transforms it into a knowledge graph (nodes + relationships), and loads it into Neo4j, Yugabyte, and Synapse Kafka; also materializes data to Hive/Trino for analytical querying.
+
+  Pipeline shape: source -> shape parse -> metadata extract -> schema graph -> CTAS (Trino) -> Parquet on S3 -> parquet read + validate -> Yugabyte COPY (journal/node/edge state) -> Synapse Kafka -> Neo4j.
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:3036
+  - {{token}}    — bearer/JWT-like token sent as Authorization header
+  - {{tenantId}} — tenant identifier (X-Tenant-ID header)
+
+  Notes:
+  - Endpoints in '02 — Connection' and '05 — File Upload (S3)' require the exact versioned media type as Content-Type (application/vnd.quipu.connection+json;version=1.0.0 and application/vnd.quipu.file-upload+json;version=1.0.0 respectively) — Spring returns 415 otherwise.
+  - 'DataSourceModel.driverType' must be one of: SNOWFLAKE, DB2, POSTGRES, BIGQUERY, MYSQL, SQLITE, MONGO, CASSANDRA, NEO4J, CSV, ORACLE, EXCEL, PDF, MARIADB, JSON.
+  - Several endpoints (Hive/Trino creation & removal, sample-record upload) are fire-and-forget: they return 200 immediately while work continues on a background executor.
+variables:
+  baseUrl: http://localhost:3036
+  token: ""
+  tenantId: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: 35215ebe-0160-44b8-a028-adcd600b40cf
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

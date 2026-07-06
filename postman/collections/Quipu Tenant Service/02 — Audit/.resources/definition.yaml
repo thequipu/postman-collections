@@ -1,0 +1,3 @@
+$kind: collection
+description: Audit trail reporting, ingested from Kafka into MongoDB. Base path /audit.
+order: 2000

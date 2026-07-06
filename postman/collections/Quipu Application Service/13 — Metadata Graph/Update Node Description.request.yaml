@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata-graph/add-description"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nodeUri": "datasource:postgres:prod",
+      "description": "Primary production PostgreSQL datasource"
+    }
+order: 2000

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/migration/:tenantId"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  tenantId: "{{tenantId}}"
+order: 1000

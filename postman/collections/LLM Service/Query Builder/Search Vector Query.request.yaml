@@ -1,0 +1,13 @@
+$kind: http-request
+description: realm and question are query params (not a JSON body). Authorization header is also read explicitly by this endpoint in addition to the middleware.
+url: "{{baseUrl}}/query-builder/query?realm={{realm}}&question=What is the total revenue this month?"
+method: POST
+headers:
+  X-TENANT-ID: "{{tenantId}}"
+queryParams:
+  realm: "{{realm}}"
+  question: What is the total revenue this month?
+body:
+  type: text
+  content: ""
+order: 1000

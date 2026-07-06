@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces/:name/historic-ingest-complete"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  name: "{{namespace}}"
+order: 7000

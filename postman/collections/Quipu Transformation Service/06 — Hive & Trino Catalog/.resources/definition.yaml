@@ -1,0 +1,3 @@
+$kind: collection
+description: Fire-and-forget Hive external table / Trino catalog creation and removal. Base path /trino-source. Each call returns 200 immediately while work continues on a background executor.
+order: 6000

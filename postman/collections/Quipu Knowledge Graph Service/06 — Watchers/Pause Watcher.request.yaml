@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/watchers/:watcherId/pause"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  watcherId: "1"
+order: 5000

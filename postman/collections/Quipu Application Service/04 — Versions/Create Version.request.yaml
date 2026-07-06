@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/versions/create?schemaName=prod_schema"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  schemaName: prod_schema
+body:
+  type: json
+  content: |-
+    {
+      "version": "1.0.0",
+      "dataSourceIds": [1, 2],
+      "description": "Initial version"
+    }
+order: 1000

@@ -1,0 +1,3 @@
+$kind: collection
+description: Document fetch for visualization (single + batch). Base path /doc-viz.
+order: 1000

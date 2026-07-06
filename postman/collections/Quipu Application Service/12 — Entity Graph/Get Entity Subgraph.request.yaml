@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-graph/entity-subgraph?uri=customer:acme-001"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  uri: customer:acme-001
+order: 3000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/trino-source/create-catalog"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "CREATE TABLE hive.tenant1_schema.customers (id bigint, name varchar) WITH (format = 'PARQUET')",
+      "catalogName": "hive.tenant1_schema",
+      "removeQuery": "DROP TABLE hive.tenant1_schema.customers"
+    }
+order: 2000

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces"
+method: GET
+order: 3000

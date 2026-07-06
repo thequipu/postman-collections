@@ -1,0 +1,3 @@
+$kind: collection
+description: "End-user authentication flow: OTP request → login → token refresh → logout. Uses /user base path."
+order: 1000

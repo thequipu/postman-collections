@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/import-schema"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "schemaGraph": "<schema-graph-string>",
+      "schemaName": "prod_schema",
+      "newSchemaName": "prod_schema_imported",
+      "awsVersionId": "abc123",
+      "versionsModel": {
+        "versionId": 1,
+        "versionName": "v1",
+        "awsVersionId": "abc123",
+        "latest": true,
+        "deleted": false,
+        "defaultVersion": true,
+        "description": "Imported version",
+        "entity360Flows": [],
+        "dataSourceIds": [1, 2],
+        "versionLocked": false
+      }
+    }
+order: 7000

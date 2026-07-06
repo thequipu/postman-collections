@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/entity/search?q=customer acme"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  q: customer acme
+order: 1000

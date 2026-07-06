@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/role-permission/exists?entityType=DATA_SOURCE&role=DATA_ENGINEER&permissionNames=VIEW,EDIT"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  entityType: DATA_SOURCE
+  role: DATA_ENGINEER
+  permissionNames: VIEW,EDIT
+order: 3000

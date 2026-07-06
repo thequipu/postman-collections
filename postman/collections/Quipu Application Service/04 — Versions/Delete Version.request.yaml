@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/versions/delete?versionId=1"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  versionId: "1"
+order: 5000

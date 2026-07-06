@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/sources?sourceIds=1,2"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  sourceIds: 1,2
+order: 13000

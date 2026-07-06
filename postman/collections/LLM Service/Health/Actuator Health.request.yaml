@@ -1,0 +1,7 @@
+$kind: http-request
+description: Not gated by the auth middleware - no headers required.
+url: "{{baseUrl}}/actuator/health"
+method: GET
+auth:
+  type: noauth
+order: 1000

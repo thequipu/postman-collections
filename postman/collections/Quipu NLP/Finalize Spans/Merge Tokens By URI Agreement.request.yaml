@@ -1,0 +1,19 @@
+$kind: http-request
+description: Input is the per-token candidate-URI matrix nexus builds after running GIN+vector searches on each token from /tokenize. Adjacent tokens that agree on a URI get merged into one span.
+url: "{{baseUrl}}/finalize-spans"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "text": "Acme Corp signed contract INV-2024-0091 with Globex.",
+      "tokens": [
+        { "text": "Acme", "start": 0, "end": 4, "uris": ["urn:org:acme"] },
+        { "text": "Corp", "start": 5, "end": 9, "uris": ["urn:org:acme"] },
+        { "text": "INV-2024-0091", "start": 18, "end": 31, "uris": ["urn:invoice:inv-2024-0091"] },
+        { "text": "Globex", "start": 37, "end": 43, "uris": ["urn:org:globex"] }
+      ]
+    }
+order: 1000

@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/realm/cdc-status/:id?cdcStatus=true"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  cdcStatus: "true"
+pathVariables:
+  id: "1"
+order: 12000

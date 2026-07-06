@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{baseUrl}}/vector-ingestion/ingest"
+method: POST
+headers:
+  - key: Authorization
+    value: Bearer {{token}}
+  - key: Content-Type
+    value: application/json
+  - key: X-Tenant-ID
+    value: "{{tenantId}}"
+  - key: X-Refresh-Token
+    value: ""
+    disabled: true
+body:
+  type: json
+  content: |-
+    [
+      {
+        "id": "doc-1",
+        "text": "Acme Corp signed a new contract with Beta LLC.",
+        "collectionName": "production_realm_docs",
+        "url": "s3://quipu-data/docs/doc-1.pdf",
+        "pathId": 1,
+        "pathIdentifier": 1001
+      }
+    ]
+order: 1000

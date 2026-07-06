@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/schema/vectorize/:fabricId"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+pathVariables:
+  fabricId: production-fabric
+order: 1000

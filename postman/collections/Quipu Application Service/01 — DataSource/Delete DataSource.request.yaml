@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/:id?permanent=false"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  permanent: "false"
+pathVariables:
+  id: "1"
+order: 4000

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/namespace/clean?name=ns1"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  name: ns1
+order: 6000

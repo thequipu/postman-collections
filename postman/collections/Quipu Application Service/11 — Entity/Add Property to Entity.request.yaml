@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/entity/property?entityUri=customer:acme-001"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  entityUri: customer:acme-001
+body:
+  type: json
+  content: |-
+    {
+      "key": "email",
+      "value": "contact@acme.com",
+      "dataType": "STRING"
+    }
+order: 7000

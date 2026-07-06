@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/tenant/:tenantId/:active"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  tenantId: "1"
+  active: "true"
+order: 7000

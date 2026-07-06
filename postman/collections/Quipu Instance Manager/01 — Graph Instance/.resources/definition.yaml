@@ -1,0 +1,3 @@
+$kind: collection
+description: "Knowledge-graph instance lifecycle: switch active fabric, start transient/mind/ontology graphs, dump current graph data. Base path /graph-instance."
+order: 1000

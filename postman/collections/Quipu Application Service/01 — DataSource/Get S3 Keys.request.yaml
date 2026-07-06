@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/keys"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "s3-source",
+      "driverType": "CSV",
+      "bucket": "quipu-data",
+      "prefix": "realm-1/"
+    }
+order: 11000

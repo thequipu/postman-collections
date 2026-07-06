@@ -1,0 +1,14 @@
+$kind: http-request
+description: Rule-based sentence splitting. Returns each sentence with start/end char offsets into the original text.
+url: "{{baseUrl}}/sentenize"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "text": "Acme Corp signed a new contract with Globex. The deal closes on March 3rd.",
+      "lang": "en"
+    }
+order: 1000

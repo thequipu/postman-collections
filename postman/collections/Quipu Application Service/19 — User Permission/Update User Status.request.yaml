@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/updateUser?username=user@example.com&status=true"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  username: user@example.com
+  status: "true"
+order: 13000

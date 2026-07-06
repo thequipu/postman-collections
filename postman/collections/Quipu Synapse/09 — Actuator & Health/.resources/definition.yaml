@@ -1,0 +1,3 @@
+$kind: collection
+description: Operational probes and metrics. No authentication required.
+order: 9000

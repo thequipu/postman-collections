@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/realm/by-name-lb?realmName=production-realm"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  realmName: production-realm
+order: 5000

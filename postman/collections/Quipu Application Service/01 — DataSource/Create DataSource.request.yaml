@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "postgres-prod",
+      "driverType": "POSTGRES",
+      "host": "db.example.com",
+      "port": 5432,
+      "database": "quipu_db",
+      "username": "quipu_user",
+      "password": "secret",
+      "realmId": 1,
+      "deleted": false
+    }
+order: 1000

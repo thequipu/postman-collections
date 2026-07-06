@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/node/get-map"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+order: 1000

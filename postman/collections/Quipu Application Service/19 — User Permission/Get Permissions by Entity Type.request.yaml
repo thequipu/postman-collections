@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/permission_by_entity?entityType=DATA_SOURCE&page=0&size=20"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  entityType: DATA_SOURCE
+  page: "0"
+  size: "20"
+order: 7000

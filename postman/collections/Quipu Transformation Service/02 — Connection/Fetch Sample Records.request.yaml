@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/test-connection/sample-records"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "dataSourceModel": {
+        "driverType": "POSTGRES",
+        "dbHostName": "localhost",
+        "dbPort": 5432,
+        "databaseName": "mydb",
+        "dbUserName": "user",
+        "dbPassword": "pass"
+      },
+      "tableName": "customers",
+      "name": "sample-fetch"
+    }
+order: 3000

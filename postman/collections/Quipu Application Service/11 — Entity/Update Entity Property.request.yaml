@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/entity/property?uri=customer:acme-001:prop:email"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  uri: customer:acme-001:prop:email
+body:
+  type: json
+  content: |-
+    {
+      "key": "email",
+      "value": "new@acme.com",
+      "dataType": "STRING"
+    }
+order: 8000

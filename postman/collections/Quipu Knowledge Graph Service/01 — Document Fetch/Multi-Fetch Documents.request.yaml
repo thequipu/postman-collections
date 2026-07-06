@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/doc-viz/multi-fetch"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "documentNames": ["doc1.pdf", "doc2.pdf"],
+      "realmName": "production-realm"
+    }
+order: 2000

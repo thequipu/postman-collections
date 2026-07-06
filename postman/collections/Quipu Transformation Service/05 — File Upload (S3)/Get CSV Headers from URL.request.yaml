@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/s3-upload/getCsvHeadersFromUrl?datasourceName=sales-csv"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/vnd.quipu.file-upload+json;version=1.0.0
+queryParams:
+  datasourceName: sales-csv
+body:
+  type: json
+  content: |-
+    {
+      "url": "https://example.com/files/sales.csv"
+    }
+order: 3000

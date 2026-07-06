@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/tenant/users/:tenantCode"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  tenantCode: acme
+order: 8000

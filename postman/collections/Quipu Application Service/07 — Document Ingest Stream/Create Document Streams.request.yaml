@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/documentIngestStream/create-streams"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "realmId": 1,
+      "dataSourceId": 1,
+      "documents": [
+        { "key": "annual-report.pdf", "name": "Annual Report 2024" }
+      ]
+    }
+order: 1000

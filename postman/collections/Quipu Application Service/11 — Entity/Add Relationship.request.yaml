@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/entity/relationship?entityUri=customer:acme-001"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  entityUri: customer:acme-001
+body:
+  type: json
+  content: |-
+    {
+      "type": "BELONGS_TO",
+      "targetUri": "industry:tech",
+      "properties": { "since": "2020-01-01", "strength": 0.95 }
+    }
+order: 10000

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/update-signature-presence?id=1"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  id: "1"
+order: 8000

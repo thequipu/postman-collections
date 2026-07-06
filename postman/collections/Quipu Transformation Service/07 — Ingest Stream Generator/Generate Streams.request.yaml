@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/streams/generate"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "realmId": 1001
+    }
+order: 1000

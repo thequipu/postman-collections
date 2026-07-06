@@ -1,0 +1,3 @@
+$kind: collection
+description: Header/preview extraction for S3-resident or URL-referenced files (Excel, CSV, PDF). Base path /s3-upload. Despite the name, these are JSON calls that reference an S3 object or URL — not multipart binary uploads. consumes/produces application/vnd.quipu.file-upload+json;version=1.0.0 (except pdf-view, a plain GET).
+order: 5000

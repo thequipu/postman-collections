@@ -1,0 +1,3 @@
+$kind: collection
+description: Datasource connectivity checks, sample-record fetch/upload, and metadata discovery. Base path /test-connection. produces application/vnd.quipu.connection+json;version=1.0.0 on every response.
+order: 2000

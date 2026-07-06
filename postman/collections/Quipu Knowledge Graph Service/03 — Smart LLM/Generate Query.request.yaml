@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/smart-llm/generate-query?realm=production-realm&question=How many customers are there?"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  realm: production-realm
+  question: How many customers are there?
+order: 1000

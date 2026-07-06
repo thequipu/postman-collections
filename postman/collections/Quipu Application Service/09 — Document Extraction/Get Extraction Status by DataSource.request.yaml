@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/document/extraction-status-by-datasource-id?datasourceId=1"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  datasourceId: "1"
+order: 4000

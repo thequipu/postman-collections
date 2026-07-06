@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/actuator/prometheus"
+method: GET
+order: 5000

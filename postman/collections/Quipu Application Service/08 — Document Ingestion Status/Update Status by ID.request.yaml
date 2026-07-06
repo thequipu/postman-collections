@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/document-ingestion-status/update-by-id?statusId=1"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  statusId: "1"
+body:
+  type: json
+  content: |-
+    {
+      "status": "FAILED",
+      "errorMessage": "Extraction timed out"
+    }
+order: 4000

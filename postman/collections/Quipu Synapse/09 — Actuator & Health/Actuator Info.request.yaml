@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/actuator/info"
+method: GET
+order: 3000

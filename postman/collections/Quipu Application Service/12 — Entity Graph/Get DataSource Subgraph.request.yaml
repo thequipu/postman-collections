@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-graph/datasource-subgraph?label=postgres-prod"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  label: postgres-prod
+order: 4000

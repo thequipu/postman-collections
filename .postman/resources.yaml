@@ -1,0 +1,37 @@
+# Use this workspace to collaborate
+workspace:
+  id: d217b5f6-7fa2-4913-8446-5d30db110208
+
+localResources:
+  collections:
+    - ../collections/Access_Token.postman_collection.json
+    - ../collections/LLM Service.postman_collection.json
+    - ../collections/Quipu Application Service.postman_collection.json
+    - ../collections/Quipu Document Graph.postman_collection.json
+    - ../collections/Quipu Instance Manager.postman_collection.json
+    - ../collections/Quipu Knowledge Graph Service.postman_collection.json
+    - ../collections/Quipu Load Balancer Service.postman_collection.json
+    - ../collections/Quipu Nexus.postman_collection.json
+    - ../collections/Quipu NLP.postman_collection.json
+    - ../collections/Quipu Security Service.postman_collection.json
+    - ../collections/Quipu Synapse.postman_collection.json
+    - ../collections/Quipu Tenant Service.postman_collection.json
+    - ../collections/Quipu Transformation Service.postman_collection.json
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Access_Token: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+    ../postman/collections/LLM Service: 56383100-9282995c-bb0f-452b-b2ec-7b73e889e7b4
+    ../postman/collections/Quipu Application Service: 56383100-2726fa3a-3641-46c8-8694-869fd49d5a97
+    ../postman/collections/Quipu Document Graph: 56383100-e2b3a422-632f-4f41-9f50-c97f2bf993fd
+    ../postman/collections/Quipu Instance Manager: 56383100-9dcb9cf5-845d-4776-b627-019a233e330c
+    ../postman/collections/Quipu Knowledge Graph Service: 56383100-83a40b0b-93ff-4d0b-8da0-1b723f934217
+    ../postman/collections/Quipu Load Balancer Service: 56383100-498a46b4-047a-4286-a5b3-5ff0de4ca161
+    ../postman/collections/Quipu Nexus: 56383100-32c81d6c-b685-4c77-bfce-3f14c30114cc
+    ../postman/collections/Quipu NLP: 56383100-20bae79b-79a9-4a8a-9053-3b2089e83061
+    ../postman/collections/Quipu Security Service: 56383100-bebbb21d-50fa-4099-aa3c-95c4438a5f37
+    ../postman/collections/Quipu Synapse: 56383100-d828744f-6c2a-4469-ba4e-b34cc259319c
+    ../postman/collections/Quipu Tenant Service: 56383100-e48657af-5c83-41ee-9474-05b36ba61caa
+    ../postman/collections/Quipu Transformation Service: 56383100-eaf72464-f7dd-43a7-ba96-eef1c70b8506

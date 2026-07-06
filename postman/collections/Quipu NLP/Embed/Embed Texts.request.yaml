@@ -1,0 +1,16 @@
+$kind: http-request
+description: Returns one embedding vector per input text using sentence-transformers/all-mpnet-base-v2 (default, overridable via SENTENCE_TRANSFORMERS_MODEL env var). Empty texts array returns an empty embeddings array.
+url: "{{baseUrl}}/embed"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "texts": [
+        "Acme Corp signed a new contract with Globex.",
+        "The deal closes on March 3rd."
+      ]
+    }
+order: 1000

@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/entity?uri=customer:acme-001"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  uri: customer:acme-001
+body:
+  type: json
+  content: |-
+    {
+      "properties": {
+        "name": "Acme Corporation",
+        "status": "active"
+      }
+    }
+order: 4000

@@ -1,0 +1,15 @@
+$kind: http-request
+description: Downloads the PDF at fileUrl, extracts nodes/edges/shape into a document graph for realmName. datasourceUri is optional (defaults to empty string).
+url: "{{baseUrl}}/document-parser/parse-pdf"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "fileUrl": "https://example.com/files/sample-invoice.pdf",
+      "realmName": "acme-realm",
+      "datasourceUri": "urn:datasource:acme-docs"
+    }
+order: 1000

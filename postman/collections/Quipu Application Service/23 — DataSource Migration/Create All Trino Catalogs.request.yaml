@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/migrate-data-source/create-trino-catalogs"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-Id: "{{tenantId}}"
+order: 5000

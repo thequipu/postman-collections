@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/consumer/pause?topic=orders-topic"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  topic: orders-topic
+order: 1000

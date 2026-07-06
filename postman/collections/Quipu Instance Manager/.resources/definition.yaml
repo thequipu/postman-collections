@@ -1,0 +1,43 @@
+$kind: collection
+description: |-
+  Complete REST API collection for the Quipu Instance Manager microservice (port 3035). Manages the lifecycle of per-tenant knowledge-graph instances: switching the active fabric's knowledge graph online, starting transient/mind/ontology graph instances, and dumping current graph data. Single controller: GraphInstanceController, base path /graph-instance.
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:3035
+  - {{token}}    — bearer JWT sent as Authorization header; decoded server-side to populate the User-Id request attribute used by /start-kg
+  - {{tenantId}} — tenant identifier (X-Tenant-ID header, required on every endpoint)
+
+  Notes:
+  - No request bodies anywhere — all inputs are query params (fabricName, activeFabricName) or headers (X-Tenant-ID).
+  - No versioned media types are declared on this controller (plain application/json).
+variables:
+  baseUrl: http://localhost:3035
+  token: ""
+  tenantId: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: e1a56996-de19-40b2-8db7-8abc1e2ebd58
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

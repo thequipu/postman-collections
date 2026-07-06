@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v2/cypher/async/result?queryId={{queryId}}"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  queryId: "{{queryId}}"
+order: 5000

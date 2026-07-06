@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/atomicIngestStream/remove-stream/:streamId"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  streamId: "1"
+order: 3000

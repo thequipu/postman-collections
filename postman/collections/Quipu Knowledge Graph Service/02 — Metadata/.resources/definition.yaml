@@ -1,0 +1,3 @@
+$kind: collection
+description: Schema save/version/fetch, backed by S3 + application-service + transformation-service. Base path /metadata. produces application/vnd.quipu.rdf.meta-data+json;version=1.0.0.
+order: 2000

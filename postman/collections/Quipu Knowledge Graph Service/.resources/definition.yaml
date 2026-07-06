@@ -1,0 +1,45 @@
+$kind: collection
+description: |-
+  Complete REST API collection for the Quipu Knowledge Graph Service microservice (port 3034). Single access point for knowledge-graph data: proxies Cypher queries, namespace lifecycle, shape ingestion, and watchers to the external Synapse engine; talks to Neo4j and Milvus directly; and integrates with llm-service (Smart LLM) and application-service (schema metadata).
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:3034
+  - {{token}}    — bearer/JWT-like token sent as Authorization header (forwarded downstream, not validated locally)
+  - {{tenantId}} — tenant identifier (X-Tenant-ID header)
+
+  Notes:
+  - Endpoints in '02 — Metadata' produce application/vnd.quipu.rdf.meta-data+json;version=1.0.0; '03 — Smart LLM' uses application/vnd.quipu.llm-client+json;version=1.0.0 (generate-answer) and text/vnd.quipu.llm-client+plain;version=1.0.0 (generate-query); '05 — Vector Client' uses application/vnd.quipu.vector-client+json;version=1.0.0.
+  - Cypher time-travel (`atTime`, epoch millis) is a JSON BODY field on POST /synapse/query, not a query string parameter.
+  - '/synapse/watchers/**' and most of '/synapse/namespace/**' proxy Synapse verbatim — response bodies/status codes are relayed from the external Synapse engine.
+  - A STOMP/SockJS chat endpoint exists at /chat (WebSocketConfig) but is NOT a standard REST call — Postman's WebSocket support does not speak STOMP frames natively; it requires a STOMP-aware client (e.g. @stomp/stompjs) and is out of scope for this collection.
+variables:
+  baseUrl: http://localhost:3034
+  token: ""
+  tenantId: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: 76085301-6e87-4ac0-9476-3d94763531b5
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

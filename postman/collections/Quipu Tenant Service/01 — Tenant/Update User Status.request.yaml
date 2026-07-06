@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/tenant/user-status?username=acme-admin&status=true"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  username: acme-admin
+  status: "true"
+order: 9000

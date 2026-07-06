@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/nexus/schema/traversable/schema"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "fabricId": "production-fabric",
+      "force": false
+    }
+order: 4000

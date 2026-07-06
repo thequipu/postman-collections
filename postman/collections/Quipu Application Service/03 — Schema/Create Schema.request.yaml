@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/schema"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "prod_schema",
+      "description": "Production schema",
+      "dataSourceIds": [1, 2]
+    }
+order: 3000

@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/entity-graph/complete-graph"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+order: 1000

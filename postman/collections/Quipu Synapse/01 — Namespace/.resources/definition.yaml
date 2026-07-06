@@ -1,0 +1,3 @@
+$kind: collection
+description: Namespace lifecycle — logical schema-isolated tenants within the graph engine. Base path /namespaces. Create/enable/disable/delete/historic-ingest-complete/projection-* require the admin role; status/list/stats are public.
+order: 1000

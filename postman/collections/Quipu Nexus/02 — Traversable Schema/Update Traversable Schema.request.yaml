@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/nexus/schema/traversable/update"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "fabricId": "production-fabric",
+      "traversableSchemaGraph": {
+        "directed": true,
+        "multigraph": true,
+        "schemaId": "schema-1",
+        "nodes": [
+          { "id": "urn:label:Customer", "label": "Customer", "namedEntity": true, "properties": ["name", "email"] },
+          { "id": "urn:label:Order", "label": "Order", "namedEntity": false, "properties": ["orderId", "amount"] }
+        ],
+        "edges": [
+          { "source": "urn:label:Customer", "target": "urn:label:Order", "key": 0, "relationship": "PLACED", "fwdEligibility": "ALLOWED_TRAVERSE", "revEligibility": "ALLOWED_TRAVERSE" }
+        ]
+      }
+    }
+order: 3000

@@ -1,0 +1,25 @@
+$kind: collection
+description: FastAPI service that parses a PDF (fetched from a URL) into a document graph (nodes/edges/shape) for a given realm and datasource. No auth middleware - CORS is wide open (allow_origins="*"), intended as an internal service reached via Kafka-driven pipelines / other backend services.
+variables:
+  baseUrl: http://localhost:3048
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token

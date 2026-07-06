@@ -1,0 +1,3 @@
+$kind: collection
+description: Synchronously generates DBT-NODE ingest streams for a realm's stored schema (UI persists the result separately via application-service). Base path /streams.
+order: 7000

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/document/extraction-status?realmName=production-realm"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  realmName: production-realm
+order: 3000

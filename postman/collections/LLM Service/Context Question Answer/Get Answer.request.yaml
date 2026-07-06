@@ -1,0 +1,19 @@
+$kind: http-request
+description: Requires at least 2 messages in the `messages` array (400 otherwise).
+url: "{{baseUrl}}/context-question-answer/getAnswer"
+method: POST
+headers:
+  Content-Type: application/json
+  X-TENANT-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "messages": [
+        { "role": "user", "content": "What is the capital of France?" },
+        { "role": "assistant", "content": "The capital of France is Paris." },
+        { "role": "user", "content": "What is its population?" }
+      ],
+      "model": "gpt-4o"
+    }
+order: 1000

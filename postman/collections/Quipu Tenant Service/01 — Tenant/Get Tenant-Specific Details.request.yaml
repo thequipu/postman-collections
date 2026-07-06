@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/tenant/tenantSpecific/:tenantId"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  tenantId: "1"
+order: 5000

@@ -1,0 +1,15 @@
+$kind: http-request
+description: Obtains a token for internal service-to-service calls. Bypasses OTP verification. Tenant must be active.
+url: "{{baseUrl}}/user/internal-token"
+method: POST
+headers:
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "username": "service-account@quipu.internal",
+      "password": "service-account-password"
+    }
+order: 3000

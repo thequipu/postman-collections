@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata-graph/fetch-data-source"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "uri": "datasource:postgres:prod"
+    }
+order: 1000

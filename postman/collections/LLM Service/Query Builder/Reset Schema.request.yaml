@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/query-builder/reset-schema?realm={{realm}}"
+method: GET
+headers:
+  X-TENANT-ID: "{{tenantId}}"
+queryParams:
+  realm: "{{realm}}"
+order: 2000

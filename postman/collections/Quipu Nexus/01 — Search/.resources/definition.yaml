@@ -1,0 +1,3 @@
+$kind: collection
+description: "Structured + unstructured search pipeline stages: full dynamic search, GIN anchor discovery, fused anchor resolution, label bags, and MST path plans. Base path /nexus. All bodies share the SearchRequest shape."
+order: 1000

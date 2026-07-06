@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/watcher?realmId=1&page=0&size=20"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  realmId: "1"
+  page: "0"
+  size: "20"
+order: 2000

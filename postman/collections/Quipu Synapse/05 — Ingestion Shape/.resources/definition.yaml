@@ -1,0 +1,3 @@
+$kind: collection
+description: Manages Kafka topic shapes — JSONPath-based extraction rules mapping Kafka messages to node/edge mutations. Base path /ingestion.
+order: 5000

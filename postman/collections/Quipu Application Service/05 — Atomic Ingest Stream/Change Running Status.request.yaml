@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/atomicIngestStream/atomic/running-status-change?streamRunning=true"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  streamRunning: "true"
+body:
+  type: json
+  content: "[1, 2, 3]"
+order: 8000

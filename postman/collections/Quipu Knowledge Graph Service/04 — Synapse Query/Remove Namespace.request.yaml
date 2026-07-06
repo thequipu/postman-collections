@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/namespace/remove?name=ns1&permanent=false"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  name: ns1
+  permanent: "false"
+order: 4000

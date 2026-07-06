@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/source-query/fetch-sample-source"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "dataSourceId": 5,
+      "dataSourceModel": {
+        "driverType": "POSTGRES",
+        "dbHostName": "localhost",
+        "dbPort": 5432,
+        "databaseName": "mydb",
+        "dbUserName": "user",
+        "dbPassword": "pass"
+      },
+      "tableList": ["customers", "orders"]
+    }
+order: 1000

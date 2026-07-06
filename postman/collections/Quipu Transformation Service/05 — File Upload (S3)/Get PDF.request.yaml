@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/s3-upload/getPdf?datasourceName=reports-pdf"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/vnd.quipu.file-upload+json;version=1.0.0
+queryParams:
+  datasourceName: reports-pdf
+body:
+  type: json
+  content: |-
+    {
+      "bucket": "quipu-data",
+      "key": "realm-1/annual-report.pdf",
+      "region": "us-east-1",
+      "accessKey": "AKIA...",
+      "secret": "secret"
+    }
+order: 5000

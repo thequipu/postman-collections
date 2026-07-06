@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/trino-source/remove-hive?purgeData=false"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  purgeData: "false"
+body:
+  type: json
+  content: |-
+    {
+      "dataSource": {
+        "id": 5,
+        "driverType": "POSTGRES",
+        "dbHostName": "localhost",
+        "dbPort": 5432,
+        "databaseName": "mydb"
+      },
+      "metadataTables": [],
+      "shape": { "shape": {}, "constraints": [] }
+    }
+order: 3000

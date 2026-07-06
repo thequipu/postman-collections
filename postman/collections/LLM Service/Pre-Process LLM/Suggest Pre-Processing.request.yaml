@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/pre-process-llm/suggest"
+method: POST
+headers:
+  Content-Type: application/json
+  X-TENANT-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "metaDataJson": "{\"columns\":[\"name\",\"email\"]}",
+      "key": "sample-file-key.csv",
+      "bucket": "quipu-uploads"
+    }
+order: 1000

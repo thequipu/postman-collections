@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/realm/cdc-active/:id"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  id: "1"
+order: 10000

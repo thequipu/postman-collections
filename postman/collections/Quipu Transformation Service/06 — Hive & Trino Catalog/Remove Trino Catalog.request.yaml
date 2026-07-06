@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/trino-source/remove-catalog?purgeData=false"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  purgeData: "false"
+body:
+  type: json
+  content: |-
+    {
+      "query": "DROP TABLE hive.tenant1_schema.customers",
+      "catalogName": "hive.tenant1_schema",
+      "removeQuery": "DROP TABLE hive.tenant1_schema.customers"
+    }
+order: 4000

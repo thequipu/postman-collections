@@ -1,0 +1,8 @@
+$kind: http-request
+name: Migrate CSV/Excel Sources to Hive
+url: "{{baseUrl}}/migrate-data-source/hive"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-Id: "{{tenantId}}"
+order: 3000

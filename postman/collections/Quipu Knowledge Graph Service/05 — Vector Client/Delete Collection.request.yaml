@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/vector-client/delete-collection?collectionName=production_realm_embeddings"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  collectionName: production_realm_embeddings
+order: 2000

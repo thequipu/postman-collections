@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/query/cypher/:queryId"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  queryId: "{{queryId}}"
+order: 6000

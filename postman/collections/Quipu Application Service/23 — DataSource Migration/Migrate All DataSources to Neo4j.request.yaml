@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/migrate-data-source/migrate-all"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-Id: "{{tenantId}}"
+  User-Id: "{{userId}}"
+order: 1000

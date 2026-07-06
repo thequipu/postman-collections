@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/watchers/:watcherId"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  watcherId: "{{watcherId}}"
+order: 3000

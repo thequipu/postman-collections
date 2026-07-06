@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/migrate-data-source?sourceId=1"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-Id: "{{tenantId}}"
+queryParams:
+  sourceId: "1"
+order: 2000

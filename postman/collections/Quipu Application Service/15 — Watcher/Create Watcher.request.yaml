@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/watcher?realmId=1"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  realmId: "1"
+body:
+  type: json
+  content: |-
+    {
+      "name": "entity-change-watcher",
+      "namespace": "prod-fabric",
+      "conditionQuery": "MATCH (n:Entity) WHERE n.updatedAt > datetime() - duration('P1D') RETURN n",
+      "deleted": false
+    }
+order: 1000

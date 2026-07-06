@@ -1,0 +1,3 @@
+$kind: collection
+description: NLP text tagging and vector-linker registration, dispatched through the load-balancer actor. Base path /tagging.
+order: 1000

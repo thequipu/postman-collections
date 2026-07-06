@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/schema/name?schemaName=prod_schema"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  schemaName: prod_schema
+order: 2000

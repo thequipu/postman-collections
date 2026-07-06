@@ -1,0 +1,45 @@
+$kind: collection
+description: |-
+  Complete REST API collection for Quipu Nexus (port 3040) — natural-language knowledge-graph search. Blends structured search (entity anchoring + intent classification + path planning -> Cypher via Synapse) and unstructured search (vector similarity over Milvus doc embeddings), returning ranked subgraphs.
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:3040
+  - {{token}}    — bearer JWT sent as Authorization header
+  - {{tenantId}} — tenant identifier (X-Tenant-ID header; fallback when not derivable from the JWT)
+
+  Notes:
+  - All /nexus endpoints share the same SearchRequest body (fabricId, query, topK, skipUnstructured) and produce application/vnd.quipu.nexus-search+json;version=1.0.0.
+  - /nexus/schema/traversable/** endpoints produce application/vnd.quipu.nexus-traversable+json;version=1.0.0.
+  - /schema/** (vectorization) endpoints produce application/vnd.quipu.nexus-vectorization+json;version=1.0.0. POST /schema/vectorize/{fabricId} returns 202 Accepted (or 409 Conflict if a job is already running) and takes no body. DELETE /schema/{fabricId} returns 204 No Content.
+  - /schema-family responses return the raw MinIO path-graph object; an absent object means an empty graph by design (no KGS fallback).
+variables:
+  baseUrl: http://localhost:3040
+  token: ""
+  tenantId: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: e5c0e45a-4847-4093-9c90-f6bcd8b3c403
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

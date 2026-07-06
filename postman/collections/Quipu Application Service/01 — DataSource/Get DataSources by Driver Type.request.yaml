@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/get-dataSources-by-type/:driverType"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  driverType: POSTGRES
+order: 14000

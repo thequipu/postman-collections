@@ -1,0 +1,3 @@
+$kind: collection
+description: Per-user, per-namespace access policies (property/edge-type allowlists). Base path /users. All endpoints require the admin role.
+order: 6000

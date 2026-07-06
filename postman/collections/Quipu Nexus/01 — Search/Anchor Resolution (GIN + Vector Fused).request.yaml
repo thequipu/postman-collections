@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/nexus/anchors"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "fabricId": "production-fabric",
+      "query": "Acme Corp",
+      "topK": 15,
+      "skipUnstructured": false
+    }
+order: 3000

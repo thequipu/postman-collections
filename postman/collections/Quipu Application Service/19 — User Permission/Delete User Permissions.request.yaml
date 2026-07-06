@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/delete?ids=1,2,3"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  ids: 1,2,3
+order: 11000

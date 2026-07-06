@@ -1,0 +1,19 @@
+$kind: collection
+description: |-
+  Complete REST API collection for the Quipu Security Service microservice (port 3032). Covers user authentication, admin authentication, OTP flow, token management, and tenant validation via Keycloak.
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:3032
+  - {{tenantId}} — tenant identifier sent as X-Tenant-ID header
+
+  Typical flow:
+  1. POST /user/generate-otp  → receive OTP on registered email
+  2. POST /user/login         → exchange credentials + OTP for access_token + refresh_token
+  3. Use access_token as Bearer on downstream services
+  4. POST /user/refreshToken  → rotate tokens before expiry
+  5. POST /user/logout        → invalidate session
+variables:
+  baseUrl: http://localhost:3032
+  tenantId: ""
+  accessToken: ""
+  refreshToken: ""

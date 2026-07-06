@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/document-ingestion-status/update?statusId=1"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  statusId: "1"
+body:
+  type: json
+  content: |-
+    {
+      "status": "COMPLETED",
+      "processedCount": 150,
+      "errorCount": 0
+    }
+order: 3000

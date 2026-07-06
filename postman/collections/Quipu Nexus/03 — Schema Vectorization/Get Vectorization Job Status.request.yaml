@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/schema/jobs/:jobId"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+pathVariables:
+  jobId: job-123
+order: 3000

@@ -1,0 +1,3 @@
+$kind: collection
+description: Cached traversable-schema build/fetch/update, used by the path planner. Base path /nexus/schema/traversable.
+order: 2000

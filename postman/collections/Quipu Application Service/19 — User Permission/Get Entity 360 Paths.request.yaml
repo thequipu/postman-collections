@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission/entity360-paths"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+order: 4000

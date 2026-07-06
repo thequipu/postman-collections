@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/watcher/:id/resume?realmId=1"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  realmId: "1"
+pathVariables:
+  id: "1"
+order: 5000

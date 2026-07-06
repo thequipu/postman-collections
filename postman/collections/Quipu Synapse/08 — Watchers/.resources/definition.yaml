@@ -1,0 +1,3 @@
+$kind: collection
+description: "Reactive State Watchers: standing conditions over the graph that fire a reaction (or reactionShape) when matched. Base path /watchers."
+order: 8000

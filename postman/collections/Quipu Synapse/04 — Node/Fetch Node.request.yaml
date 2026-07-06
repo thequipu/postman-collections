@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/node/fetch?namespace={{namespace}}&atTime="
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  namespace: "{{namespace}}"
+  atTime: ""
+body:
+  type: json
+  content: |-
+    {
+      "uri": "urn:person/1",
+      "properties": ["name", "age"]
+    }
+order: 2000

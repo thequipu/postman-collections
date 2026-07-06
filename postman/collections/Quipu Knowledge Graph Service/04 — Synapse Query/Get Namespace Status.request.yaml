@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/namespace/status?name=ns1"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  name: ns1
+order: 8000

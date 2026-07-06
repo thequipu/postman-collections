@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces/create?name={{namespace}}&isHistoricIngestRequired=false"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  name: "{{namespace}}"
+  isHistoricIngestRequired: "false"
+order: 1000

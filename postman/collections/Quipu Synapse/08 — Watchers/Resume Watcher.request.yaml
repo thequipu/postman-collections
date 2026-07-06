@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/watchers/:watcherId/resume"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  watcherId: "{{watcherId}}"
+order: 5000

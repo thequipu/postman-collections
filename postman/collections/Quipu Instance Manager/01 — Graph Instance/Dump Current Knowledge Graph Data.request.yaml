@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/graph-instance/dump-current?fabricName=production-fabric"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  fabricName: production-fabric
+order: 7000

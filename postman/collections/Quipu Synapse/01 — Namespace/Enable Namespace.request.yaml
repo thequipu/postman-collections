@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces/:name/enable"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  name: "{{namespace}}"
+order: 5000

@@ -1,0 +1,14 @@
+$kind: http-request
+description: Returns significant tokens only (PROPN/NOUN/NUM/X/SYM POS tags, or identifier-like strings) with lemma and char offsets. No NER labels are returned.
+url: "{{baseUrl}}/tokenize"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "text": "Acme Corp signed contract INV-2024-0091 with Globex on March 3rd.",
+      "lang": "en"
+    }
+order: 1000

@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/save-schema"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "schemaGraph": "<graph-json-or-string>",
+      "realmReferenceName": "production-realm"
+    }
+order: 1000

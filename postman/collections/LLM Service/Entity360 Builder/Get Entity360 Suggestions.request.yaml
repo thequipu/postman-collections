@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/entity360-builder/get-entity360s"
+method: POST
+headers:
+  Content-Type: application/json
+  X-TENANT-ID: "{{tenantId}}"
+body:
+  type: json
+  content: |-
+    {
+      "nodes": [
+        { "id": "Person", "label": "Person", "properties": ["name", "email"] },
+        { "id": "Company", "label": "Company", "properties": ["name", "domain"] }
+      ],
+      "links": [
+        { "source": "Person", "target": "Company", "relation": "WORKS_AT" }
+      ],
+      "prefix": "quipu"
+    }
+order: 1000

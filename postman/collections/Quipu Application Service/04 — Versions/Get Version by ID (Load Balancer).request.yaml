@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/versions/lb?versionId=1"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  versionId: "1"
+order: 4000

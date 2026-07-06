@@ -1,0 +1,19 @@
+$kind: http-request
+description: Provide EITHER reaction (Cypher) OR reactionShape (shape DSL), not both. 400 = malformed condition (WATCHER_* compiler codes); 422 = well-formed but unsafe (WATCHER_SUPERNODE_UNSAFE / WATCHER_CASCADE_AMPLIFIER).
+url: "{{baseUrl}}/watchers"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "namespace": "{{namespace}}",
+      "condition": "MATCH (o:Order) WHERE o.status = 'PENDING' RETURN o",
+      "reaction": "MATCH (o:Order {orderId: $orderId}) SET o.status = 'FLAGGED'",
+      "reactionShape": null,
+      "compensation": null,
+      "budget": 10
+    }
+order: 1000

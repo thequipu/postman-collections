@@ -1,0 +1,13 @@
+$kind: http-request
+description: Introspects an access token via Keycloak — returns token claims (active, sub, username, roles, exp, etc.).
+url: "{{baseUrl}}/user/introspect"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "access_token": "{{accessToken}}"
+    }
+order: 5000

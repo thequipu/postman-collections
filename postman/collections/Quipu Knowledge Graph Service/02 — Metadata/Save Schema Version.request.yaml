@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/save-schema-version"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "schemaGraph": "<schema-graph-string>",
+      "schemaName": "prod_schema",
+      "newSchemaName": "prod_schema_v2",
+      "awsVersionId": "abc123",
+      "versionsModel": {
+        "versionId": 1,
+        "versionName": "v1",
+        "awsVersionId": "abc123",
+        "latest": true,
+        "deleted": false,
+        "defaultVersion": true,
+        "description": "Initial version",
+        "entity360Flows": [],
+        "dataSourceIds": [1, 2],
+        "versionLocked": false
+      }
+    }
+order: 5000

@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/doc-viz/fetch?fileName=report.pdf&realmName=production-realm"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  fileName: report.pdf
+  realmName: production-realm
+order: 1000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/atomicIngestStream/update-stream"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "id": 1,
+      "realmId": 1,
+      "dataSourceId": 1,
+      "streamName": "main-ingest-v2",
+      "status": "PAUSED"
+    }
+order: 6000

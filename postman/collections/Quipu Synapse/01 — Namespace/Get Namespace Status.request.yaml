@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/namespaces/:name/status"
+method: GET
+pathVariables:
+  name: "{{namespace}}"
+order: 2000

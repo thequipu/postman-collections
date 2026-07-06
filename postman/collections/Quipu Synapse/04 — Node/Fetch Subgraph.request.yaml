@@ -1,0 +1,31 @@
+$kind: http-request
+description: Hard 60-second server-side timeout.
+url: "{{baseUrl}}/node/fetch/graph"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "shape": {
+        "label": "Person",
+        "uri": "urn:person/1",
+        "properties": ["name", "age"],
+        "edges": [
+          {
+            "edgeType": "KNOWS",
+            "direction": "OUT",
+            "target": { "label": "Person", "properties": ["name"] },
+            "edgeOffset": 0,
+            "edgeLimit": 25
+          }
+        ]
+      },
+      "maxDepth": 3,
+      "maxNodes": 100,
+      "namespace": "{{namespace}}",
+      "atTime": null
+    }
+order: 3000

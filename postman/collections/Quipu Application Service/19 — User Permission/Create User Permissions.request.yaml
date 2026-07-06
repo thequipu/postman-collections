@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/user-permission"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    [
+      {
+        "userIdentifier": "user@example.com",
+        "entityId": 1,
+        "entityType": "DATA_FABRIC",
+        "grantedBy": "admin@example.com",
+        "permission": { "id": 1, "name": "VIEW" }
+      }
+    ]
+order: 1000

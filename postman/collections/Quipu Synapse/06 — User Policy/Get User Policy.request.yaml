@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/users/:userId/policy?namespace={{namespace}}"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  namespace: "{{namespace}}"
+pathVariables:
+  userId: "{{userId}}"
+order: 2000

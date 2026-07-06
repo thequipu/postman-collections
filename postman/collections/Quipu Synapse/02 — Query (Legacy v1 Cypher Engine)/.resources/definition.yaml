@@ -1,0 +1,3 @@
+$kind: collection
+description: Executes openCypher queries via the legacy engine (query/cypher package, PreTraversePlanner/TraversalCostEstimator). Base path /query. Distinct from the v2 engine below. Non-admin results are filtered by per-namespace access policy.
+order: 2000

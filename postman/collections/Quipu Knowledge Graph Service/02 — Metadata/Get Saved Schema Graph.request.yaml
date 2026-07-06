@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/get-saved-schema-graph?referenceName=production-realm"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  referenceName: production-realm
+order: 2000

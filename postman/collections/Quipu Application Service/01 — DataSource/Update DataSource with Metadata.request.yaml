@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/upload"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "dataSourceModel": {
+        "id": 1,
+        "name": "s3-csv-source",
+        "driverType": "CSV"
+      },
+      "metaData": {
+        "bucket": "quipu-data",
+        "prefix": "realm-1/v2/"
+      }
+    }
+order: 6000

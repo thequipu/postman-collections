@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/document/extract"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  X-Tenant-ID: "{{tenantId}}"
+body:
+  type: json
+  content: "[101, 102, 103]"
+order: 1000

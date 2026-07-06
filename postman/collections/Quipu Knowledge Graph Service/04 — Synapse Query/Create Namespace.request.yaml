@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/synapse/namespace/create"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "ns1",
+      "schemaName": "prod_schema",
+      "schemaVersion": "v1",
+      "requiresHistoricIngest": false
+    }
+order: 3000

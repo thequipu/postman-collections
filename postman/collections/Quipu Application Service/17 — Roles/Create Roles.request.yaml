@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/roles"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    [
+      { "name": "DATA_ENGINEER", "description": "Data engineering and pipeline management" },
+      { "name": "ANALYST",       "description": "Data analysis and reporting" },
+      { "name": "ADMIN",         "description": "Platform administration" }
+    ]
+order: 1000

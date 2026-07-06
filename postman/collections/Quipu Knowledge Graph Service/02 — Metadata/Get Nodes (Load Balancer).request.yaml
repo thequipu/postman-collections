@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/nodes-lb?schemaName=prod_schema&versionId=1&namedEntities=false&erEntities=false"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  schemaName: prod_schema
+  versionId: "1"
+  namedEntities: "false"
+  erEntities: "false"
+order: 4000

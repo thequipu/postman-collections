@@ -1,0 +1,22 @@
+$kind: http-request
+name: Create/Update User Policy
+url: "{{baseUrl}}/users/:userId/policy?namespace={{namespace}}"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  namespace: "{{namespace}}"
+pathVariables:
+  userId: "{{userId}}"
+body:
+  type: json
+  content: |-
+    {
+      "allowedPropertiesPerLabel": {
+        "Person": ["name", "dob"],
+        "Address": ["street", "city"]
+      },
+      "allowedEdgeTypes": ["KNOWS", "LIVES_AT"]
+    }
+order: 1000

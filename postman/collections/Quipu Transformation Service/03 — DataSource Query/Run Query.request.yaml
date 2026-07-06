@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/source-query/query"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "dataSourceId": 5,
+      "dataSourceModel": {
+        "driverType": "POSTGRES",
+        "dbHostName": "localhost",
+        "dbPort": 5432,
+        "databaseName": "mydb",
+        "dbUserName": "user",
+        "dbPassword": "pass"
+      },
+      "tableNames": ["customers"],
+      "query": "SELECT * FROM customers LIMIT 10"
+    }
+order: 2000

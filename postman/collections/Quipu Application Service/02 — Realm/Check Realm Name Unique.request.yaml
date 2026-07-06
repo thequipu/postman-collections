@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/realm/is-unique?realmName=my-new-realm"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  realmName: my-new-realm
+order: 6000

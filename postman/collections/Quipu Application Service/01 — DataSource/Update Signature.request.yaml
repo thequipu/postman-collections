@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/datasource/update-signature"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "dataSourceId": 1,
+      "signatureType": "SCHEMA_HASH",
+      "metadata": {}
+    }
+order: 9000

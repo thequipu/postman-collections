@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}/graph-instance/active-fabric"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+order: 2000

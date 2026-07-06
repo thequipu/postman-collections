@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{baseUrl}}/ingestion/shape/parse"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "topic": "orders-topic",
+      "namespace": "{{namespace}}",
+      "shape": {
+        "prefix": "urn:order:",
+        "namespace": "{{namespace}}",
+        "nodes": [
+          {
+            "label": "Order",
+            "prefix": "urn:order:",
+            "uriJsonKey": "orderId",
+            "propertyToJsonKey": { "status": "orderStatus", "amount": "totalAmount" },
+            "edgeShapes": [
+              { "edgeType": "HAS_CUSTOMER", "targetNodeLabel": "Customer", "targetNodePrefix": "urn:customer:", "targetUriJsonKey": "customerId" }
+            ]
+          }
+        ]
+      },
+      "shapeQuery": ""
+    }
+order: 1000

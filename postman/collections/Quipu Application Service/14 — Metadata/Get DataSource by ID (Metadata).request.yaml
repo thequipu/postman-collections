@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/metadata/datasource/:datasourceId"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+pathVariables:
+  datasourceId: "1"
+order: 2000

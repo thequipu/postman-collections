@@ -1,0 +1,3 @@
+$kind: collection
+description: Node metadata/image-URI lookup for the knowledge graph. Base path /node.
+order: 8000

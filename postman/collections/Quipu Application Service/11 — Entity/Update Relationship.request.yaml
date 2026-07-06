@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/entity/relationship?uri=customer:acme-001:rel:belongs-to:industry:tech"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+queryParams:
+  uri: customer:acme-001:rel:belongs-to:industry:tech
+body:
+  type: json
+  content: |-
+    {
+      "type": "BELONGS_TO",
+      "targetUri": "industry:tech",
+      "properties": { "since": "2019-06-01", "strength": 0.98 }
+    }
+order: 11000

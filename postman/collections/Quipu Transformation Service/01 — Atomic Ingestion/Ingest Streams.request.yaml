@@ -1,0 +1,43 @@
+$kind: http-request
+url: "{{baseUrl}}/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false"
+method: POST
+headers:
+  - key: Authorization
+    value: Bearer {{token}}
+  - key: Content-Type
+    value: application/json
+  - key: X-Tenant-ID
+    value: "{{tenantId}}"
+  - key: X-Refresh-Token
+    value: ""
+    disabled: true
+queryParams:
+  truncate: "false"
+  seedSequenceFromJournal: "false"
+  forceIngest: "false"
+body:
+  type: json
+  content: |-
+    [
+      {
+        "id": 1,
+        "name": "customer_stream",
+        "description": "Customer ingest",
+        "streamLabels": ["Customer"],
+        "sqlQuery": "SELECT * FROM customers",
+        "cypherQuery": "MERGE (c:Customer {id: row.id})",
+        "streamType": "DBT-NODE",
+        "realmId": 1001,
+        "deleted": false,
+        "tablesInfo": [
+          {
+            "id": 1,
+            "tableName": "customers",
+            "tableUri": "s3://bucket/customers.parquet",
+            "query": "SELECT * FROM customers",
+            "dataSourceId": 5
+          }
+        ]
+      }
+    ]
+order: 1000

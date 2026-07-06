@@ -1,0 +1,41 @@
+$kind: collection
+description: |-
+  FastAPI-based LLM service: RAG Q&A, entity360 suggestions, pre-processing suggestions, query builder, health check, and RAG chat websocket.
+
+  All endpoints except /actuator/health require:
+  - Authorization: Bearer <JWT>
+  - X-TENANT-ID: <tenant id>
+
+  both are validated by a global middleware (verify_token) against the tenant's RSA public key.
+variables:
+  baseUrl: http://localhost:3038
+  bearerToken: ""
+  tenantId: ""
+  realm: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: 0e6bf001-8f60-4adc-b36b-f0f05fa2903e
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{bearerToken}}"

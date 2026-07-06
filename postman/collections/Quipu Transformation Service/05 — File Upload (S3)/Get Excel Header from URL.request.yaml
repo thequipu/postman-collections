@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/s3-upload/getExcelHeaderFromUrl?datasourceName=sales-excel"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/vnd.quipu.file-upload+json;version=1.0.0
+queryParams:
+  datasourceName: sales-excel
+body:
+  type: json
+  content: |-
+    {
+      "url": "https://example.com/files/sales.xlsx"
+    }
+order: 2000

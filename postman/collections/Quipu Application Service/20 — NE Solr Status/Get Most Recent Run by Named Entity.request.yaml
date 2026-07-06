@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/neSolrStatus/recent-named-entity-status?namedEntity=Customer"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+queryParams:
+  namedEntity: Customer
+order: 3000

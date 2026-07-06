@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/atomic-ingestion-status/create"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "atomicIngestStreamId": 1,
+      "status": "RUNNING",
+      "startTime": "2024-01-01T10:00:00Z",
+      "recordsProcessed": 0
+    }
+order: 1000

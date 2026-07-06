@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/role-permission"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    [
+      { "roleName": "DATA_ENGINEER", "entityType": "DATA_SOURCE", "permissionName": "EDIT" },
+      { "roleName": "ANALYST",       "entityType": "DATA_SOURCE", "permissionName": "VIEW" }
+    ]
+order: 1000

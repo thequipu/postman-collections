@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/schema/:fabricId"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+pathVariables:
+  fabricId: production-fabric
+order: 2000

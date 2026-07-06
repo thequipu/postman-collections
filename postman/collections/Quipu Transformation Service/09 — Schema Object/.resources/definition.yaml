@@ -1,0 +1,3 @@
+$kind: collection
+description: Generates dataset/schema objects from a serialized graph (networkx node_link_data JSON), replacing a decommissioned Python schema-generator endpoint. Base path /schema.
+order: 9000

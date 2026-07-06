@@ -1,0 +1,3 @@
+$kind: collection
+description: Cypher execution, namespace lifecycle, shape-based ingestion, and per-user access policies proxied to the external Synapse engine. Base path /synapse.
+order: 4000

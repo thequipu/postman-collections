@@ -1,0 +1,43 @@
+$kind: collection
+description: |-
+  Complete REST API collection for the Quipu Load Balancer Service microservice. Fans out document-tagging/vector-linking and vector-ingestion/embedding-fetch work across a pool of workers via an Akka load-balancer actor. Two controllers: DocumentLinkingController (/tagging), VectorIngestionController (/vector-ingestion).
+
+  Collection variables:
+  - {{baseUrl}}  — default http://localhost:4040
+  - {{token}}    — bearer token sent as Authorization header
+  - {{tenantId}} — tenant identifier (X-Tenant-ID header, required on every endpoint)
+
+  Notes:
+  - No versioned media types are declared on either controller (plain application/json).
+  - POST /vector-ingestion/ingest also accepts an optional X-Refresh-Token header.
+variables:
+  baseUrl: http://localhost:4040
+  token: ""
+  tenantId: ""
+scripts:
+  - type: http:beforeRequest
+    code: "try {\r
+
+      \    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r
+
+      \    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r
+
+      } catch (err) {\r
+
+      \    console.error(err);\r
+
+      }"
+    language: text/javascript
+    requests:
+      56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3:
+        workspace: d217b5f6-7fa2-4913-8446-5d30db110208
+        collection: 56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68
+        location:
+          - Access_Token
+          - onprem_access_token
+auth:
+  - id: 0ac24af1-d97d-438b-b4ae-3838924b699f
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

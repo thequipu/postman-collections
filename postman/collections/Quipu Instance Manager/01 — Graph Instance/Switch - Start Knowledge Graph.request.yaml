@@ -1,0 +1,11 @@
+$kind: http-request
+name: Switch / Start Knowledge Graph
+url: "{{baseUrl}}/graph-instance/start-kg?fabricName=production-fabric&activeFabricName="
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  X-Tenant-ID: "{{tenantId}}"
+queryParams:
+  fabricName: production-fabric
+  activeFabricName: ""
+order: 1000

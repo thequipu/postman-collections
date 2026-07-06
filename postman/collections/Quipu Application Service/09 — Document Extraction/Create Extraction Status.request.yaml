@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/document"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "realmId": 1,
+      "dataSourceId": 1,
+      "status": "IN_PROGRESS",
+      "fileName": "report.pdf"
+    }
+order: 1000

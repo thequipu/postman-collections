@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/atomicIngestStream/remove-streams"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: "[1, 2, 3]"
+order: 4000

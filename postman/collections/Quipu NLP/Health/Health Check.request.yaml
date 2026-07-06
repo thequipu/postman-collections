@@ -1,0 +1,5 @@
+$kind: http-request
+description: Returns status plus the loaded spaCy model and sentence-transformers embedding model names.
+url: "{{baseUrl}}/health"
+method: GET
+order: 1000

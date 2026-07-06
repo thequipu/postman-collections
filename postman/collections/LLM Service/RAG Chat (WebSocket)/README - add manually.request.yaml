@@ -1,0 +1,14 @@
+$kind: http-request
+description: |-
+  This is a WebSocket endpoint (ws://.../rag/chat), not plain HTTP. Postman's collection v2.1 export format doesn't reliably round-trip WebSocket requests, so create it manually: New -> WebSocket Request -> ws://localhost:3038/rag/chat.
+
+  Protocol once connected:
+  1. Send: {"realm": "<realm>", "fullQuery": "<query>"}
+  2. Server replies: {"message": "AI is ready, you can start conversation"}
+  3. Send: {"message": "<your question>"}
+  4. Send {"message": "exit"} to close the session.
+url: "{{baseUrl}}/rag/chat"
+method: GET
+auth:
+  type: noauth
+order: 1000
