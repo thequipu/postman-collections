@@ -1,0 +1,433 @@
+{
+  "info": {
+    "_postman_id": "e48657af-5c83-41ee-9474-05b36ba61caa",
+    "name": "Quipu Tenant Service",
+    "description": "Complete REST API collection for the Quipu Tenant Service microservice (port 3031, context path /admin). This is the multi-tenant management / provisioning control-plane: owns tenant lifecycle (create -> config -> activate/deactivate) and orchestrates Keycloak, Vault, per-tenant PostgreSQL, and audit ingestion.\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3031/admin (note the /admin context path)\n- {{token}}    — bearer JWT sent as Authorization header; also decoded server-side by JwtTokenFilter to populate the User-Id request attribute used by POST /tenant\n- {{tenantId}} — tenant identifier (X-Tenant-ID header, used by /tenant/user-status)\n\nTypical flow:\n1. POST /tenant                      → create tenant (provisions Keycloak realm/client/user, emits TENANT_CREATED)\n2. PUT  /tenant/config/{tenantId}    → configure tenant (Vault populate + Postgres DB creation)\n3. PUT  /tenant/{tenantId}/{active}  → activate/deactivate tenant\n4. GET  /tenant, /tenant/active, /tenant/{code} → lookups\n\nNotes:\n- All /tenant endpoints (except /tenant/users/{tenantCode} and /tenant/user-status) produce application/vnd.quipu.tenant+json;version=1.0.0.\n- /audit endpoints produce application/vnd.quipu.audit+json;version=1.0.0.\n- No bean validation — validation is manual server-side; there is no pagination on any list endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-e48657af-5c83-41ee-9474-05b36ba61caa?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — Tenant",
+      "item": [
+        {
+          "name": "Create Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"code\": \"acme\",\n  \"email\": \"admin@acme.com\",\n  \"phone\": \"+1-555-0100\",\n  \"cloudProvider\": \"AWS\",\n  \"tenantAdminDetailsModel\": {\n    \"tenantAdminUsername\": \"acme-admin\",\n    \"tenantAdminPassword\": \"ChangeMe123!\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tenant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "active"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant by Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/:code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                ":code"
+              ],
+              "variable": [
+                {
+                  "key": "code",
+                  "value": "acme"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant-Specific Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/tenantSpecific/:tenantId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "tenantSpecific",
+                ":tenantId"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Configure Tenant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/config/:tenantId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "config",
+                ":tenantId"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Tenant Active State",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/:tenantId/:active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                ":tenantId",
+                ":active"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "1"
+                },
+                {
+                  "key": "active",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Users by Tenant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/users/:tenantCode",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "users",
+                ":tenantCode"
+              ],
+              "variable": [
+                {
+                  "key": "tenantCode",
+                  "value": "acme"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/user-status?username=acme-admin&status=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "user-status"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "acme-admin"
+                },
+                {
+                  "key": "status",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get SSO Details by Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/sso/:code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "sso",
+                ":code"
+              ],
+              "variable": [
+                {
+                  "key": "code",
+                  "value": "acme"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Tenant lifecycle: create, configure, activate/deactivate, lookup, user management, SSO details. Base path /tenant."
+    },
+    {
+      "name": "02 — Audit",
+      "item": [
+        {
+          "name": "Get All Audit Entries (Grouped by Tenant)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/audit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant Request Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/audit/tenantRequests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit",
+                "tenantRequests"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Audit trail reporting, ingested from Kafka into MongoDB. Base path /audit."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3031/admin"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer JWT sent as Authorization header"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID (used by /tenant/user-status)"
+    }
+  ]
+}

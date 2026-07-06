@@ -1,0 +1,71 @@
+{
+  "info": {
+    "_postman_id": "3d475bf7-b3b1-4131-9835-e68c54f58e68",
+    "name": "Access_Token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "onprem_access_token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "type": "text",
+              "key": "grant_type",
+              "value": "password"
+            },
+            {
+              "type": "text",
+              "key": "username",
+              "value": "onpremquipu"
+            },
+            {
+              "type": "text",
+              "key": "password",
+              "value": "onpremquipu"
+            },
+            {
+              "type": "text",
+              "key": "client_id",
+              "value": "onpremquipu-client"
+            },
+            {
+              "type": "text",
+              "key": "client_secret",
+              "value": "7twCqTl1Ur49tOwtLAbEy6kEXOVEIRwm"
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://ui-login.thequipu.in/realms/onpremquipu/protocol/openid-connect/token",
+          "protocol": "https",
+          "host": [
+            "ui-login",
+            "thequipu",
+            "in"
+          ],
+          "path": [
+            "realms",
+            "onpremquipu",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        },
+        "description": "Generated from cURL: curl --location 'https://ui-login.thequipu.in/realms/onpremquipu/protocol/openid-connect/token' \\\n--header 'Content-Type: application/x-www-form-urlencoded' \\\n--data-urlencode 'grant_type=password' \\\n--data-urlencode 'username=onpremquipu' \\\n--data-urlencode 'password=onpremquipu' \\\n--data-urlencode 'client_id=onpremquipu-client' \\\n--data-urlencode 'client_secret=7twCqTl1Ur49tOwtLAbEy6kEXOVEIRwm'"
+      },
+      "response": []
+    }
+  ]
+}

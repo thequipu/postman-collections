@@ -1,0 +1,1035 @@
+{
+  "info": {
+    "_postman_id": "eaf72464-f7dd-43a7-ba96-eef1c70b8506",
+    "name": "Quipu Transformation Service",
+    "description": "Complete REST API collection for the Quipu Transformation Service microservice (port 3036). This is the ETL engine of the platform: extracts raw data from heterogeneous sources, transforms it into a knowledge graph (nodes + relationships), and loads it into Neo4j, Yugabyte, and Synapse Kafka; also materializes data to Hive/Trino for analytical querying.\n\nPipeline shape: source -> shape parse -> metadata extract -> schema graph -> CTAS (Trino) -> Parquet on S3 -> parquet read + validate -> Yugabyte COPY (journal/node/edge state) -> Synapse Kafka -> Neo4j.\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3036\n- {{token}}    — bearer/JWT-like token sent as Authorization header\n- {{tenantId}} — tenant identifier (X-Tenant-ID header)\n\nNotes:\n- Endpoints in '02 — Connection' and '05 — File Upload (S3)' require the exact versioned media type as Content-Type (application/vnd.quipu.connection+json;version=1.0.0 and application/vnd.quipu.file-upload+json;version=1.0.0 respectively) — Spring returns 415 otherwise.\n- 'DataSourceModel.driverType' must be one of: SNOWFLAKE, DB2, POSTGRES, BIGQUERY, MYSQL, SQLITE, MONGO, CASSANDRA, NEO4J, CSV, ORACLE, EXCEL, PDF, MARIADB, JSON.\n- Several endpoints (Hive/Trino creation & removal, sample-record upload) are fire-and-forget: they return 200 immediately while work continues on a background executor.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-eaf72464-f7dd-43a7-ba96-eef1c70b8506?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — Atomic Ingestion",
+      "item": [
+        {
+          "name": "Ingest Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "X-Refresh-Token",
+                "value": "",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": 1,\n    \"name\": \"customer_stream\",\n    \"description\": \"Customer ingest\",\n    \"streamLabels\": [\"Customer\"],\n    \"sqlQuery\": \"SELECT * FROM customers\",\n    \"cypherQuery\": \"MERGE (c:Customer {id: row.id})\",\n    \"streamType\": \"DBT-NODE\",\n    \"realmId\": 1001,\n    \"deleted\": false,\n    \"tablesInfo\": [\n      {\n        \"id\": 1,\n        \"tableName\": \"customers\",\n        \"tableUri\": \"s3://bucket/customers.parquet\",\n        \"query\": \"SELECT * FROM customers\",\n        \"dataSourceId\": 5\n      }\n    ]\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "event",
+                "ingest"
+              ],
+              "query": [
+                {
+                  "key": "truncate",
+                  "value": "false"
+                },
+                {
+                  "key": "seedSequenceFromJournal",
+                  "value": "false"
+                },
+                {
+                  "key": "forceIngest",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Event-sourced ingestion of atomic (DBT-NODE) streams into the journal/state pipeline. Base path /event."
+    },
+    {
+      "name": "02 — Connection",
+      "item": [
+        {
+          "name": "Test Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"postgres-prod\",\n  \"driverType\": \"POSTGRES\",\n  \"dbHostName\": \"db.example.com\",\n  \"dbPort\": 5432,\n  \"databaseName\": \"quipu_db\",\n  \"dbUserName\": \"quipu_user\",\n  \"dbPassword\": \"secret\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/test-connection",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test-connection"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Connection by DataSource ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/test-connection/:dataSourceId/:driverType",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test-connection",
+                ":dataSourceId",
+                ":driverType"
+              ],
+              "variable": [
+                {
+                  "key": "dataSourceId",
+                  "value": "1"
+                },
+                {
+                  "key": "driverType",
+                  "value": "POSTGRES"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Sample Records",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceModel\": {\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"localhost\",\n    \"dbPort\": 5432,\n    \"databaseName\": \"mydb\",\n    \"dbUserName\": \"user\",\n    \"dbPassword\": \"pass\"\n  },\n  \"tableName\": \"customers\",\n  \"name\": \"sample-fetch\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/test-connection/sample-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test-connection",
+                "sample-records"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Sample Records",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSource\": {\n    \"id\": 5,\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"localhost\",\n    \"dbPort\": 5432,\n    \"databaseName\": \"mydb\",\n    \"dbUserName\": \"user\",\n    \"dbPassword\": \"pass\"\n  },\n  \"tableUriMap\": {\n    \"customers\": \"s3://quipu-samples/customers.parquet\"\n  },\n  \"signatureModel\": {\n    \"datasourceId\": 5,\n    \"datasource\": \"postgres-prod\",\n    \"sampleSize\": 1000,\n    \"iterations\": 3,\n    \"readMultiplier\": 2\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/test-connection/upload-sample",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test-connection",
+                "upload-sample"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"postgres-prod\",\n  \"driverType\": \"POSTGRES\",\n  \"dbHostName\": \"db.example.com\",\n  \"dbPort\": 5432,\n  \"databaseName\": \"quipu_db\",\n  \"dbUserName\": \"quipu_user\",\n  \"dbPassword\": \"secret\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/test-connection/metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test-connection",
+                "metadata"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Datasource connectivity checks, sample-record fetch/upload, and metadata discovery. Base path /test-connection. produces application/vnd.quipu.connection+json;version=1.0.0 on every response."
+    },
+    {
+      "name": "03 — DataSource Query",
+      "item": [
+        {
+          "name": "Fetch Sample Source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceId\": 5,\n  \"dataSourceModel\": {\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"localhost\",\n    \"dbPort\": 5432,\n    \"databaseName\": \"mydb\",\n    \"dbUserName\": \"user\",\n    \"dbPassword\": \"pass\"\n  },\n  \"tableList\": [\"customers\", \"orders\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/source-query/fetch-sample-source",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "source-query",
+                "fetch-sample-source"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Run Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceId\": 5,\n  \"dataSourceModel\": {\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"localhost\",\n    \"dbPort\": 5432,\n    \"databaseName\": \"mydb\",\n    \"dbUserName\": \"user\",\n    \"dbPassword\": \"pass\"\n  },\n  \"tableNames\": [\"customers\"],\n  \"query\": \"SELECT * FROM customers LIMIT 10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/source-query/query",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "source-query",
+                "query"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "On-demand sample fetch and ad-hoc query execution against a configured datasource. Base path /source-query."
+    },
+    {
+      "name": "04 — Document Extraction",
+      "item": [
+        {
+          "name": "Extract Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[101, 102, 103]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document/extract",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document",
+                "extract"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Triggers extraction for a batch of document-ingest stream IDs. Base path /document."
+    },
+    {
+      "name": "05 — File Upload (S3)",
+      "item": [
+        {
+          "name": "Get Excel Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"quipu-data\",\n  \"key\": \"realm-1/sales.xlsx\",\n  \"region\": \"us-east-1\",\n  \"accessKey\": \"AKIA...\",\n  \"secret\": \"secret\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/getExcelHeader?datasourceName=sales-excel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getExcelHeader"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "sales-excel"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Excel Header from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/files/sales.xlsx\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/getExcelHeaderFromUrl?datasourceName=sales-excel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getExcelHeaderFromUrl"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "sales-excel"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get CSV Headers from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/files/sales.csv\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/getCsvHeadersFromUrl?datasourceName=sales-csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getCsvHeadersFromUrl"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "sales-csv"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get CSV Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"quipu-data\",\n  \"key\": \"realm-1/sales.csv\",\n  \"region\": \"us-east-1\",\n  \"accessKey\": \"AKIA...\",\n  \"secret\": \"secret\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/getCsvHeader?datasourceName=sales-csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getCsvHeader"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "sales-csv"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"quipu-data\",\n  \"key\": \"realm-1/annual-report.pdf\",\n  \"region\": \"us-east-1\",\n  \"accessKey\": \"AKIA...\",\n  \"secret\": \"secret\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/getPdf?datasourceName=reports-pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getPdf"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "reports-pdf"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get PDF from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/files/annual-report.pdf\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/getPdfFromUrl?datasourceName=reports-pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getPdfFromUrl"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "reports-pdf"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get PDF View (Base64)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/s3-upload/pdf-view?key=realm-1/annual-report.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s3-upload",
+                "pdf-view"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "realm-1/annual-report.pdf"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Header/preview extraction for S3-resident or URL-referenced files (Excel, CSV, PDF). Base path /s3-upload. Despite the name, these are JSON calls that reference an S3 object or URL — not multipart binary uploads. consumes/produces application/vnd.quipu.file-upload+json;version=1.0.0 (except pdf-view, a plain GET)."
+    },
+    {
+      "name": "06 — Hive & Trino Catalog",
+      "item": [
+        {
+          "name": "Create Hive Source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSource\": {\n    \"id\": 5,\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"localhost\",\n    \"dbPort\": 5432,\n    \"databaseName\": \"mydb\"\n  },\n  \"metadataTables\": [\n    {\n      \"name\": { \"name\": \"customers\", \"dataCatalogName\": \"customers\", \"ontologyName\": \"Customer\" },\n      \"type\": \"TABLE\",\n      \"namedEntity\": true,\n      \"erEntity\": true,\n      \"selected\": true,\n      \"datasourceName\": \"postgres-prod\",\n      \"properties\": [\n        {\n          \"name\": { \"name\": \"id\", \"dataCatalogName\": \"id\" },\n          \"type\": \"BIGINT\",\n          \"nullable\": false,\n          \"primaryKey\": true,\n          \"uniqueKey\": false,\n          \"datasourceName\": \"postgres-prod\"\n        }\n      ],\n      \"dataSetRelationShips\": []\n    }\n  ],\n  \"shape\": {\n    \"shape\": {},\n    \"constraints\": []\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trino-source/create-hive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trino-source",
+                "create-hive"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Trino Catalog",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"CREATE TABLE hive.tenant1_schema.customers (id bigint, name varchar) WITH (format = 'PARQUET')\",\n  \"catalogName\": \"hive.tenant1_schema\",\n  \"removeQuery\": \"DROP TABLE hive.tenant1_schema.customers\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trino-source/create-catalog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trino-source",
+                "create-catalog"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Hive Source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSource\": {\n    \"id\": 5,\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"localhost\",\n    \"dbPort\": 5432,\n    \"databaseName\": \"mydb\"\n  },\n  \"metadataTables\": [],\n  \"shape\": { \"shape\": {}, \"constraints\": [] }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trino-source/remove-hive?purgeData=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trino-source",
+                "remove-hive"
+              ],
+              "query": [
+                {
+                  "key": "purgeData",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Trino Catalog",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"DROP TABLE hive.tenant1_schema.customers\",\n  \"catalogName\": \"hive.tenant1_schema\",\n  \"removeQuery\": \"DROP TABLE hive.tenant1_schema.customers\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trino-source/remove-catalog?purgeData=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trino-source",
+                "remove-catalog"
+              ],
+              "query": [
+                {
+                  "key": "purgeData",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Fire-and-forget Hive external table / Trino catalog creation and removal. Base path /trino-source. Each call returns 200 immediately while work continues on a background executor."
+    },
+    {
+      "name": "07 — Ingest Stream Generator",
+      "item": [
+        {
+          "name": "Generate Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 1001\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/streams/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Synchronously generates DBT-NODE ingest streams for a realm's stored schema (UI persists the result separately via application-service). Base path /streams."
+    },
+    {
+      "name": "08 — Knowledge Graph Node",
+      "item": [
+        {
+          "name": "Get Node Map",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/node/get-map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "node",
+                "get-map"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Node metadata/image-URI lookup for the knowledge graph. Base path /node."
+    },
+    {
+      "name": "09 — Schema Object",
+      "item": [
+        {
+          "name": "Generate Node Objects",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"graphData\": \"{\\\"directed\\\": true, \\\"multigraph\\\": false, \\\"graph\\\": {}, \\\"nodes\\\": [{\\\"id\\\": \\\"customers\\\"}], \\\"links\\\": []}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schema/generate/node-objects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema",
+                "generate",
+                "node-objects"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Generates dataset/schema objects from a serialized graph (networkx node_link_data JSON), replacing a decommissioned Python schema-generator endpoint. Base path /schema."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3036"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer/JWT-like token sent as Authorization header"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID"
+    }
+  ]
+}

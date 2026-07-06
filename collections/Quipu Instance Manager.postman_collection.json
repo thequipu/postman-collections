@@ -1,0 +1,299 @@
+{
+  "info": {
+    "_postman_id": "9dcb9cf5-845d-4776-b627-019a233e330c",
+    "name": "Quipu Instance Manager",
+    "description": "Complete REST API collection for the Quipu Instance Manager microservice (port 3035). Manages the lifecycle of per-tenant knowledge-graph instances: switching the active fabric's knowledge graph online, starting transient/mind/ontology graph instances, and dumping current graph data. Single controller: GraphInstanceController, base path /graph-instance.\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3035\n- {{token}}    — bearer JWT sent as Authorization header; decoded server-side to populate the User-Id request attribute used by /start-kg\n- {{tenantId}} — tenant identifier (X-Tenant-ID header, required on every endpoint)\n\nNotes:\n- No request bodies anywhere — all inputs are query params (fabricName, activeFabricName) or headers (X-Tenant-ID).\n- No versioned media types are declared on this controller (plain application/json).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-9dcb9cf5-845d-4776-b627-019a233e330c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — Graph Instance",
+      "item": [
+        {
+          "name": "Switch / Start Knowledge Graph",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/start-kg?fabricName=production-fabric&activeFabricName=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "start-kg"
+              ],
+              "query": [
+                {
+                  "key": "fabricName",
+                  "value": "production-fabric"
+                },
+                {
+                  "key": "activeFabricName",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Fabric",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/active-fabric",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "active-fabric"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Transient Instance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/start-transient?fabricName=production-fabric",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "start-transient"
+              ],
+              "query": [
+                {
+                  "key": "fabricName",
+                  "value": "production-fabric"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Ontology Instance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/start-ontology",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "start-ontology"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Ontology Instance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/remove-ontology",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "remove-ontology"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Mind Graph Instance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/start-mind-graph?fabricName=production-fabric",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "start-mind-graph"
+              ],
+              "query": [
+                {
+                  "key": "fabricName",
+                  "value": "production-fabric"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dump Current Knowledge Graph Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graph-instance/dump-current?fabricName=production-fabric",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graph-instance",
+                "dump-current"
+              ],
+              "query": [
+                {
+                  "key": "fabricName",
+                  "value": "production-fabric"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Knowledge-graph instance lifecycle: switch active fabric, start transient/mind/ontology graphs, dump current graph data. Base path /graph-instance."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3035"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer JWT sent as Authorization header"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID"
+    }
+  ]
+}

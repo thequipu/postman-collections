@@ -1,0 +1,253 @@
+{
+  "info": {
+    "_postman_id": "498a46b4-047a-4286-a5b3-5ff0de4ca161",
+    "name": "Quipu Load Balancer Service",
+    "description": "Complete REST API collection for the Quipu Load Balancer Service microservice. Fans out document-tagging/vector-linking and vector-ingestion/embedding-fetch work across a pool of workers via an Akka load-balancer actor. Two controllers: DocumentLinkingController (/tagging), VectorIngestionController (/vector-ingestion).\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:4040\n- {{token}}    — bearer token sent as Authorization header\n- {{tenantId}} — tenant identifier (X-Tenant-ID header, required on every endpoint)\n\nNotes:\n- No versioned media types are declared on either controller (plain application/json).\n- POST /vector-ingestion/ingest also accepts an optional X-Refresh-Token header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-498a46b4-047a-4286-a5b3-5ff0de4ca161?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — Document Linking",
+      "item": [
+        {
+          "name": "Process NLP Tagging",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"page\": 1,\n  \"texts\": [\"Acme Corp signed a new contract with Beta LLC.\", \"The deal closes next quarter.\"],\n  \"linkerName\": \"production-linker\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tagging/nlp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tagging",
+                "nlp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Vector Linker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmName\": \"production-realm\",\n  \"schemaName\": \"prod_schema\",\n  \"versionId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tagging/add-vector-linker",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tagging",
+                "add-vector-linker"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "NLP text tagging and vector-linker registration, dispatched through the load-balancer actor. Base path /tagging."
+    },
+    {
+      "name": "02 — Vector Ingestion",
+      "item": [
+        {
+          "name": "Ingest Vectors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "X-Refresh-Token",
+                "value": "",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": \"doc-1\",\n    \"text\": \"Acme Corp signed a new contract with Beta LLC.\",\n    \"collectionName\": \"production_realm_docs\",\n    \"url\": \"s3://quipu-data/docs/doc-1.pdf\",\n    \"pathId\": 1,\n    \"pathIdentifier\": 1001\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vector-ingestion/ingest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vector-ingestion",
+                "ingest"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Embeddings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"page\": [\n    { \"text\": \"Acme Corp signed a new contract.\", \"index\": 0, \"isContext\": false, \"vector\": [] },\n    { \"text\": \"The deal closes next quarter.\", \"index\": 1, \"isContext\": true, \"vector\": [] }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vector-ingestion/get-embeddings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vector-ingestion",
+                "get-embeddings"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Vector ingestion and embedding fetch, dispatched through the load-balancer actor. Base path /vector-ingestion."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4040"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer token sent as Authorization header"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID"
+    }
+  ]
+}

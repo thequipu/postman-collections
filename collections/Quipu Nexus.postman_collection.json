@@ -1,0 +1,563 @@
+{
+  "info": {
+    "_postman_id": "32c81d6c-b685-4c77-bfce-3f14c30114cc",
+    "name": "Quipu Nexus",
+    "description": "Complete REST API collection for Quipu Nexus (port 3040) — natural-language knowledge-graph search. Blends structured search (entity anchoring + intent classification + path planning -> Cypher via Synapse) and unstructured search (vector similarity over Milvus doc embeddings), returning ranked subgraphs.\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3040\n- {{token}}    — bearer JWT sent as Authorization header\n- {{tenantId}} — tenant identifier (X-Tenant-ID header; fallback when not derivable from the JWT)\n\nNotes:\n- All /nexus endpoints share the same SearchRequest body (fabricId, query, topK, skipUnstructured) and produce application/vnd.quipu.nexus-search+json;version=1.0.0.\n- /nexus/schema/traversable/** endpoints produce application/vnd.quipu.nexus-traversable+json;version=1.0.0.\n- /schema/** (vectorization) endpoints produce application/vnd.quipu.nexus-vectorization+json;version=1.0.0. POST /schema/vectorize/{fabricId} returns 202 Accepted (or 409 Conflict if a job is already running) and takes no body. DELETE /schema/{fabricId} returns 204 No Content.\n- /schema-family responses return the raw MinIO path-graph object; an absent object means an empty graph by design (no KGS fallback).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-32c81d6c-b685-4c77-bfce-3f14c30114cc?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — Search",
+      "item": [
+        {
+          "name": "Full Dynamic Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"query\": \"customers who ordered from Acme Corp last quarter\",\n  \"topK\": 15,\n  \"skipUnstructured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GIN Exact-Match Anchor Discovery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"query\": \"Acme Corp\",\n  \"topK\": 15,\n  \"skipUnstructured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/gin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "gin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Anchor Resolution (GIN + Vector Fused)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"query\": \"Acme Corp\",\n  \"topK\": 15,\n  \"skipUnstructured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/anchors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "anchors"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Label Bags for Path Planning",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"query\": \"customers who ordered from Acme Corp\",\n  \"topK\": 15,\n  \"skipUnstructured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/labels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "labels"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Minimum-Spanning-Tree Path Plans",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"query\": \"customers who ordered from Acme Corp\",\n  \"topK\": 15,\n  \"skipUnstructured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/mst",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "mst"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Structured + unstructured search pipeline stages: full dynamic search, GIN anchor discovery, fused anchor resolution, label bags, and MST path plans. Base path /nexus. All bodies share the SearchRequest shape."
+    },
+    {
+      "name": "02 — Traversable Schema",
+      "item": [
+        {
+          "name": "Get Traversable Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"force\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/schema/traversable/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "schema",
+                "traversable",
+                "get"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Prepare Traversable Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"force\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/schema/traversable/prepare",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "schema",
+                "traversable",
+                "prepare"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Traversable Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"traversableSchemaGraph\": {\n    \"directed\": true,\n    \"multigraph\": true,\n    \"schemaId\": \"schema-1\",\n    \"nodes\": [\n      { \"id\": \"urn:label:Customer\", \"label\": \"Customer\", \"namedEntity\": true, \"properties\": [\"name\", \"email\"] },\n      { \"id\": \"urn:label:Order\", \"label\": \"Order\", \"namedEntity\": false, \"properties\": [\"orderId\", \"amount\"] }\n    ],\n    \"edges\": [\n      { \"source\": \"urn:label:Customer\", \"target\": \"urn:label:Order\", \"key\": 0, \"relationship\": \"PLACED\", \"fwdEligibility\": \"ALLOWED_TRAVERSE\", \"revEligibility\": \"ALLOWED_TRAVERSE\" }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/schema/traversable/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "schema",
+                "traversable",
+                "update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schema Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricId\": \"production-fabric\",\n  \"force\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/nexus/schema/traversable/schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "nexus",
+                "schema",
+                "traversable",
+                "schema"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Cached traversable-schema build/fetch/update, used by the path planner. Base path /nexus/schema/traversable."
+    },
+    {
+      "name": "03 — Schema Vectorization",
+      "item": [
+        {
+          "name": "Submit Vectorization Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schema/vectorize/:fabricId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema",
+                "vectorize",
+                ":fabricId"
+              ],
+              "variable": [
+                {
+                  "key": "fabricId",
+                  "value": "production-fabric"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Drop Fabric Collections",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schema/:fabricId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema",
+                ":fabricId"
+              ],
+              "variable": [
+                {
+                  "key": "fabricId",
+                  "value": "production-fabric"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vectorization Job Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schema/jobs/:jobId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema",
+                "jobs",
+                ":jobId"
+              ],
+              "variable": [
+                {
+                  "key": "jobId",
+                  "value": "job-123"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Milvus vectorization job lifecycle for a fabric's schema (entity/doc/vocab collections). Base path /schema."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3040"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer JWT sent as Authorization header"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID"
+    }
+  ]
+}

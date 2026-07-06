@@ -1,0 +1,328 @@
+{
+  "info": {
+    "_postman_id": "9282995c-bb0f-452b-b2ec-7b73e889e7b4",
+    "name": "LLM Service",
+    "description": "FastAPI-based LLM service: RAG Q&A, entity360 suggestions, pre-processing suggestions, query builder, health check, and RAG chat websocket.\n\nAll endpoints except /actuator/health require:\n- Authorization: Bearer <JWT>\n- X-TENANT-ID: <tenant id>\n\nboth are validated by a global middleware (verify_token) against the tenant's RSA public key.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-9282995c-bb0f-452b-b2ec-7b73e889e7b4?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Actuator Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Not gated by the auth middleware - no headers required."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Context Question Answer",
+      "item": [
+        {
+          "name": "Get Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    { \"role\": \"user\", \"content\": \"What is the capital of France?\" },\n    { \"role\": \"assistant\", \"content\": \"The capital of France is Paris.\" },\n    { \"role\": \"user\", \"content\": \"What is its population?\" }\n  ],\n  \"model\": \"gpt-4o\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/context-question-answer/getAnswer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "context-question-answer",
+                "getAnswer"
+              ]
+            },
+            "description": "Requires at least 2 messages in the `messages` array (400 otherwise)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Entity360 Builder",
+      "item": [
+        {
+          "name": "Get Entity360 Suggestions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nodes\": [\n    { \"id\": \"Person\", \"label\": \"Person\", \"properties\": [\"name\", \"email\"] },\n    { \"id\": \"Company\", \"label\": \"Company\", \"properties\": [\"name\", \"domain\"] }\n  ],\n  \"links\": [\n    { \"source\": \"Person\", \"target\": \"Company\", \"relation\": \"WORKS_AT\" }\n  ],\n  \"prefix\": \"quipu\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity360-builder/get-entity360s",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity360-builder",
+                "get-entity360s"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pre-Process LLM",
+      "item": [
+        {
+          "name": "Suggest Pre-Processing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metaDataJson\": \"{\\\"columns\\\":[\\\"name\\\",\\\"email\\\"]}\",\n  \"key\": \"sample-file-key.csv\",\n  \"bucket\": \"quipu-uploads\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pre-process-llm/suggest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pre-process-llm",
+                "suggest"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Query Builder",
+      "item": [
+        {
+          "name": "Search Vector Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query-builder/query?realm={{realm}}&question=What is the total revenue this month?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "query-builder",
+                "query"
+              ],
+              "query": [
+                {
+                  "key": "realm",
+                  "value": "{{realm}}"
+                },
+                {
+                  "key": "question",
+                  "value": "What is the total revenue this month?"
+                }
+              ]
+            },
+            "description": "realm and question are query params (not a JSON body). Authorization header is also read explicitly by this endpoint in addition to the middleware."
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Schema",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/query-builder/reset-schema?realm={{realm}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "query-builder",
+                "reset-schema"
+              ],
+              "query": [
+                {
+                  "key": "realm",
+                  "value": "{{realm}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RAG Chat (WebSocket)",
+      "item": [
+        {
+          "name": "README - add manually",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rag/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rag",
+                "chat"
+              ]
+            },
+            "description": "This is a WebSocket endpoint (ws://.../rag/chat), not plain HTTP. Postman's collection v2.1 export format doesn't reliably round-trip WebSocket requests, so create it manually: New -> WebSocket Request -> ws://localhost:3038/rag/chat.\n\nProtocol once connected:\n1. Send: {\"realm\": \"<realm>\", \"fullQuery\": \"<query>\"}\n2. Server replies: {\"message\": \"AI is ready, you can start conversation\"}\n3. Send: {\"message\": \"<your question>\"}\n4. Send {\"message\": \"exit\"} to close the session."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3038"
+    },
+    {
+      "key": "bearerToken",
+      "value": ""
+    },
+    {
+      "key": "tenantId",
+      "value": ""
+    },
+    {
+      "key": "realm",
+      "value": ""
+    }
+  ]
+}

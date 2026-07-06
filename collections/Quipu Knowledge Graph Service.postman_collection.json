@@ -1,0 +1,1262 @@
+{
+  "info": {
+    "_postman_id": "83a40b0b-93ff-4d0b-8da0-1b723f934217",
+    "name": "Quipu Knowledge Graph Service",
+    "description": "Complete REST API collection for the Quipu Knowledge Graph Service microservice (port 3034). Single access point for knowledge-graph data: proxies Cypher queries, namespace lifecycle, shape ingestion, and watchers to the external Synapse engine; talks to Neo4j and Milvus directly; and integrates with llm-service (Smart LLM) and application-service (schema metadata).\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3034\n- {{token}}    — bearer/JWT-like token sent as Authorization header (forwarded downstream, not validated locally)\n- {{tenantId}} — tenant identifier (X-Tenant-ID header)\n\nNotes:\n- Endpoints in '02 — Metadata' produce application/vnd.quipu.rdf.meta-data+json;version=1.0.0; '03 — Smart LLM' uses application/vnd.quipu.llm-client+json;version=1.0.0 (generate-answer) and text/vnd.quipu.llm-client+plain;version=1.0.0 (generate-query); '05 — Vector Client' uses application/vnd.quipu.vector-client+json;version=1.0.0.\n- Cypher time-travel (`atTime`, epoch millis) is a JSON BODY field on POST /synapse/query, not a query string parameter.\n- '/synapse/watchers/**' and most of '/synapse/namespace/**' proxy Synapse verbatim — response bodies/status codes are relayed from the external Synapse engine.\n- A STOMP/SockJS chat endpoint exists at /chat (WebSocketConfig) but is NOT a standard REST call — Postman's WebSocket support does not speak STOMP frames natively; it requires a STOMP-aware client (e.g. @stomp/stompjs) and is out of scope for this collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-83a40b0b-93ff-4d0b-8da0-1b723f934217?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — Document Fetch",
+      "item": [
+        {
+          "name": "Fetch Document",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doc-viz/fetch?fileName=report.pdf&realmName=production-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doc-viz",
+                "fetch"
+              ],
+              "query": [
+                {
+                  "key": "fileName",
+                  "value": "report.pdf"
+                },
+                {
+                  "key": "realmName",
+                  "value": "production-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Multi-Fetch Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentNames\": [\"doc1.pdf\", \"doc2.pdf\"],\n  \"realmName\": \"production-realm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doc-viz/multi-fetch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doc-viz",
+                "multi-fetch"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Document fetch for visualization (single + batch). Base path /doc-viz."
+    },
+    {
+      "name": "02 — Metadata",
+      "item": [
+        {
+          "name": "Save Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemaGraph\": \"<graph-json-or-string>\",\n  \"realmReferenceName\": \"production-realm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/metadata/save-schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "save-schema"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Saved Schema Graph",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/get-saved-schema-graph?referenceName=production-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "get-saved-schema-graph"
+              ],
+              "query": [
+                {
+                  "key": "referenceName",
+                  "value": "production-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Nodes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/nodes?schemaName=prod_schema&versionId=1&namedEntities=false&erEntities=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "nodes"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "prod_schema"
+                },
+                {
+                  "key": "versionId",
+                  "value": "1"
+                },
+                {
+                  "key": "namedEntities",
+                  "value": "false"
+                },
+                {
+                  "key": "erEntities",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Nodes (Load Balancer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/nodes-lb?schemaName=prod_schema&versionId=1&namedEntities=false&erEntities=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "nodes-lb"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "prod_schema"
+                },
+                {
+                  "key": "versionId",
+                  "value": "1"
+                },
+                {
+                  "key": "namedEntities",
+                  "value": "false"
+                },
+                {
+                  "key": "erEntities",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save Schema Version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemaGraph\": \"<schema-graph-string>\",\n  \"schemaName\": \"prod_schema\",\n  \"newSchemaName\": \"prod_schema_v2\",\n  \"awsVersionId\": \"abc123\",\n  \"versionsModel\": {\n    \"versionId\": 1,\n    \"versionName\": \"v1\",\n    \"awsVersionId\": \"abc123\",\n    \"latest\": true,\n    \"deleted\": false,\n    \"defaultVersion\": true,\n    \"description\": \"Initial version\",\n    \"entity360Flows\": [],\n    \"dataSourceIds\": [1, 2],\n    \"versionLocked\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/metadata/save-schema-version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "save-schema-version"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schema Version",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/get-schema-version?schemaName=prod_schema&schemaVersion=v1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "get-schema-version"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "prod_schema"
+                },
+                {
+                  "key": "schemaVersion",
+                  "value": "v1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Import Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemaGraph\": \"<schema-graph-string>\",\n  \"schemaName\": \"prod_schema\",\n  \"newSchemaName\": \"prod_schema_imported\",\n  \"awsVersionId\": \"abc123\",\n  \"versionsModel\": {\n    \"versionId\": 1,\n    \"versionName\": \"v1\",\n    \"awsVersionId\": \"abc123\",\n    \"latest\": true,\n    \"deleted\": false,\n    \"defaultVersion\": true,\n    \"description\": \"Imported version\",\n    \"entity360Flows\": [],\n    \"dataSourceIds\": [1, 2],\n    \"versionLocked\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/metadata/import-schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "import-schema"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Schema save/version/fetch, backed by S3 + application-service + transformation-service. Base path /metadata. produces application/vnd.quipu.rdf.meta-data+json;version=1.0.0."
+    },
+    {
+      "name": "03 — Smart LLM",
+      "item": [
+        {
+          "name": "Generate Query",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/smart-llm/generate-query?realm=production-realm&question=How many customers are there?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "smart-llm",
+                "generate-query"
+              ],
+              "query": [
+                {
+                  "key": "realm",
+                  "value": "production-realm"
+                },
+                {
+                  "key": "question",
+                  "value": "How many customers are there?"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    { \"role\": \"system\", \"content\": \"You are a helpful assistant.\" },\n    { \"role\": \"user\", \"content\": \"What entities are connected to Acme Corp?\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/smart-llm/generate-answer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "smart-llm",
+                "generate-answer"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Question-to-Cypher generation and context-aware answering, backed by llm-service. Base path /smart-llm."
+    },
+    {
+      "name": "04 — Synapse Query",
+      "item": [
+        {
+          "name": "Run Cypher Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"MATCH (n) RETURN n LIMIT 10\",\n  \"parameters\": {},\n  \"namespace\": \"public\",\n  \"atTime\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/synapse/query",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "query"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Namespace Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/stats?namespace=public",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "public"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Namespace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ns1\",\n  \"schemaName\": \"prod_schema\",\n  \"schemaVersion\": \"v1\",\n  \"requiresHistoricIngest\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Namespace",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/remove?name=ns1&permanent=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "remove"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                },
+                {
+                  "key": "permanent",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enable Namespace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/enable?name=ns1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "enable"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clean Namespace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/clean?name=ns1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "clean"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Disable Namespace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/disable?name=ns1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "disable"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Namespace Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/status?name=ns1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Historic Ingest Complete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/historic-ingest-complete?name=ns1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "historic-ingest-complete"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Projection Control (Pause/Resume)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/projection-control?name=ns1&pause=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "projection-control"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                },
+                {
+                  "key": "pause",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Force Projection Bootstrap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/namespace/projection-bootstrap?name=ns1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "projection-bootstrap"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "ns1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Parse Ingestion Shape (Dry Run)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"orders-topic\",\n  \"namespace\": \"public\",\n  \"shape\": {\n    \"prefix\": \"urn:order:\",\n    \"namespace\": \"public\",\n    \"nodes\": [\n      {\n        \"label\": \"Order\",\n        \"prefix\": \"urn:order:\",\n        \"uriJsonKey\": \"orderId\",\n        \"propertyToJsonKey\": { \"status\": \"orderStatus\", \"amount\": \"totalAmount\" },\n        \"edgeShapes\": [\n          { \"edgeType\": \"HAS_CUSTOMER\", \"targetNodeLabel\": \"Customer\", \"targetNodePrefix\": \"urn:customer:\", \"targetUriJsonKey\": \"customerId\", \"targetUriIteratePath\": \"\" }\n        ]\n      }\n    ]\n  },\n  \"topicShapeConstraints\": [\n    { \"@type\": \"required\", \"nodeLabel\": \"Order\", \"propertyKey\": \"orderId\" },\n    { \"@type\": \"rangeCondition\", \"nodeLabel\": \"Order\", \"propertyKey\": \"totalAmount\", \"min\": 0, \"max\": null }\n  ],\n  \"shapeQuery\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/synapse/ingestion/shape/parse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "ingestion",
+                "shape",
+                "parse"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Ingestion Shape",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"orders-topic\",\n  \"namespace\": \"public\",\n  \"shape\": {\n    \"prefix\": \"urn:order:\",\n    \"namespace\": \"public\",\n    \"nodes\": [\n      {\n        \"label\": \"Order\",\n        \"prefix\": \"urn:order:\",\n        \"uriJsonKey\": \"orderId\",\n        \"propertyToJsonKey\": { \"status\": \"orderStatus\", \"amount\": \"totalAmount\" },\n        \"edgeShapes\": [\n          { \"edgeType\": \"HAS_CUSTOMER\", \"targetNodeLabel\": \"Customer\", \"targetNodePrefix\": \"urn:customer:\", \"targetUriJsonKey\": \"customerId\", \"targetUriIteratePath\": \"\" }\n        ]\n      }\n    ]\n  },\n  \"topicShapeConstraints\": [\n    { \"@type\": \"required\", \"nodeLabel\": \"Order\", \"propertyKey\": \"orderId\" },\n    { \"@type\": \"rangeCondition\", \"nodeLabel\": \"Order\", \"propertyKey\": \"totalAmount\", \"min\": 0, \"max\": null }\n  ],\n  \"shapeQuery\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/synapse/ingestion/shape",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "ingestion",
+                "shape"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert User Access Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"allowedPropertiesPerLabel\": { \"Order\": [\"orderId\", \"status\"], \"Customer\": [\"name\"] },\n  \"allowedEdges\": [\n    { \"sourceLabel\": \"Order\", \"edgeType\": \"HAS_CUSTOMER\", \"targetLabel\": \"Customer\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/synapse/:userId/upsert-policy?namespace=public",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                ":userId",
+                "upsert-policy"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "public"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-123"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Access Policy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/:userId/get-policy?namespace=public",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                ":userId",
+                "get-policy"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "public"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-123"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Cypher execution, namespace lifecycle, shape-based ingestion, and per-user access policies proxied to the external Synapse engine. Base path /synapse."
+    },
+    {
+      "name": "05 — Vector Client",
+      "item": [
+        {
+          "name": "Create Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vector-client/create-collection?collectionName=production_realm_embeddings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vector-client",
+                "create-collection"
+              ],
+              "query": [
+                {
+                  "key": "collectionName",
+                  "value": "production_realm_embeddings"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vector-client/delete-collection?collectionName=production_realm_embeddings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vector-client",
+                "delete-collection"
+              ],
+              "query": [
+                {
+                  "key": "collectionName",
+                  "value": "production_realm_embeddings"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Milvus vector-collection create/delete (768-dim, IVF_FLAT, COSINE). Base path /vector-client. produces application/vnd.quipu.vector-client+json;version=1.0.0."
+    },
+    {
+      "name": "06 — Watchers",
+      "item": [
+        {
+          "name": "Register Watcher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"namespace\": \"public\",\n  \"condition\": \"MATCH (o:Order) WHERE o.status = 'PENDING' RETURN o\",\n  \"reaction\": \"MATCH (o:Order {orderId: $orderId}) SET o.status = 'FLAGGED'\",\n  \"reactionShape\": null,\n  \"compensation\": null,\n  \"budget\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/synapse/watchers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "watchers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Watchers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/watchers?namespace=public",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "watchers"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "public"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Watcher",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/watchers/:watcherId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "watchers",
+                ":watcherId"
+              ],
+              "variable": [
+                {
+                  "key": "watcherId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Watcher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/watchers/:watcherId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "watchers",
+                ":watcherId"
+              ],
+              "variable": [
+                {
+                  "key": "watcherId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pause Watcher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/watchers/:watcherId/pause",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "watchers",
+                ":watcherId",
+                "pause"
+              ],
+              "variable": [
+                {
+                  "key": "watcherId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resume Watcher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/synapse/watchers/:watcherId/resume",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "synapse",
+                "watchers",
+                ":watcherId",
+                "resume"
+              ],
+              "variable": [
+                {
+                  "key": "watcherId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Reactive standing queries (Synapse Reactive State Watcher API), proxied verbatim. Base path /synapse/watchers."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3034"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer/JWT-like token sent as Authorization header"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID"
+    }
+  ]
+}

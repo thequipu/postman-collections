@@ -1,0 +1,117 @@
+{
+  "info": {
+    "_postman_id": "e2b3a422-632f-4f41-9f50-c97f2bf993fd",
+    "name": "Quipu Document Graph",
+    "description": "FastAPI service that parses a PDF (fetched from a URL) into a document graph (nodes/edges/shape) for a given realm and datasource. No auth middleware - CORS is wide open (allow_origins=\"*\"), intended as an internal service reached via Kafka-driven pipelines / other backend services.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-e2b3a422-632f-4f41-9f50-c97f2bf993fd?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Document Parser",
+      "item": [
+        {
+          "name": "Parse PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileUrl\": \"https://example.com/files/sample-invoice.pdf\",\n  \"realmName\": \"acme-realm\",\n  \"datasourceUri\": \"urn:datasource:acme-docs\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-parser/parse-pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document-parser",
+                "parse-pdf"
+              ]
+            },
+            "description": "Downloads the PDF at fileUrl, extracts nodes/edges/shape into a document graph for realmName. datasourceUri is optional (defaults to empty string)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3048"
+    }
+  ]
+}

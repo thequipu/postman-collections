@@ -1,0 +1,4508 @@
+{
+  "info": {
+    "_postman_id": "2726fa3a-3641-46c8-8694-869fd49d5a97",
+    "name": "Quipu Application Service",
+    "description": "Complete REST API collection for the Quipu Application Service microservice (port 3033). Covers datasources, realms, schemas, versions, atomic & document ingestion, entity/knowledge graph, RBAC, S3 file management, watcher, and admin/migration endpoints.\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3033\n- {{token}}    — JWT bearer token from your IdP\n- {{tenantId}} — tenant identifier (X-Tenant-ID header)\n- {{userId}}   — user identifier (User-Id header for migration endpoints)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-2726fa3a-3641-46c8-8694-869fd49d5a97?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — DataSource",
+      "item": [
+        {
+          "name": "Create DataSource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"postgres-prod\",\n  \"driverType\": \"POSTGRES\",\n  \"host\": \"db.example.com\",\n  \"port\": 5432,\n  \"database\": \"quipu_db\",\n  \"username\": \"quipu_user\",\n  \"password\": \"secret\",\n  \"realmId\": 1,\n  \"deleted\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasource",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All DataSources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource?page=0&size=20&sort=name,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "name,asc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update DataSource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"postgres-prod\",\n  \"driverType\": \"POSTGRES\",\n  \"host\": \"db.example.com\",\n  \"port\": 5432,\n  \"database\": \"quipu_db\",\n  \"username\": \"quipu_user\",\n  \"password\": \"secret\",\n  \"realmId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasource",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete DataSource",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/:id?permanent=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "false"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create DataSource with Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceModel\": {\n    \"name\": \"s3-csv-source\",\n    \"driverType\": \"CSV\",\n    \"deleted\": false\n  },\n  \"metaData\": {\n    \"bucket\": \"quipu-data\",\n    \"prefix\": \"realm-1/\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasource/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update DataSource with Metadata",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceModel\": {\n    \"id\": 1,\n    \"name\": \"s3-csv-source\",\n    \"driverType\": \"CSV\"\n  },\n  \"metaData\": {\n    \"bucket\": \"quipu-data\",\n    \"prefix\": \"realm-1/v2/\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasource/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DataSources by IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/ids?sourceIds=1,2,3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "ids"
+              ],
+              "query": [
+                {
+                  "key": "sourceIds",
+                  "value": "1,2,3"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Signature Presence",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/update-signature-presence?id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "update-signature-presence"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Signature",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceId\": 1,\n  \"signatureType\": \"SCHEMA_HASH\",\n  \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasource/update-signature",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "update-signature"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check DataSource Name Unique",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/is-unique?datasourceName=my-datasource",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "is-unique"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "my-datasource"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get S3 Keys",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"s3-source\",\n  \"driverType\": \"CSV\",\n  \"bucket\": \"quipu-data\",\n  \"prefix\": \"realm-1/\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasource/keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "keys"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DataSource by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/id?sourceId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "id"
+              ],
+              "query": [
+                {
+                  "key": "sourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Connection Details for IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/sources?sourceIds=1,2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "sources"
+              ],
+              "query": [
+                {
+                  "key": "sourceIds",
+                  "value": "1,2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DataSources by Driver Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/get-dataSources-by-type/:driverType",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "get-dataSources-by-type",
+                ":driverType"
+              ],
+              "variable": [
+                {
+                  "key": "driverType",
+                  "value": "POSTGRES"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DataSource Graph IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/datasource/get-graph-ids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "datasource",
+                "get-graph-ids"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 — Realm",
+      "item": [
+        {
+          "name": "Create Realm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"production-realm\",\n  \"schemaName\": \"prod_schema\",\n  \"description\": \"Production data fabric\",\n  \"deleted\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Realms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Realms (Load Balancer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/all-realms-data",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "all-realms-data"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Realm by Name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/by-name?realmName=production-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "by-name"
+              ],
+              "query": [
+                {
+                  "key": "realmName",
+                  "value": "production-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Realm by Name (Load Balancer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/by-name-lb?realmName=production-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "by-name-lb"
+              ],
+              "query": [
+                {
+                  "key": "realmName",
+                  "value": "production-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Realm Name Unique",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/is-unique?realmName=my-new-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "is-unique"
+              ],
+              "query": [
+                {
+                  "key": "realmName",
+                  "value": "my-new-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Realm by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Realm References",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/references",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "references"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All CDC-Active Realms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/cdc-active-realms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "cdc-active-realms"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check CDC Active",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/cdc-active/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "cdc-active",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Realm",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"production-realm\",\n  \"schemaName\": \"prod_schema\",\n  \"description\": \"Updated production fabric\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Realm CDC Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/cdc-status/:id?cdcStatus=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                "cdc-status",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "cdcStatus",
+                  "value": "true"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Realm",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/realm/:id?permanent=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "realm",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "false"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 — Schema",
+      "item": [
+        {
+          "name": "Get All Schemas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schema by Name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schema/name?schemaName=prod_schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema",
+                "name"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "prod_schema"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"prod_schema\",\n  \"description\": \"Production schema\",\n  \"dataSourceIds\": [1, 2]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Schema",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"prod_schema\",\n  \"description\": \"Updated schema\",\n  \"dataSourceIds\": [1, 2, 3]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Schema",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schema?schemaName=prod_schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schema"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "prod_schema"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 — Versions",
+      "item": [
+        {
+          "name": "Create Version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"1.0.0\",\n  \"dataSourceIds\": [1, 2],\n  \"description\": \"Initial version\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/versions/create?schemaName=prod_schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions",
+                "create"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "prod_schema"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Version",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"version\": \"1.1.0\",\n  \"dataSourceIds\": [1, 2, 3],\n  \"description\": \"Added third datasource\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/versions/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions",
+                "update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Version by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/versions?versionId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Version by ID (Load Balancer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/versions/lb?versionId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions",
+                "lb"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Version",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/versions/delete?versionId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unlock Version",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/versions/veriosn-unlock?versionId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "versions",
+                "veriosn-unlock"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 — Atomic Ingest Stream",
+      "item": [
+        {
+          "name": "Create Stream",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 1,\n  \"dataSourceId\": 1,\n  \"streamName\": \"main-ingest\",\n  \"streamType\": \"ATOMIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/create-stream",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "create-stream"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Streams (Batch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"realmId\": 1, \"dataSourceId\": 1, \"streamName\": \"ingest-stream-1\" },\n  { \"realmId\": 1, \"dataSourceId\": 2, \"streamName\": \"ingest-stream-2\" }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/create-streams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "create-streams"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Stream",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/remove-stream/:streamId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "remove-stream",
+                ":streamId"
+              ],
+              "variable": [
+                {
+                  "key": "streamId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Streams (Batch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[1, 2, 3]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/remove-streams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "remove-streams"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Streams by Realm",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/get-atomic-stream/:realmId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "get-atomic-stream",
+                ":realmId"
+              ],
+              "variable": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stream",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"realmId\": 1,\n  \"dataSourceId\": 1,\n  \"streamName\": \"main-ingest-v2\",\n  \"status\": \"PAUSED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/update-stream",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "update-stream"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Any Streams Running",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/:realmId/atomic/any-running",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                ":realmId",
+                "atomic",
+                "any-running"
+              ],
+              "variable": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Running Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[1, 2, 3]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomicIngestStream/atomic/running-status-change?streamRunning=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomicIngestStream",
+                "atomic",
+                "running-status-change"
+              ],
+              "query": [
+                {
+                  "key": "streamRunning",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 — Atomic Ingestion Status",
+      "item": [
+        {
+          "name": "Create Ingestion Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"atomicIngestStreamId\": 1,\n  \"status\": \"RUNNING\",\n  \"startTime\": \"2024-01-01T10:00:00Z\",\n  \"recordsProcessed\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomic-ingestion-status/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomic-ingestion-status",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest Status for Stream IDs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[1, 2, 3]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomic-ingestion-status/get-latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atomic-ingestion-status",
+                "get-latest"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 — Document Ingest Stream",
+      "item": [
+        {
+          "name": "Create Document Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 1,\n  \"dataSourceId\": 1,\n  \"documents\": [\n    { \"key\": \"annual-report.pdf\", \"name\": \"Annual Report 2024\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documentIngestStream/create-streams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documentIngestStream",
+                "create-streams"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Document Streams by Realm",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documentIngestStream/get-document-stream/:realmId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documentIngestStream",
+                "get-document-stream",
+                ":realmId"
+              ],
+              "variable": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Document Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[1, 2, 3]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documentIngestStream/remove-streams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documentIngestStream",
+                "remove-streams"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 — Document Ingestion Status",
+      "item": [
+        {
+          "name": "Get Status by Stream IDs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[1, 2, 3]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-ingestion-status/get-by-stream-ids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document-ingestion-status",
+                "get-by-stream-ids"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Extracted Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report.pdf\": \"s3://quipu-extracts/report_extracted.json\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-ingestion-status/update-extracted-files?statusId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document-ingestion-status",
+                "update-extracted-files"
+              ],
+              "query": [
+                {
+                  "key": "statusId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Ingestion Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"processedCount\": 150,\n  \"errorCount\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-ingestion-status/update?statusId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document-ingestion-status",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "statusId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status by ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FAILED\",\n  \"errorMessage\": \"Extraction timed out\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-ingestion-status/update-by-id?statusId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document-ingestion-status",
+                "update-by-id"
+              ],
+              "query": [
+                {
+                  "key": "statusId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 — Document Extraction",
+      "item": [
+        {
+          "name": "Create Extraction Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 1,\n  \"dataSourceId\": 1,\n  \"status\": \"IN_PROGRESS\",\n  \"fileName\": \"report.pdf\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Extraction Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/document/status-update/:statusId/:status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document",
+                "status-update",
+                ":statusId",
+                ":status"
+              ],
+              "variable": [
+                {
+                  "key": "statusId",
+                  "value": "1"
+                },
+                {
+                  "key": "status",
+                  "value": "COMPLETED"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Extraction Status by Realm",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/document/extraction-status?realmName=production-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document",
+                "extraction-status"
+              ],
+              "query": [
+                {
+                  "key": "realmName",
+                  "value": "production-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Extraction Status by DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/document/extraction-status-by-datasource-id?datasourceId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "document",
+                "extraction-status-by-datasource-id"
+              ],
+              "query": [
+                {
+                  "key": "datasourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10 — Knowledge Graph",
+      "item": [
+        {
+          "name": "Get All Realms (Knowledge Graph View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/knowledgeGraph?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledgeGraph"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11 — Entity",
+      "item": [
+        {
+          "name": "Search Entities (Full-text)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity/search?q=customer acme",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "customer acme"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Entity (Structured)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"acme corp\",\n  \"realmId\": 1,\n  \"limit\": 20,\n  \"entityTypes\": [\"Customer\", \"Supplier\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Entity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Customer\",\n  \"uri\": \"customer:acme-001\",\n  \"properties\": {\n    \"name\": \"Acme Corp\",\n    \"type\": \"B2B\",\n    \"industry\": \"Tech\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Entity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"properties\": {\n    \"name\": \"Acme Corporation\",\n    \"status\": \"active\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity?uri=customer:acme-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Entity",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity?uri=customer:acme-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Delete Entities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uris\": [\"customer:acme-001\", \"customer:beta-002\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/batch-delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "batch-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Property to Entity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"email\",\n  \"value\": \"contact@acme.com\",\n  \"dataType\": \"STRING\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/property?entityUri=customer:acme-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "property"
+              ],
+              "query": [
+                {
+                  "key": "entityUri",
+                  "value": "customer:acme-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Entity Property",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"email\",\n  \"value\": \"new@acme.com\",\n  \"dataType\": \"STRING\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/property?uri=customer:acme-001:prop:email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "property"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001:prop:email"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Entity Property",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity/property?uri=customer:acme-001:prop:email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "property"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001:prop:email"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Relationship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"BELONGS_TO\",\n  \"targetUri\": \"industry:tech\",\n  \"properties\": { \"since\": \"2020-01-01\", \"strength\": 0.95 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/relationship?entityUri=customer:acme-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "relationship"
+              ],
+              "query": [
+                {
+                  "key": "entityUri",
+                  "value": "customer:acme-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Relationship",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"BELONGS_TO\",\n  \"targetUri\": \"industry:tech\",\n  \"properties\": { \"since\": \"2019-06-01\", \"strength\": 0.98 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/relationship?uri=customer:acme-001:rel:belongs-to:industry:tech",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "relationship"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001:rel:belongs-to:industry:tech"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Relationship",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity/relationship?uri=customer:acme-001:rel:belongs-to:industry:tech",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "relationship"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001:rel:belongs-to:industry:tech"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12 — Entity Graph",
+      "item": [
+        {
+          "name": "Get Complete Graph",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity-graph/complete-graph",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-graph",
+                "complete-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entity Stubs (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity-graph/entities?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-graph",
+                "entities"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entity Subgraph",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity-graph/entity-subgraph?uri=customer:acme-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-graph",
+                "entity-subgraph"
+              ],
+              "query": [
+                {
+                  "key": "uri",
+                  "value": "customer:acme-001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DataSource Subgraph",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity-graph/datasource-subgraph?label=postgres-prod",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-graph",
+                "datasource-subgraph"
+              ],
+              "query": [
+                {
+                  "key": "label",
+                  "value": "postgres-prod"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Migrate DataSource to Graph",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity-graph/migrate?dataSourceId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-graph",
+                "migrate"
+              ],
+              "query": [
+                {
+                  "key": "dataSourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13 — Metadata Graph",
+      "item": [
+        {
+          "name": "Fetch DataSource Graph",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uri\": \"datasource:postgres:prod\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/metadata-graph/fetch-data-source",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata-graph",
+                "fetch-data-source"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Node Description",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nodeUri\": \"datasource:postgres:prod\",\n  \"description\": \"Primary production PostgreSQL datasource\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/metadata-graph/add-description",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata-graph",
+                "add-description"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14 — Metadata",
+      "item": [
+        {
+          "name": "Get All DataSources (Metadata)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/datasource",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "datasource"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DataSource by ID (Metadata)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/datasource/:datasourceId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "datasource",
+                ":datasourceId"
+              ],
+              "variable": [
+                {
+                  "key": "datasourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tables Info (URNs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata/tables/urns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata",
+                "tables",
+                "urns"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "15 — Watcher",
+      "item": [
+        {
+          "name": "Create Watcher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"entity-change-watcher\",\n  \"namespace\": \"prod-fabric\",\n  \"conditionQuery\": \"MATCH (n:Entity) WHERE n.updatedAt > datetime() - duration('P1D') RETURN n\",\n  \"deleted\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/watcher?realmId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "watcher"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Watchers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/watcher?realmId=1&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "watcher"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Watcher by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/watcher/:id?realmId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "watcher",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pause Watcher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/watcher/:id/pause?realmId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "watcher",
+                ":id",
+                "pause"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resume Watcher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/watcher/:id/resume?realmId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "watcher",
+                ":id",
+                "resume"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Watcher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/watcher/:id?realmId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "watcher",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "16 — Permissions",
+      "item": [
+        {
+          "name": "Create Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"name\": \"VIEW\",       \"description\": \"Read-only access\" },\n  { \"name\": \"EDIT\",       \"description\": \"Read and write access\" },\n  { \"name\": \"ADMIN\",      \"description\": \"Full administrative access\" },\n  { \"name\": \"ROW_ACCESS\", \"description\": \"Row-level data access\" }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "17 — Roles",
+      "item": [
+        {
+          "name": "Create Roles",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"name\": \"DATA_ENGINEER\", \"description\": \"Data engineering and pipeline management\" },\n  { \"name\": \"ANALYST\",       \"description\": \"Data analysis and reporting\" },\n  { \"name\": \"ADMIN\",         \"description\": \"Platform administration\" }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Roles",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/delete?ids=1,2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "1,2"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "18 — Role Permission",
+      "item": [
+        {
+          "name": "Create Role Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"roleName\": \"DATA_ENGINEER\", \"entityType\": \"DATA_SOURCE\", \"permissionName\": \"EDIT\" },\n  { \"roleName\": \"ANALYST\",       \"entityType\": \"DATA_SOURCE\", \"permissionName\": \"VIEW\" }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/role-permission",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role Permissions (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/role-permission?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Permission Exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/role-permission/exists?entityType=DATA_SOURCE&role=DATA_ENGINEER&permissionNames=VIEW,EDIT",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "role",
+                  "value": "DATA_ENGINEER"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "VIEW,EDIT"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Role Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/role-permission/user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission",
+                "user"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/role-permission/permission?entityType=DATA_SOURCE&entityId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission",
+                "permission"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role Permissions by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/role-permission/permission_by_entity?entityType=DATA_SOURCE&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission",
+                "permission_by_entity"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Role Permissions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/role-permission/delete?ids=1,2,3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "role-permission",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "1,2,3"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "19 — User Permission",
+      "item": [
+        {
+          "name": "Create User Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userIdentifier\": \"user@example.com\",\n    \"entityId\": 1,\n    \"entityType\": \"DATA_FABRIC\",\n    \"grantedBy\": \"admin@example.com\",\n    \"permission\": { \"id\": 1, \"name\": \"VIEW\" }\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user-permission",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Permissions (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "user"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entity 360 Paths",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/entity360-paths",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "entity360-paths"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permission for User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/permission?entityType=DATA_SOURCE&entityId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check User Permission Exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/exists?entityType=DATA_SOURCE&userIdentifier=user@example.com&permissionNames=VIEW,EDIT",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "VIEW,EDIT"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/permission_by_entity?entityType=DATA_SOURCE&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_entity"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All User IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/user_ids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "user_ids"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions by User ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/permission_by_userid?userId=user@example.com&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_userid"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions by User ID and Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/permission_by_userid_and_entity_type?userId=user@example.com&entityType=DATA_SOURCE&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_userid_and_entity_type"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User Permissions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/delete?ids=1,2,3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "1,2,3"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/get-all-users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "get-all-users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user-permission/updateUser?username=user@example.com&status=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user-permission",
+                "updateUser"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "status",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "20 — NE Solr Status",
+      "item": [
+        {
+          "name": "Get All Statuses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/neSolrStatus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "neSolrStatus"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Status by Named Entity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/neSolrStatus/named-entity-status?namedEntity=Customer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "neSolrStatus",
+                "named-entity-status"
+              ],
+              "query": [
+                {
+                  "key": "namedEntity",
+                  "value": "Customer"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Most Recent Run by Named Entity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/neSolrStatus/recent-named-entity-status?namedEntity=Customer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "neSolrStatus",
+                "recent-named-entity-status"
+              ],
+              "query": [
+                {
+                  "key": "namedEntity",
+                  "value": "Customer"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Most Recent Runs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/neSolrStatus/recent?realmName=production-realm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "neSolrStatus",
+                "recent"
+              ],
+              "query": [
+                {
+                  "key": "realmName",
+                  "value": "production-realm"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "21 — S3 File",
+      "item": [
+        {
+          "name": "Upload File to S3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Binary file to upload",
+                  "value": ""
+                },
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\"fileName\": \"entities.csv\"}",
+                  "description": "JSON metadata: {fileName, url?}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity-resolution-s3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-resolution-s3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get CSV Headers from S3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucketName\": \"quipu-er-files\",\n  \"folderPath\": \"realm-1/mappings/\",\n  \"fileName\": \"entities.csv\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity-resolution-s3/getCsvHeader",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-resolution-s3",
+                "getCsvHeader"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Files from S3 Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucketName\": \"quipu-er-files\",\n  \"folderPath\": \"realm-1/documents/\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity-resolution-s3/get-files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-resolution-s3",
+                "get-files"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete File from S3",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity-resolution-s3?fileName=realm-1/documents/old-file.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity-resolution-s3"
+              ],
+              "query": [
+                {
+                  "key": "fileName",
+                  "value": "realm-1/documents/old-file.pdf"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "22 — Migration",
+      "item": [
+        {
+          "name": "Run DB Migration for Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migration/:tenantId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migration",
+                ":tenantId"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{{tenantId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "23 — DataSource Migration",
+      "item": [
+        {
+          "name": "Migrate All DataSources to Neo4j",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/migrate-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "migrate-all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Migrate DataSource to Neo4j",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source?sourceId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source"
+              ],
+              "query": [
+                {
+                  "key": "sourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Migrate CSV/Excel Sources to Hive",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/hive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "hive"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Migrate Single Source to Hive",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/hive-source/:sourceId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "hive-source",
+                ":sourceId"
+              ],
+              "variable": [
+                {
+                  "key": "sourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create All Trino Catalogs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/create-trino-catalogs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "create-trino-catalogs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Trino Catalog for Source",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/create-trino-catalog/:sourceId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "create-trino-catalog",
+                ":sourceId"
+              ],
+              "variable": [
+                {
+                  "key": "sourceId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Migrate Passwords",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/migratePassword",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "migratePassword"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Decrypt DataSource Passwords",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/migrate-data-source/decryptPassword",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "decryptPassword"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "24 — Tenant Specific",
+      "item": [
+        {
+          "name": "Get Tenant-Specific UI Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant-specific",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant-specific"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "25 — WebSocket Events",
+      "item": [
+        {
+          "name": "Send DataSource Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"DATASOURCE_CREATED\",\n  \"dataSourceId\": \"1\",\n  \"realmId\": \"1\",\n  \"status\": \"READY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/websocket/datasource",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "websocket",
+                "datasource"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3033"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "JWT bearer token from your IdP"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "description": "User identifier (User-Id header)"
+    }
+  ]
+}

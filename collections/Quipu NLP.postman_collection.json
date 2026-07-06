@@ -1,0 +1,227 @@
+{
+  "info": {
+    "_postman_id": "20bae79b-79a9-4a8a-9053-3b2089e83061",
+    "name": "Quipu NLP",
+    "description": "Stateless FastAPI sidecar used by quipu-nexus for tokenizing TextItem content, merging nexus-supplied per-token URI matches into final spans, sentence splitting, and text embeddings via sentence-transformers.\n\nNo auth middleware - this is an internal sidecar service, not internet facing. Wire-format models are the contract with nexus's `NlpClient`; field names must stay in sync.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-20bae79b-79a9-4a8a-9053-3b2089e83061?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Returns status plus the loaded spaCy model and sentence-transformers embedding model names."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tokenize",
+      "item": [
+        {
+          "name": "Tokenize Text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Acme Corp signed contract INV-2024-0091 with Globex on March 3rd.\",\n  \"lang\": \"en\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tokenize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tokenize"
+              ]
+            },
+            "description": "Returns significant tokens only (PROPN/NOUN/NUM/X/SYM POS tags, or identifier-like strings) with lemma and char offsets. No NER labels are returned."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sentenize",
+      "item": [
+        {
+          "name": "Split Into Sentences",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Acme Corp signed a new contract with Globex. The deal closes on March 3rd.\",\n  \"lang\": \"en\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sentenize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sentenize"
+              ]
+            },
+            "description": "Rule-based sentence splitting. Returns each sentence with start/end char offsets into the original text."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Finalize Spans",
+      "item": [
+        {
+          "name": "Merge Tokens By URI Agreement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Acme Corp signed contract INV-2024-0091 with Globex.\",\n  \"tokens\": [\n    { \"text\": \"Acme\", \"start\": 0, \"end\": 4, \"uris\": [\"urn:org:acme\"] },\n    { \"text\": \"Corp\", \"start\": 5, \"end\": 9, \"uris\": [\"urn:org:acme\"] },\n    { \"text\": \"INV-2024-0091\", \"start\": 18, \"end\": 31, \"uris\": [\"urn:invoice:inv-2024-0091\"] },\n    { \"text\": \"Globex\", \"start\": 37, \"end\": 43, \"uris\": [\"urn:org:globex\"] }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finalize-spans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finalize-spans"
+              ]
+            },
+            "description": "Input is the per-token candidate-URI matrix nexus builds after running GIN+vector searches on each token from /tokenize. Adjacent tokens that agree on a URI get merged into one span."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Embed",
+      "item": [
+        {
+          "name": "Embed Texts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texts\": [\n    \"Acme Corp signed a new contract with Globex.\",\n    \"The deal closes on March 3rd.\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/embed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "embed"
+              ]
+            },
+            "description": "Returns one embedding vector per input text using sentence-transformers/all-mpnet-base-v2 (default, overridable via SENTENCE_TRANSFORMERS_MODEL env var). Empty texts array returns an empty embeddings array."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {
+          "56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3": {
+            "workspace": "d217b5f6-7fa2-4913-8446-5d30db110208",
+            "collection": "56383100-3d475bf7-b3b1-4131-9835-e68c54f58e68",
+            "location": [
+              "Access_Token",
+              "onprem_access_token"
+            ]
+          }
+        },
+        "exec": [
+          "try {\r",
+          "    const response = await pm.execution.runRequest(\"56383100-bb2a2d58-63d7-4e87-8bde-af2f2be608c3\");\r",
+          "    pm.collectionVariables.set(\"token\", response.json()['access_token']);\r",
+          "} catch (err) {\r",
+          "    console.error(err);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8009"
+    }
+  ]
+}

@@ -1,0 +1,562 @@
+{
+  "info": {
+    "_postman_id": "bebbb21d-50fa-4099-aa3c-95c4438a5f37",
+    "name": "Quipu Security Service",
+    "description": "Complete REST API collection for the Quipu Security Service microservice (port 3032). Covers user authentication, admin authentication, OTP flow, token management, and tenant validation via Keycloak.\n\nCollection variables:\n- {{baseUrl}}  — default http://localhost:3032\n- {{tenantId}} — tenant identifier sent as X-Tenant-ID header\n\nTypical flow:\n1. POST /user/generate-otp  → receive OTP on registered email\n2. POST /user/login         → exchange credentials + OTP for access_token + refresh_token\n3. Use access_token as Bearer on downstream services\n4. POST /user/refreshToken  → rotate tokens before expiry\n5. POST /user/logout        → invalidate session",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56383100",
+    "_collection_link": "https://go.postman.co/collection/56383100-bebbb21d-50fa-4099-aa3c-95c4438a5f37?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 — User Authentication",
+      "item": [
+        {
+          "name": "Generate OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user@example.com\",\n  \"password\": \"your-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/generate-otp?isUserAdmin=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "generate-otp"
+              ],
+              "query": [
+                {
+                  "key": "isUserAdmin",
+                  "value": "false",
+                  "description": "Set true for admin user OTP flow"
+                }
+              ]
+            },
+            "description": "Sends a one-time password (OTP) to the user's registered email address. Must be called before /user/login. Tenant must be active."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token)  pm.collectionVariables.set('accessToken',  res.access_token);",
+                  "if (res.refresh_token) pm.collectionVariables.set('refreshToken', res.refresh_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user@example.com\",\n  \"password\": \"your-password\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login?isUserAdmin=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "login"
+              ],
+              "query": [
+                {
+                  "key": "isUserAdmin",
+                  "value": "false",
+                  "description": "Set true for admin user login"
+                }
+              ]
+            },
+            "description": "Authenticates a user with credentials and OTP. Returns Keycloak access_token and refresh_token. The test script auto-saves both tokens to collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Internal Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"service-account@quipu.internal\",\n  \"password\": \"service-account-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/internal-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "internal-token"
+              ]
+            },
+            "description": "Obtains a token for internal service-to-service calls. Bypasses OTP verification. Tenant must be active."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token)  pm.collectionVariables.set('accessToken',  res.access_token);",
+                  "if (res.refresh_token) pm.collectionVariables.set('refreshToken', res.refresh_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/refreshToken",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "refreshToken"
+              ]
+            },
+            "description": "Exchanges a valid refresh_token for a new access_token + refresh_token pair. Test script auto-updates collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Introspect Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_token\": \"{{accessToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/introspect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "introspect"
+              ]
+            },
+            "description": "Introspects an access token via Keycloak — returns token claims (active, sub, username, roles, exp, etc.)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "users"
+              ]
+            },
+            "description": "Returns all users registered in the Keycloak realm."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('accessToken', '');",
+                  "pm.collectionVariables.set('refreshToken', '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "logout"
+              ]
+            },
+            "description": "Invalidates the user's session in Keycloak. Test script clears saved tokens from collection variables."
+          },
+          "response": []
+        }
+      ],
+      "description": "End-user authentication flow: OTP request → login → token refresh → logout. Uses /user base path."
+    },
+    {
+      "name": "02 — Admin Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token)  pm.collectionVariables.set('accessToken',  res.access_token);",
+                  "if (res.refresh_token) pm.collectionVariables.set('refreshToken', res.refresh_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin@quipu.io\",\n  \"password\": \"admin-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "login"
+              ]
+            },
+            "description": "Authenticates a platform administrator via Keycloak. No OTP or X-Tenant-ID required. Test script auto-saves tokens."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Short-Lived Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/short-lived-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "short-lived-token"
+              ]
+            },
+            "description": "Issues a short-lived token using the service-account credentials configured via SHORT_LIVED_TOKEN_USERNAME and SHORT_LIVED_TOKEN_PASSWORD environment variables. Used for internal automated operations."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token)  pm.collectionVariables.set('accessToken',  res.access_token);",
+                  "if (res.refresh_token) pm.collectionVariables.set('refreshToken', res.refresh_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/refreshToken",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "refreshToken"
+              ]
+            },
+            "description": "Rotates an admin refresh_token into a new access_token + refresh_token pair."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Introspect Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_token\": \"{{accessToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/introspect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "introspect"
+              ]
+            },
+            "description": "Introspects an admin access token. Returns token claims from Keycloak."
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "your-tenant-code",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/validate-tenant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "validate-tenant"
+              ]
+            },
+            "description": "Checks whether a given tenant code is valid and registered in the platform. Returns a boolean. Body is a plain-text tenant code string."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('accessToken', '');",
+                  "pm.collectionVariables.set('refreshToken', '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "logout"
+              ]
+            },
+            "description": "Invalidates the admin session in Keycloak. Test script clears saved tokens."
+          },
+          "response": []
+        }
+      ],
+      "description": "Admin-level authentication flow for platform operators. Uses /admin base path. No OTP required — direct credential login."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3032"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "description": "Tenant identifier sent as X-Tenant-ID header"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "description": "Bearer token returned by /login or /refreshToken"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "description": "Refresh token returned by /login"
+    }
+  ]
+}
