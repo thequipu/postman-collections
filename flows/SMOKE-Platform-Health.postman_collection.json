@@ -1,0 +1,526 @@
+{
+  "info": {
+    "_postman_id": "5m0ke-heal-th00-0000-000000000001",
+    "name": "SMOKE – Platform Health",
+    "description": "Onprem platform health via IP 167.86.123.100 (ports/schemes from docker-compose-onprem healthchecks).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ===== Prod safety guard: block destructive verbs when allow_destructive=false =====",
+          "const destructive = ['POST','PUT','PATCH','DELETE'];",
+          "const url = pm.request.url.toString();",
+          "if (pm.environment.get('allow_destructive') === 'false'",
+          "    && destructive.includes(pm.request.method)",
+          "    && !url.includes('/token')) {",
+          "    throw new Error(`Blocked ${pm.request.method} in env=${pm.environment.get('env_name')} (allow_destructive=false)`);",
+          "}",
+          "",
+          "// ===== Centralized Keycloak auth with token caching (60s safety margin) =====",
+          "const tokenUrl = pm.environment.get('keycloak_token_url');",
+          "const user = pm.environment.get('test_username');",
+          "if (!tokenUrl || !user) { return; }   // health checks are public; skip auth if creds not provided",
+          "const token  = pm.collectionVariables.get('access_token');",
+          "const expiry = pm.collectionVariables.get('token_expiry');",
+          "if (token && expiry && Date.now() < Number(expiry) - 60000) { return; }",
+          "pm.sendRequest({",
+          "    url: tokenUrl,",
+          "    method: 'POST',",
+          "    header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
+          "    body: { mode: 'urlencoded', urlencoded: [",
+          "        { key: 'grant_type',    value: 'password' },",
+          "        { key: 'client_id',     value: pm.environment.get('client_id') },",
+          "        { key: 'client_secret', value: pm.environment.get('client_secret') },",
+          "        { key: 'username',      value: pm.environment.get('test_username') },",
+          "        { key: 'password',      value: pm.environment.get('test_password') }",
+          "    ] }",
+          "}, (err, res) => {",
+          "    if (err || res.code !== 200) {",
+          "        throw new Error(`Keycloak token fetch failed for env=${pm.environment.get('env_name')}: ${err || res.status}`);",
+          "    }",
+          "    const b = res.json();",
+          "    pm.collectionVariables.set('access_token', b.access_token);",
+          "    pm.collectionVariables.set('token_expiry', Date.now() + b.expires_in * 1000);",
+          "    pm.environment.set('access_token', b.access_token);",
+          "});"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level baseline applied after every request",
+          "pm.test('no server error (5xx)', () => pm.expect(pm.response.code).to.be.below(500));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_expiry",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Platform Health",
+      "item": [
+        {
+          "name": "Health: Tenant Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{tenant_base_url}}/admin/actuator/health",
+              "host": [
+                "{{tenant_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Tenant Service health via http://167.86.123.100:4031/admin/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Tenant Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Tenant Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Security Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{security_base_url}}/actuator/health",
+              "host": [
+                "{{security_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Security Service health via http://167.86.123.100:4032/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Security Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Security Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Application Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{app_base_url}}/actuator/health",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Application Service health via http://167.86.123.100:4033/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Application Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Application Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_base_url}}/actuator/health",
+              "host": [
+                "{{gateway_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Gateway health via https://167.86.123.100:5795/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gateway · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Gateway · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Quipu Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{quipugateway_base_url}}/actuator/health",
+              "host": [
+                "{{quipugateway_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Quipu Gateway health via https://167.86.123.100:5796/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Quipu Gateway · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Quipu Gateway · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Knowledge Graph Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{kg_base_url}}/actuator/health",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Knowledge Graph Service health via http://167.86.123.100:4034/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Knowledge Graph Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Knowledge Graph Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Transformation Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transform_base_url}}/actuator/health",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Transformation Service health via http://167.86.123.100:4036/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transformation Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Transformation Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: LLM Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{llm_base_url}}/actuator/health",
+              "host": [
+                "{{llm_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "LLM Service health via https://167.86.123.100:4038/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('LLM Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('LLM Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Instance Manager",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{instance_base_url}}/actuator/health",
+              "host": [
+                "{{instance_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Instance Manager health via http://167.86.123.100:4035/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Instance Manager · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Instance Manager · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Load Balancer Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{loadbalancer_base_url}}/actuator/health",
+              "host": [
+                "{{loadbalancer_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Load Balancer Service health via http://167.86.123.100:4040/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Load Balancer Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Load Balancer Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: NLP",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{nlp_base_url}}/actuator/health",
+              "host": [
+                "{{nlp_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "NLP health via http://167.86.123.100:4055/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('NLP · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('NLP · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Health: Nexus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{nexus_base_url}}/actuator/health",
+              "host": [
+                "{{nexus_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Nexus health via http://167.86.123.100:4057/actuator/health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Nexus · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
+                  "  pm.test('Nexus · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

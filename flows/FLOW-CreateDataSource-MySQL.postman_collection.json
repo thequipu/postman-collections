@@ -1,0 +1,196 @@
+{
+  "info": {
+    "_postman_id": "f10w-create-ds-mysql-0001",
+    "name": "FLOW - Create DataSource (Postman Flow Trigger)",
+    "description": "Triggers the deployed Postman Flow 'createMysql_datasource' via its HTTP endpoint.\n\nThis collection calls the flow endpoint with the full datasource model, then validates the response.\n\nFlow sequence (executed server-side):\n1. Access Token (Keycloak)\n2. Test Connection\n3. Create DataSource\n4. Branch A: Fetch Graph → Sample → Query\n5. Branch B: Test Connection → Update\n6. Delete (cleanup)\n\n**To test different DB types:** duplicate the request and change driverType, driverClassName, dbPort, and connection fields.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "flow_base_url", "value": "https://node-growth-plane.flows.pstmn.io/api/default", "type": "string" },
+    { "key": "keycloakUrl", "value": "https://ui-login.thequipu.in/realms/onpremquipu/protocol/openid-connect/token", "type": "string" },
+    { "key": "tenantId", "value": "onpremquipu", "type": "string" },
+    { "key": "keycloakUserName", "value": "", "type": "secret" },
+    { "key": "keycloakPassword", "value": "", "type": "secret" },
+    { "key": "clientId", "value": "onpremquipu-client", "type": "string" },
+    { "key": "clientSecret", "value": "", "type": "secret" },
+    { "key": "applicationUrl", "value": "http://167.86.123.100:4033/", "type": "string" },
+    { "key": "transformationUrl", "value": "http://167.86.123.100:4036/", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Create DataSource via Flow",
+      "item": [
+        {
+          "name": "01 MySQL DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{flow_base_url}}/createMysql_datasource",
+              "host": ["{{flow_base_url}}"],
+              "path": ["createMysql_datasource"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Acess_Token\": {\n    \"keyclockUrl\": \"{{keycloakUrl}}\",\n    \"tenantId\": \"{{tenantId}}\",\n    \"userName\": \"{{keycloakUserName}}\",\n    \"password\": \"{{keycloakPassword}}\",\n    \"clientId\": \"{{clientId}}\",\n    \"clientSecret\": \"{{clientSecret}}\"\n  },\n  \"infra\": {\n    \"applicationUrl\": \"{{applicationUrl}}\",\n    \"transformationUrl\": \"{{transformationUrl}}\",\n    \"tenantId\": \"{{tenantId}}\"\n  },\n  \"datasourceModel\": {\n    \"id\": null,\n    \"name\": \"pm-flow-mysql-test\",\n    \"description\": \"MySQL datasource created via Postman Flow\",\n    \"dataCatalogName\": null,\n    \"driverType\": \"MYSQL\",\n    \"dbHostName\": \"207.180.249.216\",\n    \"dbPort\": 3306,\n    \"databaseName\": \"employee_policy_info\",\n    \"dbUserName\": \"root\",\n    \"dbPassword\": \"u9S+BAQ3pGdNG08TBWKq1w==\",\n    \"driverClassName\": \"com.mysql.cj.jdbc.Driver\",\n    \"dbSchema\": \"employee_policy_info\",\n    \"projectId\": null,\n    \"clientEmail\": null,\n    \"clientId\": null,\n    \"privateKeyId\": null,\n    \"privateKey\": null,\n    \"datasetName\": null,\n    \"deleted\": false,\n    \"connectionStatus\": null,\n    \"catalogIngestionId\": null,\n    \"showDatacatalogLoading\": false,\n    \"dataSourceId\": \"8a5f3e86-e03e-4432-9ba7-354e9a5d4112\",\n    \"bucket\": null,\n    \"key\": null,\n    \"region\": null,\n    \"accessKey\": null,\n    \"secret\": null,\n    \"shapeCypher\": null,\n    \"shapeParseResult\": null,\n    \"aesRandomIV\": \"SMmh0yulc1drekAc2JcrOg==\"\n  },\n  \"UpdateDataSource\": {\n    \"description\": \"Updated via Postman Flow test\"\n  },\n  \"Run_query\": {\n    \"query\": \"SELECT * FROM corporation LIMIT 10\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Flow endpoint reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('Flow response is not empty', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "console.log('Flow response: '+JSON.stringify(b).slice(0,500));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 PostgreSQL DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{flow_base_url}}/createMysql_datasource",
+              "host": ["{{flow_base_url}}"],
+              "path": ["createMysql_datasource"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Acess_Token\": {\n    \"keyclockUrl\": \"{{keycloakUrl}}\",\n    \"tenantId\": \"{{tenantId}}\",\n    \"userName\": \"{{keycloakUserName}}\",\n    \"password\": \"{{keycloakPassword}}\",\n    \"clientId\": \"{{clientId}}\",\n    \"clientSecret\": \"{{clientSecret}}\"\n  },\n  \"infra\": {\n    \"applicationUrl\": \"{{applicationUrl}}\",\n    \"transformationUrl\": \"{{transformationUrl}}\",\n    \"tenantId\": \"{{tenantId}}\"\n  },\n  \"datasourceModel\": {\n    \"id\": null,\n    \"name\": \"pm-flow-postgres-test\",\n    \"description\": \"PostgreSQL datasource created via Postman Flow\",\n    \"dataCatalogName\": null,\n    \"driverType\": \"POSTGRES\",\n    \"dbHostName\": \"207.180.249.216\",\n    \"dbPort\": 5433,\n    \"databaseName\": \"kyc_management\",\n    \"dbUserName\": \"postgres\",\n    \"dbPassword\": \"2c510254-b82a-4562-9950-ad18e561cdee\",\n    \"driverClassName\": \"org.postgresql.Driver\",\n    \"dbSchema\": \"public\",\n    \"projectId\": null,\n    \"clientEmail\": null,\n    \"clientId\": null,\n    \"privateKeyId\": null,\n    \"privateKey\": null,\n    \"datasetName\": null,\n    \"deleted\": false,\n    \"connectionStatus\": null,\n    \"catalogIngestionId\": null,\n    \"showDatacatalogLoading\": false,\n    \"dataSourceId\": null,\n    \"bucket\": null,\n    \"key\": null,\n    \"region\": null,\n    \"accessKey\": null,\n    \"secret\": null,\n    \"shapeCypher\": null,\n    \"shapeParseResult\": null,\n    \"aesRandomIV\": \"SMmh0yulc1drekAc2JcrOg==\"\n  },\n  \"UpdateDataSource\": {\n    \"description\": \"Updated via Postman Flow test\"\n  },\n  \"Run_query\": {\n    \"query\": \"SELECT * FROM person LIMIT 10\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Flow endpoint reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('Flow response is not empty', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "console.log('Flow response: '+JSON.stringify(b).slice(0,500));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Oracle DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{flow_base_url}}/createMysql_datasource",
+              "host": ["{{flow_base_url}}"],
+              "path": ["createMysql_datasource"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Acess_Token\": {\n    \"keyclockUrl\": \"{{keycloakUrl}}\",\n    \"tenantId\": \"{{tenantId}}\",\n    \"userName\": \"{{keycloakUserName}}\",\n    \"password\": \"{{keycloakPassword}}\",\n    \"clientId\": \"{{clientId}}\",\n    \"clientSecret\": \"{{clientSecret}}\"\n  },\n  \"infra\": {\n    \"applicationUrl\": \"{{applicationUrl}}\",\n    \"transformationUrl\": \"{{transformationUrl}}\",\n    \"tenantId\": \"{{tenantId}}\"\n  },\n  \"datasourceModel\": {\n    \"id\": null,\n    \"name\": \"pm-flow-oracle-test\",\n    \"description\": \"Oracle datasource created via Postman Flow\",\n    \"dataCatalogName\": null,\n    \"driverType\": \"ORACLE\",\n    \"dbHostName\": \"207.180.249.216\",\n    \"dbPort\": 1521,\n    \"databaseName\": \"FREE\",\n    \"dbUserName\": \"financialstatements\",\n    \"dbPassword\": \"financialstatements\",\n    \"driverClassName\": \"oracle.jdbc.OracleDriver\",\n    \"dbSchema\": \"FINANCIALSTATEMENTS\",\n    \"projectId\": null,\n    \"clientEmail\": null,\n    \"clientId\": null,\n    \"privateKeyId\": null,\n    \"privateKey\": null,\n    \"datasetName\": null,\n    \"deleted\": false,\n    \"connectionStatus\": null,\n    \"catalogIngestionId\": null,\n    \"showDatacatalogLoading\": false,\n    \"dataSourceId\": null,\n    \"bucket\": null,\n    \"key\": null,\n    \"region\": null,\n    \"accessKey\": null,\n    \"secret\": null,\n    \"shapeCypher\": null,\n    \"shapeParseResult\": null,\n    \"aesRandomIV\": \"SMmh0yulc1drekAc2JcrOg==\"\n  },\n  \"UpdateDataSource\": {\n    \"description\": \"Updated via Postman Flow test\"\n  },\n  \"Run_query\": {\n    \"query\": \"SELECT * FROM REVENUE FETCH FIRST 10 ROWS ONLY\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Flow endpoint reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('Flow response is not empty', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "console.log('Flow response: '+JSON.stringify(b).slice(0,500));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Snowflake DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{flow_base_url}}/createMysql_datasource",
+              "host": ["{{flow_base_url}}"],
+              "path": ["createMysql_datasource"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Acess_Token\": {\n    \"keyclockUrl\": \"{{keycloakUrl}}\",\n    \"tenantId\": \"{{tenantId}}\",\n    \"userName\": \"{{keycloakUserName}}\",\n    \"password\": \"{{keycloakPassword}}\",\n    \"clientId\": \"{{clientId}}\",\n    \"clientSecret\": \"{{clientSecret}}\"\n  },\n  \"infra\": {\n    \"applicationUrl\": \"{{applicationUrl}}\",\n    \"transformationUrl\": \"{{transformationUrl}}\",\n    \"tenantId\": \"{{tenantId}}\"\n  },\n  \"datasourceModel\": {\n    \"id\": null,\n    \"name\": \"pm-flow-snowflake-test\",\n    \"description\": \"Snowflake datasource created via Postman Flow\",\n    \"dataCatalogName\": null,\n    \"driverType\": \"SNOWFLAKE\",\n    \"dbHostName\": \"OYYQWYP-MD26878.snowflakecomputing.com\",\n    \"dbPort\": 0,\n    \"databaseName\": \"INVESTMENT_MANAGEMENT\",\n    \"dbUserName\": \"QUIPU\",\n    \"dbPassword\": \"quipu@S0\",\n    \"driverClassName\": \"net.snowflake.client.jdbc.SnowflakeDriver\",\n    \"dbSchema\": \"PUBLIC\",\n    \"projectId\": null,\n    \"clientEmail\": null,\n    \"clientId\": null,\n    \"privateKeyId\": null,\n    \"privateKey\": null,\n    \"datasetName\": null,\n    \"deleted\": false,\n    \"connectionStatus\": null,\n    \"catalogIngestionId\": null,\n    \"showDatacatalogLoading\": false,\n    \"dataSourceId\": null,\n    \"bucket\": null,\n    \"key\": null,\n    \"region\": null,\n    \"accessKey\": null,\n    \"secret\": null,\n    \"shapeCypher\": null,\n    \"shapeParseResult\": null,\n    \"aesRandomIV\": \"SMmh0yulc1drekAc2JcrOg==\"\n  },\n  \"UpdateDataSource\": {\n    \"description\": \"Updated via Postman Flow test\"\n  },\n  \"Run_query\": {\n    \"query\": \"SELECT * FROM HOLDINGS LIMIT 10\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Flow endpoint reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('Flow response is not empty', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "console.log('Flow response: '+JSON.stringify(b).slice(0,500));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 MariaDB DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{flow_base_url}}/createMysql_datasource",
+              "host": ["{{flow_base_url}}"],
+              "path": ["createMysql_datasource"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Acess_Token\": {\n    \"keyclockUrl\": \"{{keycloakUrl}}\",\n    \"tenantId\": \"{{tenantId}}\",\n    \"userName\": \"{{keycloakUserName}}\",\n    \"password\": \"{{keycloakPassword}}\",\n    \"clientId\": \"{{clientId}}\",\n    \"clientSecret\": \"{{clientSecret}}\"\n  },\n  \"infra\": {\n    \"applicationUrl\": \"{{applicationUrl}}\",\n    \"transformationUrl\": \"{{transformationUrl}}\",\n    \"tenantId\": \"{{tenantId}}\"\n  },\n  \"datasourceModel\": {\n    \"id\": null,\n    \"name\": \"pm-flow-mariadb-test\",\n    \"description\": \"MariaDB datasource created via Postman Flow\",\n    \"dataCatalogName\": null,\n    \"driverType\": \"MARIADB\",\n    \"dbHostName\": \"207.180.249.216\",\n    \"dbPort\": 3309,\n    \"databaseName\": \"datatypetesting_mariadb\",\n    \"dbUserName\": \"root\",\n    \"dbPassword\": \"yzja0VYp2H8NnvGxI8xPXA==\",\n    \"driverClassName\": \"org.mariadb.jdbc.Driver\",\n    \"dbSchema\": \"datatypetesting_mariadb\",\n    \"projectId\": null,\n    \"clientEmail\": null,\n    \"clientId\": null,\n    \"privateKeyId\": null,\n    \"privateKey\": null,\n    \"datasetName\": null,\n    \"deleted\": false,\n    \"connectionStatus\": null,\n    \"catalogIngestionId\": null,\n    \"showDatacatalogLoading\": false,\n    \"dataSourceId\": null,\n    \"bucket\": null,\n    \"key\": null,\n    \"region\": null,\n    \"accessKey\": null,\n    \"secret\": null,\n    \"shapeCypher\": null,\n    \"shapeParseResult\": null,\n    \"aesRandomIV\": \"7rK6Q+65bU/G1uwcArLGQA==\"\n  },\n  \"UpdateDataSource\": {\n    \"description\": \"Updated via Postman Flow test\"\n  },\n  \"Run_query\": {\n    \"query\": \"SELECT * FROM datatypetesting_mariadb LIMIT 10\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Flow endpoint reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('Flow response is not empty', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "console.log('Flow response: '+JSON.stringify(b).slice(0,500));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

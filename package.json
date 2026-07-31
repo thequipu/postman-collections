@@ -1,0 +1,17 @@
+{
+  "name": "quipu-api-flow-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Feature-wise / E2E API flow testing for the Quipu platform (Postman + Newman).",
+  "scripts": {
+    "smoke:local":    "newman run \"flows/SMOKE-Platform-Health.postman_collection.json\" -e environments/local.postman_environment.json    --insecure -r cli,htmlextra,junit --reporter-junit-export reports/smoke-local.xml    --reporter-htmlextra-export reports/smoke-local.html    --timeout-request 30000",
+    "smoke:onprem":   "newman run \"flows/SMOKE-Platform-Health.postman_collection.json\" -e environments/onprem.postman_environment.json   --insecure -r cli,htmlextra,junit --reporter-junit-export reports/smoke-onprem.xml   --reporter-htmlextra-export reports/smoke-onprem.html   --timeout-request 30000",
+    "auth:onprem":    "newman run \"flows/FLOW-Auth-Token.postman_collection.json\" -e environments/onprem.postman_environment.json --insecure -r cli,junit --reporter-junit-export reports/auth-onprem.xml --timeout-request 30000",
+    "ds-crud:onprem": "newman run \"flows/FLOW-DataSource-CRUD.postman_collection.json\" -e environments/onprem.postman_environment.json --insecure -r cli,htmlextra,junit --reporter-junit-export reports/ds-crud-onprem.xml --reporter-htmlextra-export reports/ds-crud-onprem.html --timeout-request 30000",
+    "smoke:stage":    "newman run \"flows/SMOKE-Platform-Health.postman_collection.json\" -e environments/stage.postman_environment.json    -r cli,htmlextra,junit --reporter-junit-export reports/smoke-stage.xml    --reporter-htmlextra-export reports/smoke-stage.html    --timeout-request 30000",
+    "smoke:pre-prod": "newman run \"flows/SMOKE-Platform-Health.postman_collection.json\" -e environments/pre-prod.postman_environment.json -r cli,htmlextra,junit --reporter-junit-export reports/smoke-pre-prod.xml --reporter-htmlextra-export reports/smoke-pre-prod.html --timeout-request 30000",
+    "smoke:prod":     "newman run \"flows/SMOKE-Platform-Health.postman_collection.json\" -e environments/prod.postman_environment.json     -r cli,htmlextra,junit --reporter-junit-export reports/smoke-prod.xml     --reporter-htmlextra-export reports/smoke-prod.html     --timeout-request 30000",
+    "postinstall-note": "echo 'Install runner: npm i -g newman newman-reporter-htmlextra'"
+  },
+  "devDependencies": {}
+}

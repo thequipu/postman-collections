@@ -1,0 +1,36 @@
+{
+  "info": {
+    "_postman_id": "f10w-synapse-heal-0000-000000000011",
+    "name": "FLOW – Synapse: Health (direct, no gateway)",
+    "description": "Synapse bypasses the API gateways and is reached directly. Verifies its Spring Boot actuator health is UP. Portable via {{synapse_base_url}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Synapse actuator health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{synapse_base_url}}/actuator/health", "host": [ "{{synapse_base_url}}" ], "path": [ "actuator", "health" ] },
+        "auth": { "type": "noauth" },
+        "description": "Direct Synapse liveness/readiness probe (no auth)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Synapse health HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "let b = {}; try { b = pm.response.json(); } catch (e) {}",
+              "pm.test('status is UP', () => pm.expect(String(b.status || '')).to.eql('UP'));",
+              "pm.test('exposes liveness & readiness groups', () => pm.expect(b.groups || []).to.include.members(['liveness','readiness']));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

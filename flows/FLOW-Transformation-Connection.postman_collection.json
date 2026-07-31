@@ -1,0 +1,404 @@
+{
+  "info": {
+    "_postman_id": "flow-transformation-connection-auto",
+    "name": "FLOW - Transformation Service Connection",
+    "description": "Validates Transformation Service: test-connection, metadata, sample-records.\n\nRequires DB config via `--env-var` (driverType, dbHost, dbPort, dbName, dbUser, dbPassword, dbSchema, driverClassName, aesRandomIV).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const destructive=['POST','PUT','PATCH','DELETE'];",
+          "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
+          "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
+          "}",
+          "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
+          "if(!url||!user){ return; }",
+          "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
+          "if(tok && exp && Date.now() < Number(exp)-60000){ return; }",
+          "pm.sendRequest({url:url,method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},",
+          "  body:{mode:'urlencoded',urlencoded:[",
+          "    {key:'grant_type',value:'password'},{key:'client_id',value:pm.environment.get('client_id')},",
+          "    {key:'client_secret',value:pm.environment.get('client_secret')},",
+          "    {key:'username',value:pm.environment.get('test_username')},{key:'password',value:pm.environment.get('test_password')}]}},",
+          "  (e,res)=>{ if(e||res.code!==200){ throw new Error('token fetch failed: '+(e||res.status)); }",
+          "    const b=res.json(); pm.collectionVariables.set('access_token',b.access_token);",
+          "    pm.collectionVariables.set('token_expiry', Date.now()+b.expires_in*1000);",
+          "    pm.environment.set('access_token', b.access_token); });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_expiry",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_flow_failed",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_flow_failed_at",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_skip_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverType",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dbHost",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dbPort",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dbName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dbUser",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dbPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "aesRandomIV",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dbSchema",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverClassName",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Transformation Connection",
+      "item": [
+        {
+          "name": "00 Setup",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('_flow_failed');",
+                  "pm.collectionVariables.unset('_flow_failed_at');",
+                  "pm.collectionVariables.set('_skip_url', pm.environment.get('transform_base_url') + '/actuator/health');",
+                  "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('00 token acquired', () => pm.expect(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')||'').to.not.eql(''));",
+                  "pm.test('00 service reachable', () => pm.expect(pm.response.code).to.eql(200));",
+                  "if (pm.response.code !== 200) {",
+                  "  pm.collectionVariables.set('_flow_failed', 'true');",
+                  "  pm.collectionVariables.set('_flow_failed_at', '00 Setup');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transform_base_url}}/actuator/health",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "01 Test Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/test-connection",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "test-connection"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('01 Test connection 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const s=JSON.stringify(b).toLowerCase();",
+                  "const ok=pm.response.code===200||b.success===true||b.connected===true||/success|connected/.test(s);",
+                  "pm.test('01 DB connected', () => { if(!ok){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01 Test Connection');} pm.expect(ok).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 Fetch Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/test-connection/metadata",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "test-connection",
+                "metadata"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02 Metadata 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('02 has metadata', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Sample Records",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/test-connection/sample-records",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "test-connection",
+                "sample-records"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('03 Sample 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "99 Teardown",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+                  "pm.collectionVariables.unset('_flow_failed');",
+                  "pm.collectionVariables.unset('_flow_failed_at');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transform_base_url}}/actuator/health",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
