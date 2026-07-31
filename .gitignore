@@ -1,0 +1,24 @@
+# Test run output
+reports/
+results/
+newman/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets — never commit real credential values
+config/secrets/
+*.secrets.env
+*.local.json
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

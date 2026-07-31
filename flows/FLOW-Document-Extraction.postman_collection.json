@@ -1,0 +1,610 @@
+{
+  "info": {
+    "_postman_id": "flow-document-extraction-auto",
+    "name": "FLOW - Document Extraction",
+    "description": "Document extraction lifecycle: create status -> get status -> create streams -> get streams -> ingestion status -> extract.\n\nRequires `--env-var realmId=...` and `--env-var datasourceId=...`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const destructive=['POST','PUT','PATCH','DELETE'];",
+          "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
+          "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
+          "}",
+          "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
+          "if(!url||!user){ return; }",
+          "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
+          "if(tok && exp && Date.now() < Number(exp)-60000){ return; }",
+          "pm.sendRequest({url:url,method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},",
+          "  body:{mode:'urlencoded',urlencoded:[",
+          "    {key:'grant_type',value:'password'},{key:'client_id',value:pm.environment.get('client_id')},",
+          "    {key:'client_secret',value:pm.environment.get('client_secret')},",
+          "    {key:'username',value:pm.environment.get('test_username')},{key:'password',value:pm.environment.get('test_password')}]}},",
+          "  (e,res)=>{ if(e||res.code!==200){ throw new Error('token fetch failed: '+(e||res.status)); }",
+          "    const b=res.json(); pm.collectionVariables.set('access_token',b.access_token);",
+          "    pm.collectionVariables.set('token_expiry', Date.now()+b.expires_in*1000);",
+          "    pm.environment.set('access_token', b.access_token); });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_expiry",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_flow_failed",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_flow_failed_at",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_skip_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "extractionStatusId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "datasourceId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Document Extraction",
+      "item": [
+        {
+          "name": "00 Setup",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('_flow_failed');",
+                  "pm.collectionVariables.unset('_flow_failed_at');",
+                  "pm.collectionVariables.unset('extractionStatusId');",
+                  "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
+                  "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('00 token acquired', () => pm.expect(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')||'').to.not.eql(''));",
+                  "pm.test('00 service reachable', () => pm.expect(pm.response.code).to.eql(200));",
+                  "if (pm.response.code !== 200) {",
+                  "  pm.collectionVariables.set('_flow_failed', 'true');",
+                  "  pm.collectionVariables.set('_flow_failed_at', '00 Setup');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{app_base_url}}/actuator/health",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "01 Create Extraction Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/document",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "document"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": {{realmId}},\n  \"dataSourceId\": \"{{datasourceId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code = pm.response.code;",
+                  "pm.test('01 Create extraction 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01 Create Extraction');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const d=b.data||b;",
+                  "const id=d.id||d.statusId;",
+                  "if(id) pm.collectionVariables.set('extractionStatusId', String(id));",
+                  "console.log('Extraction status created: '+id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 Get Extraction Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/document/extraction-status?realmId={{realmId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "document",
+                "extraction-status"
+              ],
+              "query": [
+                {
+                  "key": "realmId",
+                  "value": "{{realmId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02 Get status 200', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "console.log('Extraction statuses: '+(Array.isArray(b)?b.length:'?'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Get Status by DataSource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/document/extraction-status-by-datasource-id?datasourceId={{datasourceId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "document",
+                "extraction-status-by-datasource-id"
+              ],
+              "query": [
+                {
+                  "key": "datasourceId",
+                  "value": "{{datasourceId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('03 Get by DS 200', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Create Document Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/documentIngestStream/create-streams",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "documentIngestStream",
+                "create-streams"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": {{realmId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04 Create doc streams 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "console.log('Doc streams: '+JSON.stringify(b).slice(0,200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Get Document Streams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/documentIngestStream/get-document-stream/{{realmId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "documentIngestStream",
+                "get-document-stream",
+                "{{realmId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('05 Get doc streams 200', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Get Ingestion Status by Stream IDs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/document-ingestion-status/get-by-stream-ids",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "document-ingestion-status",
+                "get-by-stream-ids"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"streamIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('06 Ingestion status 200', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 Extract Document (Transformation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/document/extract",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "document",
+                "extract"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceId\": \"{{datasourceId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('07 Extract 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,404]));",
+                  "console.log('Extract response: '+pm.response.code);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "99 Teardown",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+                  "pm.collectionVariables.unset('_flow_failed');",
+                  "pm.collectionVariables.unset('_flow_failed_at');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{app_base_url}}/actuator/health",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,499 @@
+{
+  "info": {
+    "_postman_id": "flow-watcher-crud-auto",
+    "name": "FLOW - Watcher CRUD",
+    "description": "Watcher lifecycle: create -> list -> get -> pause -> resume -> delete.\n\nUses `{{realm}}` from environment for watcher namespace.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const destructive=['POST','PUT','PATCH','DELETE'];",
+          "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
+          "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
+          "}",
+          "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
+          "if(!url||!user){ return; }",
+          "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
+          "if(tok && exp && Date.now() < Number(exp)-60000){ return; }",
+          "pm.sendRequest({url:url,method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},",
+          "  body:{mode:'urlencoded',urlencoded:[",
+          "    {key:'grant_type',value:'password'},{key:'client_id',value:pm.environment.get('client_id')},",
+          "    {key:'client_secret',value:pm.environment.get('client_secret')},",
+          "    {key:'username',value:pm.environment.get('test_username')},{key:'password',value:pm.environment.get('test_password')}]}},",
+          "  (e,res)=>{ if(e||res.code!==200){ throw new Error('token fetch failed: '+(e||res.status)); }",
+          "    const b=res.json(); pm.collectionVariables.set('access_token',b.access_token);",
+          "    pm.collectionVariables.set('token_expiry', Date.now()+b.expires_in*1000);",
+          "    pm.environment.set('access_token', b.access_token); });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_expiry",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_flow_failed",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_flow_failed_at",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_skip_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "watcherId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Watcher CRUD",
+      "item": [
+        {
+          "name": "00 Setup",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('_flow_failed');",
+                  "pm.collectionVariables.unset('_flow_failed_at');",
+                  "pm.collectionVariables.unset('watcherId');",
+                  "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
+                  "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('00 token acquired', () => pm.expect(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')||'').to.not.eql(''));",
+                  "pm.test('00 service reachable', () => pm.expect(pm.response.code).to.eql(200));",
+                  "if (pm.response.code !== 200) {",
+                  "  pm.collectionVariables.set('_flow_failed', 'true');",
+                  "  pm.collectionVariables.set('_flow_failed_at', '00 Setup');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{app_base_url}}/actuator/health",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "01 Create Watcher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"pm-flow-watcher-{{$timestamp}}\",\n  \"namespace\": \"{{realm}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code = pm.response.code;",
+                  "pm.test('01 Create watcher 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01 Create Watcher');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const d=b.data||b;",
+                  "const id=d.id||d.watcherId;",
+                  "if(id) pm.collectionVariables.set('watcherId', String(id));",
+                  "console.log('Watcher created: '+id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 List Watchers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02 List watchers 200', () => pm.response.to.have.status(200));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "console.log('Watchers: '+(Array.isArray(b)?b.length:'?'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Get Watcher by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher/{{watcherId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher",
+                "{{watcherId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('03 Get watcher 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('03 has watcher data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Pause Watcher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher/{{watcherId}}/pause",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher",
+                "{{watcherId}}",
+                "pause"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04 Pause 200', () => pm.expect(pm.response.code).to.be.oneOf([200,202]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Resume Watcher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher/{{watcherId}}/resume",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher",
+                "{{watcherId}}",
+                "resume"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('05 Resume 200', () => pm.expect(pm.response.code).to.be.oneOf([200,202]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Delete Watcher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher/{{watcherId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher",
+                "{{watcherId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('06 Delete watcher 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "99 Teardown",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/watcher/{{watcherId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "watcher",
+                "{{watcherId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('99 teardown tolerant', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+                  "pm.collectionVariables.unset('_flow_failed');",
+                  "pm.collectionVariables.unset('_flow_failed_at');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

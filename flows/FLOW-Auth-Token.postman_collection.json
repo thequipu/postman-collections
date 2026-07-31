@@ -1,0 +1,63 @@
+{
+  "info": {
+    "_postman_id": "f10w-auth-t0ken-0000-000000000010",
+    "name": "FLOW – Auth: Get Access Token",
+    "description": "Single-step flow: authenticate against Keycloak (password grant) and prove a usable token comes back. Portable across environments via variables; secrets injected at runtime (never committed). Demonstrates the base flow pattern: assert status + business field, then capture state for downstream steps.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Get Access Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type",    "value": "password", "type": "text" },
+            { "key": "client_id",     "value": "{{client_id}}", "type": "text" },
+            { "key": "client_secret", "value": "{{client_secret}}", "type": "text" },
+            { "key": "username",      "value": "{{test_username}}", "type": "text" },
+            { "key": "password",      "value": "{{test_password}}", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{keycloak_token_url}}",
+          "host": [ "{{keycloak_token_url}}" ]
+        },
+        "auth": { "type": "noauth" },
+        "description": "Keycloak OpenID password-grant token request for {{env_name}}."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Auth returns HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "let body = {};",
+              "try { body = pm.response.json(); } catch (e) {}",
+              "pm.test('response contains access_token', () => pm.expect(body.access_token, 'access_token').to.be.a('string').and.not.empty);",
+              "pm.test('token_type is Bearer', () => pm.expect(String(body.token_type || '')).to.match(/bearer/i));",
+              "pm.test('expires_in is present', () => pm.expect(body.expires_in).to.be.a('number'));",
+              "if (body.access_token) {",
+              "  pm.collectionVariables.set('access_token', body.access_token);",
+              "  pm.collectionVariables.set('token_expiry', Date.now() + (body.expires_in * 1000));",
+              "  pm.environment.set('access_token', body.access_token);",
+              "  console.log('Captured token for env=' + pm.environment.get('env_name') + ', length=' + body.access_token.length);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "token_expiry", "value": "", "type": "string" }
+  ]
+}
