@@ -8,6 +8,8 @@ def keycloak_prerequest():
         "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
         "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
         "}",
+        "// Skip token refresh if using admin token (e.g. for tenant delete)",
+        "if(pm.collectionVariables.get('_use_admin_token')==='true'){ return; }",
         "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
         "if(!url||!user){ return; }",
         "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
