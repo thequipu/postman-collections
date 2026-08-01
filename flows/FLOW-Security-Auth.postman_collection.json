@@ -672,7 +672,7 @@
           "response": []
         },
         {
-          "name": "09 User Login (reachability)",
+          "name": "09 User Login (wrong OTP validation)",
           "request": {
             "method": "POST",
             "header": [
@@ -707,7 +707,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"login-reachability-test\",\n  \"password\": \"test\",\n  \"otp\": \"000000\"\n}",
+              "raw": "{\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"otp\": \"000000\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -741,8 +741,11 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('09 Login reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,400,401,500]));",
-                  "console.log('User login: '+pm.response.code);"
+                  "pm.test('09 Login returns 401', () => pm.response.to.have.status(401));",
+                  "const body = pm.response.text();",
+                  "pm.test('09 OTP invalid message', () => pm.expect(body).to.include('OTP'));",
+                  "pm.test('09 specific error (not generic 401)', () => pm.expect(body).to.include('INVALID'));",
+                  "console.log('User login: '+pm.response.code+' — '+body);"
                 ]
               }
             }
