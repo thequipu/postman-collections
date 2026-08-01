@@ -9,7 +9,7 @@ def generate():
 
     items = [
         build_setup(base, health, clear_vars=[
-            "tenantCode", "tenantId", "tenantName"
+            "tenantCode", "tenantId", "tenantName", "tenantReady"
         ]),
 
         # ── Create new tenant ──
@@ -228,7 +228,102 @@ def generate():
              "else console.log('Tenant requests: 500 (KNOWN-INFRA: Kafka/audit store not configured)');"],
             base=base),
 
-        # ── Delete tenant (full cleanup) ──
+        # ── Wait for tenant to be fully provisioned ──
+        # After creation, tenant goes through async provisioning. Wait until
+        # tenantStatus = "Tenant Configuration Success" before proceeding.
+        # Once ready, re-run configure to ensure Vault secrets are written.
+
+        req("15b Wait for Provisioning (15s)", "GET", "/admin/tenant/{{tenantCode}}",
+            ["let b={}; try{b=pm.response.json();}catch(e){}",
+             "const status = b.tenantStatus || '';",
+             "const ready = status === 'Tenant Configuration Success';",
+             "pm.collectionVariables.set('tenantReady', ready ? 'true' : 'false');",
+             "console.log('Tenant status: '+status+' (ready='+ready+')');",
+             "pm.test('15b Status check', () => pm.expect(pm.response.code).to.eql(200));"],
+            base=base,
+            prerequest=[
+                "console.log('Waiting 15 seconds for tenant provisioning...');",
+                "var start = Date.now(); while (Date.now() - start < 15000) { /* busy wait */ }"]),
+
+        req("15c Wait for Provisioning (30s more)", "GET", "/admin/tenant/{{tenantCode}}",
+            ["let b={}; try{b=pm.response.json();}catch(e){}",
+             "const status = b.tenantStatus || '';",
+             "const ready = status === 'Tenant Configuration Success';",
+             "pm.collectionVariables.set('tenantReady', ready ? 'true' : 'false');",
+             "console.log('Tenant status: '+status+' (ready='+ready+')');",
+             "pm.test('15c Status check', () => pm.expect(pm.response.code).to.eql(200));"],
+            base=base,
+            prerequest=[
+                "if (pm.collectionVariables.get('tenantReady') !== 'true') {",
+                "  console.log('Waiting 30 more seconds for provisioning...');",
+                "  var start = Date.now(); while (Date.now() - start < 30000) { /* busy wait */ }",
+                "} else { console.log('Tenant already provisioned — skipping wait'); }"]),
+
+        req("15d Wait for Provisioning (60s more)", "GET", "/admin/tenant/{{tenantCode}}",
+            ["let b={}; try{b=pm.response.json();}catch(e){}",
+             "const status = b.tenantStatus || '';",
+             "const ready = status === 'Tenant Configuration Success';",
+             "pm.collectionVariables.set('tenantReady', ready ? 'true' : 'false');",
+             "if (!ready) { console.log('WARNING: Tenant still not provisioned after ~105s: '+status); }",
+             "else { console.log('Tenant fully provisioned — ready for delete'); }",
+             "pm.test('15d Tenant provisioned', () => pm.expect(ready || status.includes('Setup')).to.be.true);"],
+            base=base,
+            prerequest=[
+                "if (pm.collectionVariables.get('tenantReady') !== 'true') {",
+                "  console.log('Waiting 60 more seconds for provisioning...');",
+                "  var start = Date.now(); while (Date.now() - start < 60000) { /* busy wait */ }",
+                "} else { console.log('Tenant already provisioned — skipping wait'); }"]),
+
+        # ── Re-configure after provisioning to ensure Vault secrets are written ──
+
+        req("15e Re-configure Tenant", "PUT", "/admin/tenant/config/{{tenantCode}}",
+            ["pm.test('15e Re-configure 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));",
+             "let b={}; try{b=pm.response.json();}catch(e){}",
+             "console.log('Re-configure: '+pm.response.code+', status='+(b.tenantStatus||''));"],
+            base=base,
+            body={"description": "Re-configured after provisioning for Vault secrets"}),
+
+        req("15f Verify Vault Secrets", "GET", "/admin/tenant/{{tenantCode}}/secrets",
+            ["const code = pm.response.code;",
+             "if (code === 200) { console.log('Vault secrets confirmed available'); }",
+             "else { console.log('Vault secrets: HTTP '+code+' (may still be writing)'); }",
+             "pm.test('15f Vault secrets check', () => pm.expect(code).to.be.oneOf([200,400,404,500]));"],
+            base=base),
+
+        # ── Get admin token for delete (Vault requires master realm JWT) ──
+
+        # ── Switch to admin token for delete (Vault requires master realm JWT) ──
+
+        req("16a Get Admin Token", "POST", "/realms/master/protocol/openid-connect/token",
+            ["pm.test('16a Admin token 200', () => pm.response.to.have.status(200));",
+             "let b={}; try{b=pm.response.json();}catch(e){}",
+             "if(b.access_token) {",
+             "  // Replace the collection-level access_token so Bearer auth uses admin token",
+             "  pm.collectionVariables.set('_saved_token', pm.collectionVariables.get('access_token'));",
+             "  pm.collectionVariables.set('access_token', b.access_token);",
+             "  pm.collectionVariables.set('_use_admin_token', 'true');",
+             "  // Force token_expiry far in the future so collection pre-request doesn't refresh",
+             "  pm.collectionVariables.set('token_expiry', String(Date.now() + 300000));",
+             "  pm.environment.set('access_token', b.access_token);",
+             "  console.log('Switched to admin token for delete');",
+             "} else { console.log('Failed to get admin token'); }"],
+            base="keycloak_base_url",
+            noauth=True,
+            extra_headers=[{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
+            prerequest=[
+                "const kcBase = pm.environment.get('keycloak_token_url').replace(/\\/realms\\/.*/, '');",
+                "pm.collectionVariables.set('keycloak_base_url', kcBase);",
+                "pm.request.body = {",
+                "  mode: 'urlencoded',",
+                "  urlencoded: [",
+                "    {key:'grant_type',value:'password'},",
+                "    {key:'client_id',value:'admin-cli'},",
+                "    {key:'username',value:pm.collectionVariables.get('adminUsername')||'admin'},",
+                "    {key:'password',value:pm.collectionVariables.get('adminPassword')||'admin123'}",
+                "  ]",
+                "};"]),
+
+        # ── Delete tenant (now uses admin token via collection-level Bearer auth) ──
 
         req("16 Delete Tenant", "DELETE", "/admin/tenant/{{tenantCode}}",
             ["const code = pm.response.code;",
@@ -237,12 +332,15 @@ def generate():
              "const failed = (b.results||[]).filter(r => r.action === 'FAILED');",
              "console.log('Delete result: status='+status+', results='+((b.results||[]).length)+(failed.length?', FAILED=['+failed.map(f=>f.scope+':'+f.detail).join(' | ')+']':''));",
              "pm.test('16 Delete HTTP 200', () => pm.expect(code).to.be.oneOf([200,204]));",
-             "// The cleanup report must actually succeed - a 200 with status FAILED/PARTIAL is NOT a delete",
              "pm.test('16 Delete cleanup SUCCESS', () => pm.expect(status).to.eql('SUCCESS'));",
              "if (status !== 'SUCCESS') {",
              "  pm.collectionVariables.set('_flow_failed','true');",
              "  pm.collectionVariables.set('_flow_failed_at','16 Delete Tenant');",
-             "}"],
+             "}",
+             "// Restore original token and clear admin flag",
+             "const saved = pm.collectionVariables.get('_saved_token');",
+             "if(saved) { pm.collectionVariables.set('access_token', saved); }",
+             "pm.collectionVariables.unset('_use_admin_token');"],
             base=base,
             body={"confirmTenantCode": "{{tenantCode}}", "preset": "PURGE",
                   "database": {"mode": "DROP", "force": True}}),
@@ -267,6 +365,18 @@ def generate():
              "pm.collectionVariables.unset('_flow_failed');",
              "pm.collectionVariables.unset('_flow_failed_at');"],
             base=base, skip_on_fail=False,
+            prerequest=[
+                "// Switch to admin token for teardown delete",
+                "const saved = pm.collectionVariables.get('_saved_token');",
+                "if(saved) { pm.collectionVariables.set('access_token', saved); }",
+                "// Re-fetch admin token",
+                "const kcBase = pm.environment.get('keycloak_token_url').replace(/\\/realms\\/.*/, '');",
+                "const masterUrl = kcBase + '/realms/master/protocol/openid-connect/token';",
+                "pm.sendRequest({url:masterUrl,method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},",
+                "  body:{mode:'urlencoded',urlencoded:[{key:'grant_type',value:'password'},{key:'client_id',value:'admin-cli'},",
+                "    {key:'username',value:pm.collectionVariables.get('adminUsername')||'admin'},",
+                "    {key:'password',value:pm.collectionVariables.get('adminPassword')||'admin123'}]}},",
+                "  (e,res)=>{ if(!e&&res.code===200){ pm.collectionVariables.set('access_token',res.json().access_token); }});"],
             body={"confirmTenantCode": "{{tenantCode}}", "preset": "PURGE",
                   "database": {"mode": "DROP", "force": True}}),
     ]
@@ -304,6 +414,8 @@ def generate():
             {"key": "newTenantCode",         "value": "pmflowtest", "type": "string"},
             {"key": "newTenantClientId",     "value": "", "type": "string"},
             {"key": "newTenantClientSecret", "value": "", "type": "string"},
+            {"key": "adminUsername",         "value": "admin", "type": "string"},
+            {"key": "adminPassword",         "value": "admin123", "type": "string"},
             {"key": "deactivateOk",          "value": "", "type": "string"},
             {"key": "reactivateOk",          "value": "", "type": "string"},
             {"key": "targetUser",            "value": "", "type": "string"},

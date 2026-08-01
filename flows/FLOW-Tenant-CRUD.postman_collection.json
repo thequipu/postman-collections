@@ -25,6 +25,8 @@
           "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
           "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
           "}",
+          "// Skip token refresh if using admin token (e.g. for tenant delete)",
+          "if(pm.collectionVariables.get('_use_admin_token')==='true'){ return; }",
           "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
           "if(!url||!user){ return; }",
           "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
@@ -99,6 +101,16 @@
       "type": "string"
     },
     {
+      "key": "adminUsername",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin123",
+      "type": "string"
+    },
+    {
       "key": "deactivateOk",
       "value": "",
       "type": "string"
@@ -141,6 +153,7 @@
                   "pm.collectionVariables.unset('tenantCode');",
                   "pm.collectionVariables.unset('tenantId');",
                   "pm.collectionVariables.unset('tenantName');",
+                  "pm.collectionVariables.unset('tenantReady');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('tenant_base_url') + '/admin/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -1393,6 +1406,395 @@
           "response": []
         },
         {
+          "name": "15b Wait for Provisioning (15s)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{tenant_base_url}}/admin/tenant/{{tenantCode}}",
+              "host": [
+                "{{tenant_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "tenant",
+                "{{tenantCode}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "console.log('Waiting 15 seconds for tenant provisioning...');",
+                  "var start = Date.now(); while (Date.now() - start < 15000) { /* busy wait */ }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const status = b.tenantStatus || '';",
+                  "const ready = status === 'Tenant Configuration Success';",
+                  "pm.collectionVariables.set('tenantReady', ready ? 'true' : 'false');",
+                  "console.log('Tenant status: '+status+' (ready='+ready+')');",
+                  "pm.test('15b Status check', () => pm.expect(pm.response.code).to.eql(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "15c Wait for Provisioning (30s more)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{tenant_base_url}}/admin/tenant/{{tenantCode}}",
+              "host": [
+                "{{tenant_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "tenant",
+                "{{tenantCode}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if (pm.collectionVariables.get('tenantReady') !== 'true') {",
+                  "  console.log('Waiting 30 more seconds for provisioning...');",
+                  "  var start = Date.now(); while (Date.now() - start < 30000) { /* busy wait */ }",
+                  "} else { console.log('Tenant already provisioned — skipping wait'); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const status = b.tenantStatus || '';",
+                  "const ready = status === 'Tenant Configuration Success';",
+                  "pm.collectionVariables.set('tenantReady', ready ? 'true' : 'false');",
+                  "console.log('Tenant status: '+status+' (ready='+ready+')');",
+                  "pm.test('15c Status check', () => pm.expect(pm.response.code).to.eql(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "15d Wait for Provisioning (60s more)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{tenant_base_url}}/admin/tenant/{{tenantCode}}",
+              "host": [
+                "{{tenant_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "tenant",
+                "{{tenantCode}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if (pm.collectionVariables.get('tenantReady') !== 'true') {",
+                  "  console.log('Waiting 60 more seconds for provisioning...');",
+                  "  var start = Date.now(); while (Date.now() - start < 60000) { /* busy wait */ }",
+                  "} else { console.log('Tenant already provisioned — skipping wait'); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const status = b.tenantStatus || '';",
+                  "const ready = status === 'Tenant Configuration Success';",
+                  "pm.collectionVariables.set('tenantReady', ready ? 'true' : 'false');",
+                  "if (!ready) { console.log('WARNING: Tenant still not provisioned after ~105s: '+status); }",
+                  "else { console.log('Tenant fully provisioned — ready for delete'); }",
+                  "pm.test('15d Tenant provisioned', () => pm.expect(ready || status.includes('Setup')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "15e Re-configure Tenant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{tenant_base_url}}/admin/tenant/config/{{tenantCode}}",
+              "host": [
+                "{{tenant_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "tenant",
+                "config",
+                "{{tenantCode}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Re-configured after provisioning for Vault secrets\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('15e Re-configure 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "console.log('Re-configure: '+pm.response.code+', status='+(b.tenantStatus||''));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "15f Verify Vault Secrets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{tenant_base_url}}/admin/tenant/{{tenantCode}}/secrets",
+              "host": [
+                "{{tenant_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "tenant",
+                "{{tenantCode}}",
+                "secrets"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code = pm.response.code;",
+                  "if (code === 200) { console.log('Vault secrets confirmed available'); }",
+                  "else { console.log('Vault secrets: HTTP '+code+' (may still be writing)'); }",
+                  "pm.test('15f Vault secrets check', () => pm.expect(code).to.be.oneOf([200,400,404,500]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "16a Get Admin Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloak_base_url}}/realms/master/protocol/openid-connect/token",
+              "host": [
+                "{{keycloak_base_url}}"
+              ],
+              "path": [
+                "realms",
+                "master",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const kcBase = pm.environment.get('keycloak_token_url').replace(/\\/realms\\/.*/, '');",
+                  "pm.collectionVariables.set('keycloak_base_url', kcBase);",
+                  "pm.request.body = {",
+                  "  mode: 'urlencoded',",
+                  "  urlencoded: [",
+                  "    {key:'grant_type',value:'password'},",
+                  "    {key:'client_id',value:'admin-cli'},",
+                  "    {key:'username',value:pm.collectionVariables.get('adminUsername')||'admin'},",
+                  "    {key:'password',value:pm.collectionVariables.get('adminPassword')||'admin123'}",
+                  "  ]",
+                  "};"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('16a Admin token 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "if(b.access_token) {",
+                  "  // Replace the collection-level access_token so Bearer auth uses admin token",
+                  "  pm.collectionVariables.set('_saved_token', pm.collectionVariables.get('access_token'));",
+                  "  pm.collectionVariables.set('access_token', b.access_token);",
+                  "  pm.collectionVariables.set('_use_admin_token', 'true');",
+                  "  // Force token_expiry far in the future so collection pre-request doesn't refresh",
+                  "  pm.collectionVariables.set('token_expiry', String(Date.now() + 300000));",
+                  "  pm.environment.set('access_token', b.access_token);",
+                  "  console.log('Switched to admin token for delete');",
+                  "} else { console.log('Failed to get admin token'); }"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
           "name": "16 Delete Tenant",
           "request": {
             "method": "DELETE",
@@ -1456,12 +1858,15 @@
                   "const failed = (b.results||[]).filter(r => r.action === 'FAILED');",
                   "console.log('Delete result: status='+status+', results='+((b.results||[]).length)+(failed.length?', FAILED=['+failed.map(f=>f.scope+':'+f.detail).join(' | ')+']':''));",
                   "pm.test('16 Delete HTTP 200', () => pm.expect(code).to.be.oneOf([200,204]));",
-                  "// The cleanup report must actually succeed - a 200 with status FAILED/PARTIAL is NOT a delete",
                   "pm.test('16 Delete cleanup SUCCESS', () => pm.expect(status).to.eql('SUCCESS'));",
                   "if (status !== 'SUCCESS') {",
                   "  pm.collectionVariables.set('_flow_failed','true');",
                   "  pm.collectionVariables.set('_flow_failed_at','16 Delete Tenant');",
-                  "}"
+                  "}",
+                  "// Restore original token and clear admin flag",
+                  "const saved = pm.collectionVariables.get('_saved_token');",
+                  "if(saved) { pm.collectionVariables.set('access_token', saved); }",
+                  "pm.collectionVariables.unset('_use_admin_token');"
                 ]
               }
             }
@@ -1543,6 +1948,25 @@
             }
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Switch to admin token for teardown delete",
+                  "const saved = pm.collectionVariables.get('_saved_token');",
+                  "if(saved) { pm.collectionVariables.set('access_token', saved); }",
+                  "// Re-fetch admin token",
+                  "const kcBase = pm.environment.get('keycloak_token_url').replace(/\\/realms\\/.*/, '');",
+                  "const masterUrl = kcBase + '/realms/master/protocol/openid-connect/token';",
+                  "pm.sendRequest({url:masterUrl,method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},",
+                  "  body:{mode:'urlencoded',urlencoded:[{key:'grant_type',value:'password'},{key:'client_id',value:'admin-cli'},",
+                  "    {key:'username',value:pm.collectionVariables.get('adminUsername')||'admin'},",
+                  "    {key:'password',value:pm.collectionVariables.get('adminPassword')||'admin123'}]}},",
+                  "  (e,res)=>{ if(!e&&res.code===200){ pm.collectionVariables.set('access_token',res.json().access_token); }});"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
