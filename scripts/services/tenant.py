@@ -34,6 +34,13 @@ def generate():
              "console.log('Tenant created: code='+tcode+', status='+(b.tenantStatus||''));",
              "console.log('SSO clientId='+(b.singleSignOnDetails?b.singleSignOnDetails.clientId:'n/a'));"],
             base=base,
+            prerequest=[
+                "// Generate unique tenant code if not provided",
+                "if (!pm.collectionVariables.get('newTenantCode') || pm.collectionVariables.get('newTenantCode') === '') {",
+                "  const ts = Date.now().toString(36);",
+                "  pm.collectionVariables.set('newTenantCode', 'pmflow' + ts);",
+                "}",
+                "console.log('Tenant code: ' + pm.collectionVariables.get('newTenantCode'));"],
             body={
                 "name": "PM Flow Test Tenant",
                 "code": "{{newTenantCode}}",
@@ -411,7 +418,7 @@ def generate():
             {"key": "tenantCode",            "value": "", "type": "string"},
             {"key": "tenantId",              "value": "", "type": "string"},
             {"key": "tenantName",            "value": "", "type": "string"},
-            {"key": "newTenantCode",         "value": "pmflowtest", "type": "string"},
+            {"key": "newTenantCode",         "value": "", "type": "string"},
             {"key": "newTenantClientId",     "value": "", "type": "string"},
             {"key": "newTenantClientSecret", "value": "", "type": "string"},
             {"key": "adminUsername",         "value": "admin", "type": "string"},

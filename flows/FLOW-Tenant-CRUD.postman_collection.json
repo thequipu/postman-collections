@@ -87,7 +87,7 @@
     },
     {
       "key": "newTenantCode",
-      "value": "pmflowtest",
+      "value": "",
       "type": "string"
     },
     {
@@ -238,7 +238,13 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "// Generate unique tenant code if not provided",
+                  "if (!pm.collectionVariables.get('newTenantCode') || pm.collectionVariables.get('newTenantCode') === '') {",
+                  "  const ts = Date.now().toString(36);",
+                  "  pm.collectionVariables.set('newTenantCode', 'pmflow' + ts);",
+                  "}",
+                  "console.log('Tenant code: ' + pm.collectionVariables.get('newTenantCode'));"
                 ]
               }
             },
