@@ -1,0 +1,7 @@
+[
+  {"id": 1, "name": "John Smith", "email": "john@example.com", "age": 32, "salary": 75000.50, "department": "Engineering", "hire_date": "2020-01-15", "is_active": true},
+  {"id": 2, "name": "Jane Doe", "email": "jane@example.com", "age": 28, "salary": 68000.00, "department": "Marketing", "hire_date": "2021-03-22", "is_active": true},
+  {"id": 3, "name": "Bob Wilson", "email": "bob@example.com", "age": 45, "salary": 92000.75, "department": "Engineering", "hire_date": "2018-06-10", "is_active": true},
+  {"id": 4, "name": "Alice Brown", "email": "alice@example.com", "age": 35, "salary": 81000.25, "department": "Sales", "hire_date": "2019-11-05", "is_active": false},
+  {"id": 5, "name": "Charlie Davis", "email": "charlie@example.com", "age": 29, "salary": 72000.00, "department": "Marketing", "hire_date": "2022-01-30", "is_active": true}
+]

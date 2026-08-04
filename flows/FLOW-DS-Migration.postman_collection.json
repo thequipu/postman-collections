@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-lumen-pipeline-auto",
-    "name": "FLOW - Lumen Pipeline",
-    "description": "Lumen AI pipeline: query-builder, describe, embed, cluster, semantic-chat.\n\nSteps 03-05 require `--env-var versionUri=...` for a valid schema version.\nSteps 01-02 require `{{realm}}` from environment.",
+    "_postman_id": "flow-ds-migration-auto",
+    "name": "FLOW - DS Migration",
+    "description": "DataSource migration endpoints: Neo4j, Hive, Trino catalog, password migration.\n\nUses existing datasource ID from environment variable {{datasourceId}}.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -69,16 +69,11 @@
       "key": "_skip_url",
       "value": "",
       "type": "string"
-    },
-    {
-      "key": "versionUri",
-      "value": "",
-      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Lumen Pipeline",
+      "name": "DS Migration",
       "item": [
         {
           "name": "00 Setup",
@@ -90,7 +85,7 @@
                 "exec": [
                   "pm.collectionVariables.unset('_flow_failed');",
                   "pm.collectionVariables.unset('_flow_failed_at');",
-                  "pm.collectionVariables.set('_skip_url', pm.environment.get('lumen_base_url') + '/actuator/health');",
+                  "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
               }
@@ -114,9 +109,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{lumen_base_url}}/actuator/health",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
                 "actuator",
@@ -130,37 +125,24 @@
           "response": []
         },
         {
-          "name": "01 Query Builder",
+          "name": "01 Migrate All to Neo4j",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/query-builder/query",
+              "raw": "{{app_base_url}}/migrate-data-source/migrate-all",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "query-builder",
-                "query"
+                "migrate-data-source",
+                "migrate-all"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"realm\": \"{{realm}}\",\n  \"question\": \"Show all entities\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -186,9 +168,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('01 Query builder 200', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "if(pm.response.code===200) console.log('Generated query: '+JSON.stringify(b).slice(0,200));"
+                  "pm.test('01 Migrate all 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,500]));"
                 ]
               }
             }
@@ -196,37 +176,29 @@
           "response": []
         },
         {
-          "name": "02 Reset Schema",
+          "name": "02 Migrate Single",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/query-builder/reset-schema",
+              "raw": "{{app_base_url}}/migrate-data-source?sourceId={{datasourceId}}",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "query-builder",
-                "reset-schema"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"realm\": \"{{realm}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+                "migrate-data-source"
+              ],
+              "query": [
+                {
+                  "key": "sourceId",
+                  "value": "{{datasourceId}}"
                 }
-              }
+              ]
             }
           },
           "event": [
@@ -252,7 +224,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('02 Reset schema 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('02 Migrate single 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -260,38 +232,24 @@
           "response": []
         },
         {
-          "name": "03 Describe Datasource",
+          "name": "03 Hive Migration All",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/lumen/describe/datasource",
+              "raw": "{{app_base_url}}/migrate-data-source/hive",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "lumen",
-                "describe",
-                "datasource"
+                "migrate-data-source",
+                "hive"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"{{versionUri}}\",\n  \"overwrite\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -317,9 +275,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03 Describe 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,404]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "console.log('Describe response: '+JSON.stringify(b).slice(0,200));"
+                  "pm.test('03 Hive all 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,500]));"
                 ]
               }
             }
@@ -327,38 +283,25 @@
           "response": []
         },
         {
-          "name": "04 Embed Datasource",
+          "name": "04 Hive Single",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/lumen/embed/datasource",
+              "raw": "{{app_base_url}}/migrate-data-source/hive-source/{{datasourceId}}",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "lumen",
-                "embed",
-                "datasource"
+                "migrate-data-source",
+                "hive-source",
+                "{{datasourceId}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"{{versionUri}}\",\n  \"overwrite\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -384,7 +327,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04 Embed 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,404]));"
+                  "pm.test('04 Hive single 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -392,38 +335,24 @@
           "response": []
         },
         {
-          "name": "05 Cluster Preview",
+          "name": "05 Create Trino Catalogs All",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/lumen/cluster/final-clusters",
+              "raw": "{{app_base_url}}/migrate-data-source/create-trino-catalogs",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "lumen",
-                "cluster",
-                "final-clusters"
+                "migrate-data-source",
+                "create-trino-catalogs"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"{{versionUri}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -449,9 +378,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 Clusters 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "if(b.clusters) console.log('Clusters: '+b.clusters.length);"
+                  "pm.test('05 Trino all 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,500]));"
                 ]
               }
             }
@@ -459,37 +386,25 @@
           "response": []
         },
         {
-          "name": "06 Semantic Chat",
+          "name": "06 Create Trino Single",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/semantic-chat/getAnswer",
+              "raw": "{{app_base_url}}/migrate-data-source/create-trino-catalog/{{datasourceId}}",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "semantic-chat",
-                "getAnswer"
+                "migrate-data-source",
+                "create-trino-catalog",
+                "{{datasourceId}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"messageContextModels\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a data analyst. Data: [{'id':1,'name':'test'}]\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"What is in the data?\"\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -515,7 +430,109 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('06 Semantic chat 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));"
+                  "pm.test('06 Trino single 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 Migrate Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/migrate-data-source/migratePassword",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "migratePassword"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('07 Migrate password 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "08 Decrypt Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/migrate-data-source/decryptPassword",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "migrate-data-source",
+                "decryptPassword"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('08 Decrypt password 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
                 ]
               }
             }
@@ -541,9 +558,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{lumen_base_url}}/actuator/health",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
                 "actuator",

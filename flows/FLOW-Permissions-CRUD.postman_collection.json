@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-permissions-crud-auto",
-    "name": "FLOW - Permissions CRUD (Read-Only)",
-    "description": "Read-only validation of RBAC endpoints: permissions, roles, user-permissions, entity360-paths.",
+    "_postman_id": "flow-permissions-full-auto",
+    "name": "FLOW - Permissions Full",
+    "description": "Complete RBAC testing: 2 Keycloak users (USER role) + permissions + roles on real entities.\n\nUser1 (viewer): VIEW on DATA_FABRIC + DATA_SOURCE\nUser2 (admin): EDIT on DATA_FABRIC + ADMIN on SCHEMA + EDIT on DATA_SOURCE\n\nVerifies: exists=true/false per user per entity, permission_by_userid, role-permission exists.\n\nRequires: DB config + kc_admin_user + kc_admin_password + keycloak_admin_url in environment.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -25,6 +25,8 @@
           "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
           "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
           "}",
+          "// Skip token refresh if using admin token (e.g. for tenant delete)",
+          "if(pm.collectionVariables.get('_use_admin_token')==='true'){ return; }",
           "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
           "if(!url||!user){ return; }",
           "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
@@ -67,11 +69,121 @@
       "key": "_skip_url",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "dsId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schemaName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schemaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user1Id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user2Id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user1Name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user2Name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "viewPermId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "editPermId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminPermId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "viewerRoleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminRoleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upId2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upId3",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upId4",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upId5",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rpId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rpId2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rpId3",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_kc_admin_token",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Permissions CRUD",
+      "name": "Permissions Full",
       "item": [
         {
           "name": "00 Setup",
@@ -83,6 +195,27 @@
                 "exec": [
                   "pm.collectionVariables.unset('_flow_failed');",
                   "pm.collectionVariables.unset('_flow_failed_at');",
+                  "pm.collectionVariables.unset('dsId');",
+                  "pm.collectionVariables.unset('schemaName');",
+                  "pm.collectionVariables.unset('schemaId');",
+                  "pm.collectionVariables.unset('realmId');",
+                  "pm.collectionVariables.unset('user1Id');",
+                  "pm.collectionVariables.unset('user2Id');",
+                  "pm.collectionVariables.unset('user1Name');",
+                  "pm.collectionVariables.unset('user2Name');",
+                  "pm.collectionVariables.unset('viewPermId');",
+                  "pm.collectionVariables.unset('editPermId');",
+                  "pm.collectionVariables.unset('adminPermId');",
+                  "pm.collectionVariables.unset('viewerRoleId');",
+                  "pm.collectionVariables.unset('adminRoleId');",
+                  "pm.collectionVariables.unset('upId1');",
+                  "pm.collectionVariables.unset('upId2');",
+                  "pm.collectionVariables.unset('upId3');",
+                  "pm.collectionVariables.unset('upId4');",
+                  "pm.collectionVariables.unset('upId5');",
+                  "pm.collectionVariables.unset('rpId1');",
+                  "pm.collectionVariables.unset('rpId2');",
+                  "pm.collectionVariables.unset('rpId3');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -123,7 +256,508 @@
           "response": []
         },
         {
-          "name": "01 Get Permissions",
+          "name": "01a Create DataSource (dep)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/datasource",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "datasource"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"pm-flow-perm-ds-{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code = pm.response.code;",
+                  "pm.test('01a Create DS 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01a Create DS');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const d=b.dataSourceModel||b.data||b;",
+                  "if(d.id||d.sourceId) pm.collectionVariables.set('dsId', String(d.id||d.sourceId));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "01b Create Schema (dep)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/schema",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "schema"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemaName\": \"pm-flow-perm-schema-{{$timestamp}}\",\n  \"description\": \"Permissions flow dep\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code = pm.response.code;",
+                  "pm.test('01b Create schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01b Create Schema');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const d=b.schemaModel||b.data||b;",
+                  "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
+                  "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "01c Create Realm (dep)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/realm",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "realm"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"pm-flow-perm-realm-{{$timestamp}}\",\n  \"description\": \"Permissions flow dep\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code = pm.response.code;",
+                  "pm.test('01c Create realm 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01c Create Realm');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const d=b.realmModel||b.data||b;",
+                  "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02a Create User1 (viewer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{_kc_admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloak_admin_url}}/admin/realms/{{tenant_id}}/users",
+              "host": [
+                "{{keycloak_admin_url}}"
+              ],
+              "path": [
+                "admin",
+                "realms",
+                "{{tenant_id}}",
+                "users"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"pmflow-viewer-{{$timestamp}}\",\n  \"enabled\": true,\n  \"credentials\": [\n    {\n      \"type\": \"password\",\n      \"value\": \"Test@123\",\n      \"temporary\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Get Keycloak admin token for user management",
+                  "const kcUrl = pm.environment.get('keycloak_url') || pm.environment.get('kc_url');",
+                  "const kcRealm = 'master';",
+                  "const kcUser = pm.environment.get('kc_admin_user') || 'admin';",
+                  "const kcPass = pm.environment.get('kc_admin_password') || 'admin123';",
+                  "const tokenUrl = kcUrl.replace(/\\/realms\\/.*/, '') + '/realms/' + kcRealm + '/protocol/openid-connect/token';",
+                  "pm.sendRequest({",
+                  "  url: tokenUrl,",
+                  "  method: 'POST',",
+                  "  header: {'Content-Type': 'application/x-www-form-urlencoded'},",
+                  "  body: {mode:'urlencoded', urlencoded:[",
+                  "    {key:'grant_type',value:'password'},",
+                  "    {key:'client_id',value:'admin-cli'},",
+                  "    {key:'username',value:kcUser},",
+                  "    {key:'password',value:kcPass}",
+                  "  ]}",
+                  "}, (err, res) => {",
+                  "  if(err||!res) { console.log('KC admin token error:', err); return; }",
+                  "  const t = res.json();",
+                  "  pm.collectionVariables.set('_kc_admin_token', t.access_token);",
+                  "  console.log('KC admin token acquired');",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02a Create user1 201', () => pm.expect(pm.response.code).to.be.oneOf([201,409]));",
+                  "// Extract user ID from Location header",
+                  "const loc = pm.response.headers.get('Location') || '';",
+                  "const uid = loc.split('/').pop();",
+                  "if(uid && pm.response.code===201) pm.collectionVariables.set('user1Id', uid);",
+                  "console.log('User1 created: '+uid);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02b Set User1 Name var",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/permissions",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Store the generated username for later lookups",
+                  "const ts = pm.collectionVariables.get('user1Id') ? '' : '';",
+                  "pm.collectionVariables.set('user1Name', 'pmflow-viewer-' + pm.variables.replaceIn('{{$timestamp}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02b ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03a Create User2 (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{_kc_admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloak_admin_url}}/admin/realms/{{tenant_id}}/users",
+              "host": [
+                "{{keycloak_admin_url}}"
+              ],
+              "path": [
+                "admin",
+                "realms",
+                "{{tenant_id}}",
+                "users"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"pmflow-admin-{{$timestamp}}\",\n  \"enabled\": true,\n  \"credentials\": [\n    {\n      \"type\": \"password\",\n      \"value\": \"Test@123\",\n      \"temporary\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Get Keycloak admin token for user management",
+                  "const kcUrl = pm.environment.get('keycloak_url') || pm.environment.get('kc_url');",
+                  "const kcRealm = 'master';",
+                  "const kcUser = pm.environment.get('kc_admin_user') || 'admin';",
+                  "const kcPass = pm.environment.get('kc_admin_password') || 'admin123';",
+                  "const tokenUrl = kcUrl.replace(/\\/realms\\/.*/, '') + '/realms/' + kcRealm + '/protocol/openid-connect/token';",
+                  "pm.sendRequest({",
+                  "  url: tokenUrl,",
+                  "  method: 'POST',",
+                  "  header: {'Content-Type': 'application/x-www-form-urlencoded'},",
+                  "  body: {mode:'urlencoded', urlencoded:[",
+                  "    {key:'grant_type',value:'password'},",
+                  "    {key:'client_id',value:'admin-cli'},",
+                  "    {key:'username',value:kcUser},",
+                  "    {key:'password',value:kcPass}",
+                  "  ]}",
+                  "}, (err, res) => {",
+                  "  if(err||!res) { console.log('KC admin token error:', err); return; }",
+                  "  const t = res.json();",
+                  "  pm.collectionVariables.set('_kc_admin_token', t.access_token);",
+                  "  console.log('KC admin token acquired');",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('03a Create user2 201', () => pm.expect(pm.response.code).to.be.oneOf([201,409]));",
+                  "const loc = pm.response.headers.get('Location') || '';",
+                  "const uid = loc.split('/').pop();",
+                  "if(uid && pm.response.code===201) pm.collectionVariables.set('user2Id', uid);",
+                  "console.log('User2 created: '+uid);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/get-all-users",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "get-all-users"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04 Get all users 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('04 has users data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Get Existing Permissions",
           "request": {
             "method": "GET",
             "header": [
@@ -165,9 +799,9 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('01 Permissions 200', () => pm.response.to.have.status(200));",
+                  "pm.test('05 Permissions 200', () => pm.response.to.have.status(200));",
                   "let b=[]; try{b=pm.response.json();}catch(e){}",
-                  "pm.test('01 is array', () => pm.expect(Array.isArray(b)).to.be.true);"
+                  "pm.test('05 is array', () => pm.expect(Array.isArray(b)).to.be.true);"
                 ]
               }
             }
@@ -175,7 +809,135 @@
           "response": []
         },
         {
-          "name": "02 Get Roles",
+          "name": "06 Create Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/permissions",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"VIEW\",\n    \"description\": \"Read only access\"\n  },\n  {\n    \"name\": \"EDIT\",\n    \"description\": \"Read write access\"\n  },\n  {\n    \"name\": \"ADMIN\",\n    \"description\": \"Full administrative access\"\n  },\n  {\n    \"name\": \"ROW_ACCESS\",\n    \"description\": \"Row level data access\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('06 Create perms 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:(b.data||[]);",
+                  "// Capture permission IDs by name",
+                  "for(const p of arr){",
+                  "  if(p.name==='VIEW') pm.collectionVariables.set('viewPermId', String(p.id));",
+                  "  if(p.name==='EDIT') pm.collectionVariables.set('editPermId', String(p.id));",
+                  "  if(p.name==='ADMIN') pm.collectionVariables.set('adminPermId', String(p.id));",
+                  "}",
+                  "pm.test('06 captured VIEW id', () => pm.expect(pm.collectionVariables.get('viewPermId')).to.not.eql(''));",
+                  "console.log('Perms: VIEW='+pm.collectionVariables.get('viewPermId')+', EDIT='+pm.collectionVariables.get('editPermId')+', ADMIN='+pm.collectionVariables.get('adminPermId'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 Verify Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/permissions",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('07 Permissions 200', () => pm.response.to.have.status(200));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const names=b.map(p=>p.name);",
+                  "pm.test('07 has VIEW', () => pm.expect(names).to.include('VIEW'));",
+                  "pm.test('07 has EDIT', () => pm.expect(names).to.include('EDIT'));",
+                  "pm.test('07 has ADMIN', () => pm.expect(names).to.include('ADMIN'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "08 Get Existing Roles",
           "request": {
             "method": "GET",
             "header": [
@@ -217,7 +979,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('02 Roles 200', () => pm.response.to.have.status(200));"
+                  "pm.test('08 Roles 200', () => pm.response.to.have.status(200));"
                 ]
               }
             }
@@ -225,7 +987,140 @@
           "response": []
         },
         {
-          "name": "03 Get Role Permissions",
+          "name": "09 Create Viewer Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/roles",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"pm-flow-viewer\",\n    \"description\": \"View only role\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('09 Create viewer role 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('viewerRoleId', String(arr[0].id));",
+                  "console.log('Viewer role id='+pm.collectionVariables.get('viewerRoleId'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "10 Create Admin Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/roles",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"pm-flow-admin\",\n    \"description\": \"Admin role\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('10 Create admin role 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('adminRoleId', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "11 Verify Roles",
           "request": {
             "method": "GET",
             "header": [
@@ -235,14 +1130,403 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/role-permission?page=0&size=20",
+              "raw": "{{app_base_url}}/roles",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "role-permission"
+                "roles"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('11 Roles 200', () => pm.response.to.have.status(200));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const names=(Array.isArray(b)?b:[]).map(r=>r.name);",
+                  "pm.test('11 has viewer role', () => pm.expect(names).to.include('pm-flow-viewer'));",
+                  "pm.test('11 has admin role', () => pm.expect(names).to.include('pm-flow-admin'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "12 User1 VIEW on Fabric",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userIdentifier\": \"{{user1Name}}\",\n    \"entityType\": \"DATA_FABRIC\",\n    \"entityId\": {{realmId}},\n    \"permission\": {\n      \"id\": \"{{viewPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('12 Assign 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('upId1', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "13 User1 VIEW on DataSource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userIdentifier\": \"{{user1Name}}\",\n    \"entityType\": \"DATA_SOURCE\",\n    \"entityId\": \"{{dsId}}\",\n    \"permission\": {\n      \"id\": \"{{viewPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('13 Assign 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('upId2', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "14 User2 EDIT on Fabric",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userIdentifier\": \"{{user2Name}}\",\n    \"entityType\": \"DATA_FABRIC\",\n    \"entityId\": {{realmId}},\n    \"permission\": {\n      \"id\": \"{{editPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('14 Assign 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('upId3', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "15 User2 ADMIN on Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userIdentifier\": \"{{user2Name}}\",\n    \"entityType\": \"SCHEMA\",\n    \"entityId\": \"{{schemaId}}\",\n    \"permission\": {\n      \"id\": \"{{adminPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('15 Assign 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('upId4', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "16 User2 EDIT on DataSource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userIdentifier\": \"{{user2Name}}\",\n    \"entityType\": \"DATA_SOURCE\",\n    \"entityId\": \"{{dsId}}\",\n    \"permission\": {\n      \"id\": \"{{editPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('16 Assign 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('upId5', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "17 User1 Perms by UserID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/permission_by_userid?userId={{user1Name}}&page=0&size=20",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_userid"
               ],
               "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user1Name}}"
+                },
                 {
                   "key": "page",
                   "value": "0"
@@ -277,7 +1561,13 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03 Role perms 200', () => pm.response.to.have.status(200));"
+                  "pm.test('17 Get user1 perms 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const content=b.content||b.data||[];",
+                  "const permNames=content.map(p=>p.permission?p.permission.name:p.permissionName||'');",
+                  "pm.test('17 user1 has VIEW', () => pm.expect(permNames).to.include('VIEW'));",
+                  "pm.test('17 user1 no EDIT', () => pm.expect(permNames).to.not.include('EDIT'));",
+                  "pm.test('17 user1 no ADMIN', () => pm.expect(permNames).to.not.include('ADMIN'));"
                 ]
               }
             }
@@ -285,7 +1575,7 @@
           "response": []
         },
         {
-          "name": "04 Get User Permissions",
+          "name": "18 User1 VIEW on Fabric exists",
           "request": {
             "method": "GET",
             "header": [
@@ -295,7 +1585,624 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/user-permission?page=0&size=20",
+              "raw": "{{app_base_url}}/user-permission/exists?entityType=DATA_FABRIC&userIdentifier={{user1Name}}&permissionNames=VIEW",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "{{user1Name}}"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "VIEW"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('18 Exists 200', () => pm.response.to.have.status(200));",
+                  "let b=false; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('18 user1 VIEW on fabric = true', () => pm.expect(b).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "19 User1 EDIT on Fabric NOT exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/exists?entityType=DATA_FABRIC&userIdentifier={{user1Name}}&permissionNames=EDIT",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "{{user1Name}}"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "EDIT"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('19 Exists 200', () => pm.response.to.have.status(200));",
+                  "let b=true; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('19 user1 EDIT on fabric = false', () => pm.expect(b).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "20 User1 VIEW on DS exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/exists?entityType=DATA_SOURCE&userIdentifier={{user1Name}}&permissionNames=VIEW",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "{{user1Name}}"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "VIEW"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('20 Exists 200', () => pm.response.to.have.status(200));",
+                  "let b=false; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('20 user1 VIEW on DS = true', () => pm.expect(b).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "21 User1 Perms on Fabric",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/permission_by_userid_and_entity_type?userId={{user1Name}}&entityType=DATA_FABRIC&page=0&size=20",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_userid_and_entity_type"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user1Name}}"
+                },
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('21 Perms 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const content=b.content||b.data||[];",
+                  "pm.test('21 only VIEW on fabric', () => {",
+                  "  const permNames=content.map(p=>p.permission?p.permission.name:'');",
+                  "  pm.expect(permNames).to.include('VIEW');",
+                  "  pm.expect(permNames).to.not.include('ADMIN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "22 User2 Perms by UserID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/permission_by_userid?userId={{user2Name}}&page=0&size=20",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_userid"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user2Name}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('22 Get user2 perms 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const content=b.content||b.data||[];",
+                  "const permNames=content.map(p=>p.permission?p.permission.name:'');",
+                  "pm.test('22 user2 has EDIT', () => pm.expect(permNames).to.include('EDIT'));",
+                  "pm.test('22 user2 has ADMIN', () => pm.expect(permNames).to.include('ADMIN'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "23 User2 EDIT on Fabric exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/exists?entityType=DATA_FABRIC&userIdentifier={{user2Name}}&permissionNames=EDIT",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "{{user2Name}}"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "EDIT"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('23 user2 EDIT = true', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "24 User2 ADMIN on Schema exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/exists?entityType=SCHEMA&userIdentifier={{user2Name}}&permissionNames=ADMIN",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "SCHEMA"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "{{user2Name}}"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "ADMIN"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('24 user2 ADMIN on schema = true', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "25 User2 EDIT on DS exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/exists?entityType=DATA_SOURCE&userIdentifier={{user2Name}}&permissionNames=EDIT",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_SOURCE"
+                },
+                {
+                  "key": "userIdentifier",
+                  "value": "{{user2Name}}"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "EDIT"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('25 user2 EDIT on DS = true', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "26 User2 Perms on Schema",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/permission_by_userid_and_entity_type?userId={{user2Name}}&entityType=SCHEMA&page=0&size=20",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_userid_and_entity_type"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user2Name}}"
+                },
+                {
+                  "key": "entityType",
+                  "value": "SCHEMA"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('26 Perms 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const content=b.content||b.data||[];",
+                  "pm.test('26 user2 ADMIN on schema', () => {",
+                  "  const names=content.map(p=>p.permission?p.permission.name:'');",
+                  "  pm.expect(names).to.include('ADMIN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "27 All User-Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission?page=0&size=100",
               "host": [
                 "{{app_base_url}}"
               ],
@@ -309,7 +2216,7 @@
                 },
                 {
                   "key": "size",
-                  "value": "20"
+                  "value": "100"
                 }
               ]
             }
@@ -337,7 +2244,9 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04 User perms 200', () => pm.response.to.have.status(200));"
+                  "pm.test('27 All user-perms 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('27 has paginated content', () => pm.expect(b.content||b.data).to.not.be.undefined);"
                 ]
               }
             }
@@ -345,7 +2254,58 @@
           "response": []
         },
         {
-          "name": "05 Get Entity360 Paths",
+          "name": "28 Current User Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/user",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "user"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('28 Current user perms 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "29 Entity360 Paths",
           "request": {
             "method": "GET",
             "header": [
@@ -388,7 +2348,1242 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 Entity360 paths 200', () => pm.response.to.have.status(200));"
+                  "pm.test('29 E360 paths 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "30 User-Perm by Entity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/permission?entityType=DATA_FABRIC&entityId={{realmId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{realmId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('30 Perm by entity 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "31 User-Perm by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/permission_by_entity?entityType=DATA_FABRIC&page=0&size=20",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "permission_by_entity"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('31 Perm by entity type 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "32 All User IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/user_ids",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "user_ids"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('32 User IDs 200', () => pm.response.to.have.status(200));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('32 is array', () => pm.expect(Array.isArray(b)).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "33 Role-Perm: viewer→VIEW on Fabric",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"role\": {\n      \"id\": \"{{viewerRoleId}}\"\n    },\n    \"entityType\": \"DATA_FABRIC\",\n    \"entityId\": {{realmId}},\n    \"permission\": {\n      \"id\": \"{{viewPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('33 Create role-perm 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('rpId1', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "34 Role-Perm: admin→EDIT+ADMIN on Fabric",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"role\": {\n      \"id\": \"{{adminRoleId}}\"\n    },\n    \"entityType\": \"DATA_FABRIC\",\n    \"entityId\": {{realmId}},\n    \"permission\": {\n      \"id\": \"{{editPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  },\n  {\n    \"role\": {\n      \"id\": \"{{adminRoleId}}\"\n    },\n    \"entityType\": \"DATA_FABRIC\",\n    \"entityId\": {{realmId}},\n    \"permission\": {\n      \"id\": \"{{adminPermId}}\"\n    },\n    \"grantedBy\": \"pmflow-test\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('34 Create role-perms 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "const arr=Array.isArray(b)?b:[b];",
+                  "if(arr[0]&&arr[0].id) pm.collectionVariables.set('rpId2', String(arr[0].id));",
+                  "if(arr[1]&&arr[1].id) pm.collectionVariables.set('rpId3', String(arr[1].id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "35 Get Role-Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission?page=0&size=100",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('35 Role-perms 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "36 Viewer has VIEW",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission/exists?entityType=DATA_FABRIC&role=pm-flow-viewer&permissionNames=VIEW",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "role",
+                  "value": "pm-flow-viewer"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "VIEW"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('36 viewer VIEW = true', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "37 Viewer NOT ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission/exists?entityType=DATA_FABRIC&role=pm-flow-viewer&permissionNames=ADMIN",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "role",
+                  "value": "pm-flow-viewer"
+                },
+                {
+                  "key": "permissionNames",
+                  "value": "ADMIN"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('37 viewer ADMIN = false', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "38 Role-Perm by User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission/user",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission",
+                "user"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('38 Role-perm user 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "39 Role-Perm by Entity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission/permission?entityType=DATA_FABRIC&entityId={{realmId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission",
+                "permission"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{realmId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('39 Role-perm entity 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "40 Role-Perm by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission/permission_by_entity?entityType=DATA_FABRIC&page=0&size=20",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission",
+                "permission_by_entity"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "DATA_FABRIC"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('40 Role-perm entity type 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "41 Deactivate User1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/updateUser?username={{user1Name}}&status=false",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "updateUser"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "{{user1Name}}"
+                },
+                {
+                  "key": "status",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('41 Deactivate user1 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "42 Delete User-Permissions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/user-permission/delete?ids={{upId1}},{{upId2}},{{upId3}},{{upId4}},{{upId5}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "user-permission",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{upId1}},{{upId2}},{{upId3}},{{upId4}},{{upId5}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('42 Delete user-perms 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "43 Delete Role-Permissions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/role-permission/delete?ids={{rpId1}},{{rpId2}},{{rpId3}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "role-permission",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{rpId1}},{{rpId2}},{{rpId3}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('43 Delete role-perms 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "44 Delete Roles",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/roles/delete?ids={{viewerRoleId}},{{adminRoleId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "roles",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{viewerRoleId}},{{adminRoleId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('44 Delete roles 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "45 Delete User1 from Keycloak",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{_kc_admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloak_admin_url}}/admin/realms/{{tenant_id}}/users/{{user1Id}}",
+              "host": [
+                "{{keycloak_admin_url}}"
+              ],
+              "path": [
+                "admin",
+                "realms",
+                "{{tenant_id}}",
+                "users",
+                "{{user1Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Get Keycloak admin token for user management",
+                  "const kcUrl = pm.environment.get('keycloak_url') || pm.environment.get('kc_url');",
+                  "const kcRealm = 'master';",
+                  "const kcUser = pm.environment.get('kc_admin_user') || 'admin';",
+                  "const kcPass = pm.environment.get('kc_admin_password') || 'admin123';",
+                  "const tokenUrl = kcUrl.replace(/\\/realms\\/.*/, '') + '/realms/' + kcRealm + '/protocol/openid-connect/token';",
+                  "pm.sendRequest({",
+                  "  url: tokenUrl,",
+                  "  method: 'POST',",
+                  "  header: {'Content-Type': 'application/x-www-form-urlencoded'},",
+                  "  body: {mode:'urlencoded', urlencoded:[",
+                  "    {key:'grant_type',value:'password'},",
+                  "    {key:'client_id',value:'admin-cli'},",
+                  "    {key:'username',value:kcUser},",
+                  "    {key:'password',value:kcPass}",
+                  "  ]}",
+                  "}, (err, res) => {",
+                  "  if(err||!res) { console.log('KC admin token error:', err); return; }",
+                  "  const t = res.json();",
+                  "  pm.collectionVariables.set('_kc_admin_token', t.access_token);",
+                  "  console.log('KC admin token acquired');",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('45 Delete user1 204', () => pm.expect(pm.response.code).to.be.oneOf([204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "46 Delete User2 from Keycloak",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{_kc_admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloak_admin_url}}/admin/realms/{{tenant_id}}/users/{{user2Id}}",
+              "host": [
+                "{{keycloak_admin_url}}"
+              ],
+              "path": [
+                "admin",
+                "realms",
+                "{{tenant_id}}",
+                "users",
+                "{{user2Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Get Keycloak admin token for user management",
+                  "const kcUrl = pm.environment.get('keycloak_url') || pm.environment.get('kc_url');",
+                  "const kcRealm = 'master';",
+                  "const kcUser = pm.environment.get('kc_admin_user') || 'admin';",
+                  "const kcPass = pm.environment.get('kc_admin_password') || 'admin123';",
+                  "const tokenUrl = kcUrl.replace(/\\/realms\\/.*/, '') + '/realms/' + kcRealm + '/protocol/openid-connect/token';",
+                  "pm.sendRequest({",
+                  "  url: tokenUrl,",
+                  "  method: 'POST',",
+                  "  header: {'Content-Type': 'application/x-www-form-urlencoded'},",
+                  "  body: {mode:'urlencoded', urlencoded:[",
+                  "    {key:'grant_type',value:'password'},",
+                  "    {key:'client_id',value:'admin-cli'},",
+                  "    {key:'username',value:kcUser},",
+                  "    {key:'password',value:kcPass}",
+                  "  ]}",
+                  "}, (err, res) => {",
+                  "  if(err||!res) { console.log('KC admin token error:', err); return; }",
+                  "  const t = res.json();",
+                  "  pm.collectionVariables.set('_kc_admin_token', t.access_token);",
+                  "  console.log('KC admin token acquired');",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('46 Delete user2 204', () => pm.expect(pm.response.code).to.be.oneOf([204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "47 Delete Realm",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=true",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "realm",
+                "{{realmId}}"
+              ],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('47 Delete realm 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "48 Delete Schema",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/schema?schemaName={{schemaName}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "schema"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "{{schemaName}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('48 Delete schema 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "49 Delete DataSource",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/datasource/{{dsId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "datasource",
+                "{{dsId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('49 Delete DS 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -397,36 +3592,44 @@
         },
         {
           "name": "99 Teardown",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=true",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "realm",
+                "{{realmId}}"
+              ],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "true"
+                }
+              ]
+            }
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+                  "pm.test('99 teardown tolerant', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
                   "pm.collectionVariables.unset('_flow_failed');",
                   "pm.collectionVariables.unset('_flow_failed_at');"
                 ]
               }
             }
           ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{app_base_url}}/actuator/health",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "actuator",
-                "health"
-              ]
-            },
-            "auth": {
-              "type": "noauth"
-            }
-          },
           "response": []
         }
       ]

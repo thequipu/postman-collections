@@ -1,0 +1,11 @@
+{
+  "driverType": "SNOWFLAKE",
+  "dbHost": "OYYQWYP-MD26878.snowflakecomputing.com",
+  "dbPort": "",
+  "dbName": "DATATYPETESTING_SNOWFLAKE",
+  "dbUser": "QUIPU",
+  "dbPassword": "Glm7TwRE8HgFodpLeEVLkA==",
+  "dbSchema": "PUBLIC",
+  "driverClassName": "net.snowflake.client.jdbc.SnowflakeDriver",
+  "aesRandomIV": "Xihbd85Sd9z3jBSfUYS4vA=="
+}

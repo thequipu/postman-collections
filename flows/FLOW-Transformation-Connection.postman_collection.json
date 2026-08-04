@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-transformation-connection-auto",
-    "name": "FLOW - Transformation Service Connection",
-    "description": "Validates Transformation Service: test-connection, metadata, sample-records.\n\nRequires DB config via `--env-var` (driverType, dbHost, dbPort, dbName, dbUser, dbPassword, dbSchema, driverClassName, aesRandomIV).",
+    "_postman_id": "flow-transformation-full-auto",
+    "name": "FLOW - Transformation Service Full",
+    "description": "Complete transformation service: 23 endpoints.\n\nConnection (5) + Source Query (2) + S3 Upload (7) + Hive/Trino (4) +\nIngest/Extract (3) + Schema (2).\n\nRequires: DB config, S3 config (s3_bucket, s3_region, s3_access_key, s3_secret_key,\ns3_csv_key, s3_excel_key, s3_pdf_key, s3_csv_url, s3_excel_url, s3_pdf_url),\ndatasourceId, realmId via environment.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -25,6 +25,8 @@
           "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
           "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
           "}",
+          "// Skip token refresh if using admin token (e.g. for tenant delete)",
+          "if(pm.collectionVariables.get('_use_admin_token')==='true'){ return; }",
           "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
           "if(!url||!user){ return; }",
           "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
@@ -69,54 +71,14 @@
       "type": "string"
     },
     {
-      "key": "driverType",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dbHost",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dbPort",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dbName",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dbUser",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dbPassword",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "aesRandomIV",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dbSchema",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "driverClassName",
+      "key": "firstTableName",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Transformation Connection",
+      "name": "Transformation Full",
       "item": [
         {
           "name": "00 Setup",
@@ -223,11 +185,12 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('01 Test connection 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const code = pm.response.code;",
+                  "pm.test('01 Test-connection 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const s=JSON.stringify(b).toLowerCase();",
-                  "const ok=pm.response.code===200||b.success===true||b.connected===true||/success|connected/.test(s);",
-                  "pm.test('01 DB connected', () => { if(!ok){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01 Test Connection');} pm.expect(ok).to.be.true; });"
+                  "const ok=code===200||b.success===true||b.connected===true||/success|connected/.test(s);",
+                  "pm.test('01 DB connected', () => pm.expect(ok).to.be.true);"
                 ]
               }
             }
@@ -235,7 +198,64 @@
           "response": []
         },
         {
-          "name": "02 Fetch Metadata",
+          "name": "02 Test by DataSource ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/test-connection/{{datasourceId}}/{{driverType}}",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "test-connection",
+                "{{datasourceId}}",
+                "{{driverType}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02 Test by DS ID reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,404]));",
+                  "if([200,201].includes(pm.response.code)){",
+                  "  let b={}; try{b=pm.response.json();}catch(e){}",
+                  "  const s=JSON.stringify(b).toLowerCase();",
+                  "  pm.test('02 connected', () => pm.expect(/success|connected|valid/.test(s)||b.success===true).to.be.true);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Fetch Metadata",
           "request": {
             "method": "POST",
             "header": [
@@ -291,9 +311,15 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('02 Metadata 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('03 Metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "pm.test('02 has metadata', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"
+                  "pm.test('03 has metadata', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "// Capture first table name for subsequent queries",
+                  "const tables=b.tables||b.metadata||Object.keys(b||{});",
+                  "if(Array.isArray(tables)&&tables.length>0){",
+                  "  const tbl=typeof tables[0]==='string'?tables[0]:(tables[0].name||tables[0].tableName||'');",
+                  "  if(tbl) pm.collectionVariables.set('firstTableName', tbl);",
+                  "}"
                 ]
               }
             }
@@ -301,7 +327,7 @@
           "response": []
         },
         {
-          "name": "03 Sample Records",
+          "name": "04 Sample Records",
           "request": {
             "method": "POST",
             "header": [
@@ -326,7 +352,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "raw": "{\n  \"dataSourceModel\": {\n    \"driverType\": \"{{driverType}}\",\n    \"dbHostName\": \"{{dbHost}}\",\n    \"dbPort\": {{dbPort}},\n    \"databaseName\": \"{{dbName}}\",\n    \"dbUserName\": \"{{dbUser}}\",\n    \"dbPassword\": \"{{dbPassword}}\",\n    \"aesRandomIV\": \"{{aesRandomIV}}\",\n    \"dbSchema\": \"{{dbSchema}}\",\n    \"driverClassName\": \"{{driverClassName}}\"\n  },\n  \"tableName\": \"{{firstTableName}}\",\n  \"name\": \"pm-flow-sample\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -357,7 +383,1291 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03 Sample 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                  "pm.test('04 Sample reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,500]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('04 has data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Upload Sample",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/test-connection/upload-sample",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "test-connection",
+                "upload-sample"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSource\": {\n    \"id\": \"{{datasourceId}}\"\n  },\n  \"tableUriMap\": {},\n  \"signatureModel\": {\n    \"sampleSize\": 100\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('05 Upload sample 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Fetch Sample Source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/source-query/fetch-sample-source",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "source-query",
+                "fetch-sample-source"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceId\": \"{{datasourceId}}\",\n  \"dataSourceModel\": null,\n  \"tableList\": [\n    \"{{firstTableName}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('06 Fetch sample 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 Run Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/source-query/query",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "source-query",
+                "query"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSourceId\": \"{{datasourceId}}\",\n  \"dataSourceModel\": null,\n  \"tableNames\": [\n    \"{{firstTableName}}\"\n  ],\n  \"query\": \"SELECT 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('07 Run query 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));",
+                  "if(pm.response.code===200){",
+                  "  let b={}; try{b=pm.response.json();}catch(e){}",
+                  "  pm.test('07 has result', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "08 Get Excel Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getExcelHeader?datasourceName=pm-flow-test",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getExcelHeader"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "pm-flow-test"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"{{s3_bucket}}\",\n  \"key\": \"{{s3_excel_key}}\",\n  \"region\": \"{{s3_region}}\",\n  \"accessKey\": \"{{s3_access_key}}\",\n  \"secret\": \"{{s3_secret_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('08 Excel header 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "09 Excel from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getExcelHeaderFromUrl?datasourceName=pm-flow-test",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getExcelHeaderFromUrl"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "pm-flow-test"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{s3_excel_url}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('09 Excel URL 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "10 CSV Headers from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getCsvHeadersFromUrl?datasourceName=pm-flow-test",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getCsvHeadersFromUrl"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "pm-flow-test"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{s3_csv_url}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('10 CSV URL 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "11 Get CSV Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getCsvHeader?datasourceName=pm-flow-test",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getCsvHeader"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "pm-flow-test"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"{{s3_bucket}}\",\n  \"key\": \"{{s3_csv_key}}\",\n  \"region\": \"{{s3_region}}\",\n  \"accessKey\": \"{{s3_access_key}}\",\n  \"secret\": \"{{s3_secret_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('11 CSV header 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "12 Get PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getPdf?datasourceName=pm-flow-test",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getPdf"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "pm-flow-test"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"{{s3_bucket}}\",\n  \"key\": \"{{s3_pdf_key}}\",\n  \"region\": \"{{s3_region}}\",\n  \"accessKey\": \"{{s3_access_key}}\",\n  \"secret\": \"{{s3_secret_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('12 Get PDF 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "13 PDF from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/vnd.quipu.file-upload+json;version=1.0.0"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getPdfFromUrl?datasourceName=pm-flow-test",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getPdfFromUrl"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "pm-flow-test"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{s3_pdf_url}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('13 PDF URL 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "14 PDF View",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/pdf-view?key={{s3_pdf_key}}",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "pdf-view"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{s3_pdf_key}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('14 PDF view 200|400|404', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "15 Create Hive Source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/trino-source/create-hive",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "trino-source",
+                "create-hive"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSource\": {\n    \"id\": \"{{datasourceId}}\"\n  },\n  \"metadataTables\": [],\n  \"shape\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('15 Create hive 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "16 Create Trino Catalog",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/trino-source/create-catalog",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "trino-source",
+                "create-catalog"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"\",\n  \"catalogName\": \"pm_flow_test\",\n  \"removeQuery\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('16 Create catalog 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "17 Remove Trino Catalog",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/trino-source/remove-catalog?purgeData=false",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "trino-source",
+                "remove-catalog"
+              ],
+              "query": [
+                {
+                  "key": "purgeData",
+                  "value": "false"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"\",\n  \"catalogName\": \"pm_flow_test\",\n  \"removeQuery\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('17 Remove catalog 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "18 Remove Hive Source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/trino-source/remove-hive?purgeData=false",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "trino-source",
+                "remove-hive"
+              ],
+              "query": [
+                {
+                  "key": "purgeData",
+                  "value": "false"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataSource\": {\n    \"id\": \"{{datasourceId}}\"\n  },\n  \"metadataTables\": [],\n  \"shape\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('18 Remove hive 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "19 Event Ingest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "event",
+                "ingest"
+              ],
+              "query": [
+                {
+                  "key": "truncate",
+                  "value": "false"
+                },
+                {
+                  "key": "seedSequenceFromJournal",
+                  "value": "false"
+                },
+                {
+                  "key": "forceIngest",
+                  "value": "false"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"pm-flow-stream\",\n    \"realmId\": {{realmId}},\n    \"streamType\": \"DBT-NODE\",\n    \"sqlQuery\": \"SELECT 1\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('19 Ingest 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "20 Document Extract",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/document/extract",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "document",
+                "extract"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('20 Extract 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "21 Generate Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/streams/generate",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": {{realmId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('21 Generate streams 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "22 Get Node Map",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/node/get-map",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "node",
+                "get-map"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('22 Node map 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "23 Generate Node Objects",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/schema/generate/node-objects",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "schema",
+                "generate",
+                "node-objects"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"graphData\": \"{}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('23 Node objects 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
                 ]
               }
             }

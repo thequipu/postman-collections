@@ -1,0 +1,16 @@
+{
+  "driverType": "PDF",
+  "dbHost": "",
+  "dbPort": "",
+  "dbName": "",
+  "dbUser": "",
+  "dbPassword": "",
+  "dbSchema": "",
+  "driverClassName": "",
+  "aesRandomIV": "",
+  "bucket": "quipu-api-tests",
+  "key": "config/test-files/sample-document.pdf",
+  "region": "eu-central-1",
+  "accessKey": "",
+  "secret": ""
+}

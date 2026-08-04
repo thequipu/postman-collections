@@ -1,0 +1,11 @@
+{
+  "driverType": "MARIADB",
+  "dbHost": "207.180.249.216",
+  "dbPort": "3309",
+  "dbName": "datatypetesting_mariadb",
+  "dbUser": "root",
+  "dbPassword": "br9Z9iWr7QIhQzh7A7EbEg==",
+  "dbSchema": "datatypetesting_mariadb",
+  "driverClassName": "org.mariadb.jdbc.Driver",
+  "aesRandomIV": "YGht/nLJNrFQ7poNNmoaCQ=="
+}

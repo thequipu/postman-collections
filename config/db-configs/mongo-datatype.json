@@ -1,0 +1,11 @@
+{
+  "driverType": "MONGO",
+  "dbHost": "207.180.249.216",
+  "dbPort": "27018",
+  "dbName": "datatypetesting_mongo",
+  "dbUser": "quipu_admin",
+  "dbPassword": "RMBUOBkBZbZBLM4/v5SakQ==",
+  "dbSchema": "admin",
+  "driverClassName": "",
+  "aesRandomIV": "sKJtPIkVxxfO2wE3Qyp4uQ=="
+}

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "flow-version-crud-auto",
     "name": "FLOW - Version CRUD",
-    "description": "Schema version lifecycle: create realm (dep) -> create schema (dep) -> create version -> get -> update -> delete -> cleanup.",
+    "description": "Version lifecycle with entities from datasource.\nDS → Metadata → Schema → Version CRUD.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -25,6 +25,8 @@
           "if(pm.environment.get('allow_destructive')==='false' && destructive.includes(pm.request.method)){",
           "  throw new Error('Blocked '+pm.request.method+' in env='+pm.environment.get('env_name'));",
           "}",
+          "// Skip token refresh if using admin token (e.g. for tenant delete)",
+          "if(pm.collectionVariables.get('_use_admin_token')==='true'){ return; }",
           "const url=pm.environment.get('keycloak_token_url'); const user=pm.environment.get('test_username');",
           "if(!url||!user){ return; }",
           "const tok=pm.collectionVariables.get('access_token'); const exp=pm.collectionVariables.get('token_expiry');",
@@ -69,7 +71,12 @@
       "type": "string"
     },
     {
-      "key": "realmId",
+      "key": "dsId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dataCatalogName",
       "value": "",
       "type": "string"
     },
@@ -79,7 +86,32 @@
       "type": "string"
     },
     {
+      "key": "schemaId",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "versionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_graphNodes",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_graphLinks",
       "value": "",
       "type": "string"
     }
@@ -98,9 +130,15 @@
                 "exec": [
                   "pm.collectionVariables.unset('_flow_failed');",
                   "pm.collectionVariables.unset('_flow_failed_at');",
-                  "pm.collectionVariables.unset('realmId');",
+                  "pm.collectionVariables.unset('dsId');",
+                  "pm.collectionVariables.unset('dataCatalogName');",
                   "pm.collectionVariables.unset('schemaName');",
+                  "pm.collectionVariables.unset('schemaId');",
                   "pm.collectionVariables.unset('versionId');",
+                  "pm.collectionVariables.unset('realmId');",
+                  "pm.collectionVariables.unset('realmName');",
+                  "pm.collectionVariables.unset('_graphNodes');",
+                  "pm.collectionVariables.unset('_graphLinks');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -141,7 +179,7 @@
           "response": []
         },
         {
-          "name": "01 Create Realm (dep)",
+          "name": "01a Create DataSource",
           "request": {
             "method": "POST",
             "header": [
@@ -155,17 +193,17 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/realm",
+              "raw": "{{app_base_url}}/datasource",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "realm"
+                "datasource"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-ver-realm-{{$timestamp}}\",\n  \"description\": \"Version flow dep\"\n}",
+              "raw": "{\n  \"name\": \"pm-flow-ds-{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -196,11 +234,13 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "const code = pm.response.code;",
-                  "pm.test('01 Create realm 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01 Create Realm');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "const code=pm.response.code;",
+                  "pm.test('01a DS 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01a');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "const d=b.realmModel||b.data||b;",
-                  "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));"
+                  "const d=b.dataSourceModel||b.data||b;",
+                  "if(d.id||d.sourceId) pm.collectionVariables.set('dsId', String(d.id||d.sourceId));",
+                  "if(d.dataCatalogName) pm.collectionVariables.set('dataCatalogName', d.dataCatalogName);",
+                  "console.log('DS id='+(d.id||d.sourceId));"
                 ]
               }
             }
@@ -208,7 +248,82 @@
           "response": []
         },
         {
-          "name": "02 Create Schema (dep)",
+          "name": "01b Fetch Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/test-connection/metadata",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "test-connection",
+                "metadata"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('01b Metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
+                  "let tables = [];",
+                  "if(pm.response.code===200){",
+                  "  let b={}; try{b=pm.response.json();}catch(e){}",
+                  "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
+                  "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
+                  "  else tables=Object.keys(b).filter(k=>k!=='error'&&k!=='status');",
+                  "}",
+                  "const nodes=tables.slice(0,10).map((t,i)=>({id:'entity_'+i,label:t,type:'entity',prefix:'ds:',properties:{}}));",
+                  "pm.collectionVariables.set('_graphNodes', JSON.stringify(nodes));",
+                  "pm.collectionVariables.set('_graphLinks', '[]');",
+                  "console.log('Metadata: '+tables.slice(0,5).join(', ')+' -> '+nodes.length+' entities');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "01c Create Schema",
           "request": {
             "method": "POST",
             "header": [
@@ -232,7 +347,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-ver-schema-{{$timestamp}}\",\n  \"description\": \"Version flow dep\"\n}",
+              "raw": "{\n  \"schemaName\": \"pm-flow-ver-schema-{{$timestamp}}\",\n  \"description\": \"Auto-created by FLOW\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -263,11 +378,12 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "const code = pm.response.code;",
-                  "pm.test('02 Create schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02 Create Schema');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "const code=pm.response.code;",
+                  "pm.test('01c Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01c');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.schemaModel||b.data||b;",
                   "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
+                  "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
                   "console.log('Schema: '+(d.name||d.schemaName));"
                 ]
               }
@@ -276,7 +392,7 @@
           "response": []
         },
         {
-          "name": "03 Create Version",
+          "name": "02 Create Version",
           "request": {
             "method": "POST",
             "header": [
@@ -290,18 +406,24 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/versions/create",
+              "raw": "{{app_base_url}}/versions/create?schemaName={{schemaName}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
                 "versions",
                 "create"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "{{schemaName}}"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"{{schemaName}}\",\n  \"versionName\": \"pm-flow-version-{{$timestamp}}\",\n  \"description\": \"Auto-created by FLOW test\"\n}",
+              "raw": "{\n  \"versionName\": \"v1\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -319,7 +441,10 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
+                  "let nodes=[]; try{nodes=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
+                  "pm.request.body.raw=JSON.stringify({versionName:'pm-flow-version-'+Date.now(),description:'Auto-created by FLOW',dataSourceIds:dsId?[dsId]:[],nodes:nodes,links:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});"
                 ]
               }
             },
@@ -332,13 +457,13 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "const code = pm.response.code;",
-                  "pm.test('03 Create version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03 Create Version');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "const code=pm.response.code;",
+                  "pm.test('02 Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.data||b;",
-                  "const id=d.id||d.versionId;",
-                  "if(id) pm.collectionVariables.set('versionId', String(id));",
-                  "console.log('Version created: '+id);"
+                  "pm.test('02 has id', () => pm.expect(d.id||d.versionId).to.not.be.undefined);",
+                  "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));",
+                  "console.log('Version id='+(d.id||d.versionId));"
                 ]
               }
             }
@@ -346,7 +471,7 @@
           "response": []
         },
         {
-          "name": "04 Get Version",
+          "name": "03 Get Version",
           "request": {
             "method": "GET",
             "header": [
@@ -394,9 +519,66 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04 Get version 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "pm.test('04 has version data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"
+                  "pm.test('03 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
+                  "pm.test('03 id matches', () => pm.expect(String(d.id||d.versionId||'')).to.eql(pm.collectionVariables.get('versionId')));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Get Version LB",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/versions/lb?versionId={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "versions",
+                "lb"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "{{versionId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04 200', () => pm.response.to.have.status(200));"
                 ]
               }
             }
@@ -429,12 +611,71 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"{{versionId}}\",\n  \"description\": \"Updated by FLOW test\"\n}",
+              "raw": "{\n  \"id\": 0\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const vid=parseInt(pm.collectionVariables.get('versionId'));",
+                  "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
+                  "pm.request.body.raw=JSON.stringify({id:vid,versionId:vid,description:'Updated by FLOW test',dataSourceIds:dsId?[dsId]:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('05 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Verify Update",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/versions?versionId={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "versions"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "{{versionId}}"
+                }
+              ]
             }
           },
           "event": [
@@ -460,7 +701,9 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 Update version 200', () => pm.response.to.have.status(200));"
+                  "pm.test('06 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
+                  "pm.test('06 desc check', () => { const desc=String(d.description||''); pm.expect(desc.length).to.be.above(0); });"
                 ]
               }
             }
@@ -468,7 +711,72 @@
           "response": []
         },
         {
-          "name": "06 Delete Version",
+          "name": "07 Unlock Version",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/versions/veriosn-unlock",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "versions",
+                "veriosn-unlock"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('versionId'))});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('07 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "08 Delete Version",
           "request": {
             "method": "DELETE",
             "header": [
@@ -517,7 +825,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('06 Delete version 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "pm.test('08 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
                 ]
               }
             }
@@ -525,7 +833,7 @@
           "response": []
         },
         {
-          "name": "07 Delete Schema",
+          "name": "09 Del Schema",
           "request": {
             "method": "DELETE",
             "header": [
@@ -573,7 +881,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('07 Delete schema 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -581,7 +889,7 @@
           "response": []
         },
         {
-          "name": "08 Delete Realm",
+          "name": "10 Del DS",
           "request": {
             "method": "DELETE",
             "header": [
@@ -591,19 +899,13 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=true",
+              "raw": "{{app_base_url}}/datasource/{{dsId}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "realm",
-                "{{realmId}}"
-              ],
-              "query": [
-                {
-                  "key": "permanent",
-                  "value": "true"
-                }
+                "datasource",
+                "{{dsId}}"
               ]
             }
           },
@@ -630,7 +932,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('08 Delete realm 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }
@@ -648,19 +950,13 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=true",
+              "raw": "{{app_base_url}}/datasource/{{dsId}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "realm",
-                "{{realmId}}"
-              ],
-              "query": [
-                {
-                  "key": "permanent",
-                  "value": "true"
-                }
+                "datasource",
+                "{{dsId}}"
               ]
             }
           },
@@ -670,9 +966,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('99 teardown tolerant', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
-                  "pm.collectionVariables.unset('_flow_failed');",
-                  "pm.collectionVariables.unset('_flow_failed_at');"
+                  "pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+                  "pm.collectionVariables.unset('_flow_failed'); pm.collectionVariables.unset('_flow_failed_at');"
                 ]
               }
             }

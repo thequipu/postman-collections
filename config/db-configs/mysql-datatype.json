@@ -1,0 +1,11 @@
+{
+  "driverType": "MYSQL",
+  "dbHost": "207.180.249.216",
+  "dbPort": "3306",
+  "dbName": "datatypetesting_mysql",
+  "dbUser": "root",
+  "dbPassword": "7RZ2uQysHK48wOK07Mq3/Q==",
+  "dbSchema": "datatypetesting_mysql",
+  "driverClassName": "com.mysql.cj.jdbc.Driver",
+  "aesRandomIV": "Y/wiwlY/oFQnjKdpschsXQ=="
+}

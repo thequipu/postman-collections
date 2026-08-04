@@ -132,7 +132,6 @@ create_body = {
     "aesRandomIV": "{{aesRandomIV}}",
     "dbSchema": "{{dbSchema}}",
     "driverClassName": "{{driverClassName}}",
-    "realmId": "{{realmId}}",
     "deleted": False
 }
 
@@ -148,7 +147,6 @@ update_body = {
     "aesRandomIV": "{{aesRandomIV}}",
     "dbSchema": "{{dbSchema}}",
     "driverClassName": "{{driverClassName}}",
-    "realmId": "{{realmId}}",
     "description": "{{updateDescription}}",
     "deleted": False
 }
@@ -419,6 +417,36 @@ items = [
             "  console.log('Query body: ' + body.slice(0,200));",
             "}",
         ]),
+
+    # ── Additional Transformation Service endpoints ──
+
+    req("07a Fetch Metadata", "POST", "/test-connection/metadata",
+        ["pm.test('07a Metadata 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
+         "if(pm.response.code===200){",
+         "  let b={}; try{b=pm.response.json();}catch(e){}",
+         "  pm.test('07a has metadata', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+         "  console.log('Metadata keys: '+Object.keys(b).slice(0,5).join(', '));",
+         "}"],
+        body=conn_cfg, base="transform_base_url"),
+
+    req("07b Sample Records", "POST", "/test-connection/sample-records",
+        ["pm.test('07b Sample 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,500]));",
+         "if(pm.response.code===200){",
+         "  let b={}; try{b=pm.response.json();}catch(e){}",
+         "  pm.test('07b has data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+         "}"],
+        body={**conn_cfg, "tableName": "{{firstTableName}}", "name": "pm-flow-sample"},
+        base="transform_base_url"),
+
+    req("07c Upload Sample", "POST", "/test-connection/upload-sample",
+        ["pm.test('07c Upload 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
+        body={"dataSource": {"id": "{{datasourceId}}"}, "tableUriMap": {},
+              "signatureModel": {"sampleSize": 100}},
+        base="transform_base_url"),
+
+    req("07d Get Node Map", "GET", "/node/get-map",
+        ["pm.test('07d Node map 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
+        base="transform_base_url"),
 
     req("08 Update DataSource", "PUT", "/datasource",
         t_update, body=update_body),

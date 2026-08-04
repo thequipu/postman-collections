@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-lumen-pipeline-auto",
-    "name": "FLOW - Lumen Pipeline",
-    "description": "Lumen AI pipeline: query-builder, describe, embed, cluster, semantic-chat.\n\nSteps 03-05 require `--env-var versionUri=...` for a valid schema version.\nSteps 01-02 require `{{realm}}` from environment.",
+    "_postman_id": "flow-metadata-read-auto",
+    "name": "FLOW - Metadata Read",
+    "description": "Metadata read operations: datasource listing, tables URNs, nodes, metadata-graph.\n\nUses existing data — no creation/deletion needed.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -71,14 +71,14 @@
       "type": "string"
     },
     {
-      "key": "versionUri",
+      "key": "metaDsId",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Lumen Pipeline",
+      "name": "Metadata Read",
       "item": [
         {
           "name": "00 Setup",
@@ -90,7 +90,7 @@
                 "exec": [
                   "pm.collectionVariables.unset('_flow_failed');",
                   "pm.collectionVariables.unset('_flow_failed_at');",
-                  "pm.collectionVariables.set('_skip_url', pm.environment.get('lumen_base_url') + '/actuator/health');",
+                  "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
               }
@@ -114,9 +114,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{lumen_base_url}}/actuator/health",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
                 "actuator",
@@ -130,168 +130,24 @@
           "response": []
         },
         {
-          "name": "01 Query Builder",
+          "name": "01 Get All DataSources",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/query-builder/query",
+              "raw": "{{app_base_url}}/metadata/datasource",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "query-builder",
-                "query"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"realm\": \"{{realm}}\",\n  \"question\": \"Show all entities\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('01 Query builder 200', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "if(pm.response.code===200) console.log('Generated query: '+JSON.stringify(b).slice(0,200));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "02 Reset Schema",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{lumen_base_url}}/query-builder/reset-schema",
-              "host": [
-                "{{lumen_base_url}}"
-              ],
-              "path": [
-                "query-builder",
-                "reset-schema"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"realm\": \"{{realm}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('02 Reset schema 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "03 Describe Datasource",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{lumen_base_url}}/lumen/describe/datasource",
-              "host": [
-                "{{lumen_base_url}}"
-              ],
-              "path": [
-                "lumen",
-                "describe",
+                "metadata",
                 "datasource"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"{{versionUri}}\",\n  \"overwrite\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "event": [
@@ -317,9 +173,15 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03 Describe 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,404]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "console.log('Describe response: '+JSON.stringify(b).slice(0,200));"
+                  "pm.test('01 Metadata DS 200', () => pm.response.to.have.status(200));",
+                  "let b=[]; try{b=pm.response.json();}catch(e){}",
+                  "pm.test('01 has data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "// Capture first datasource id for next step",
+                  "const arr=Array.isArray(b)?b:(b.data||b.content||[]);",
+                  "if(arr.length>0){",
+                  "  const id=arr[0].id||arr[0].sourceId||arr[0].datasourceId;",
+                  "  if(id) pm.collectionVariables.set('metaDsId', String(id));",
+                  "}"
                 ]
               }
             }
@@ -327,7 +189,176 @@
           "response": []
         },
         {
-          "name": "04 Embed Datasource",
+          "name": "02 Get DataSource by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata/datasource/{{metaDsId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata",
+                "datasource",
+                "{{metaDsId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('02 DS by id 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));",
+                  "if(pm.response.code===200){",
+                  "  let b={}; try{b=pm.response.json();}catch(e){}",
+                  "  pm.test('02 has datasource data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Get Tables URNs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata/tables/urns",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata",
+                "tables",
+                "urns"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('03 Tables URNs 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Get Nodes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata/nodes?schemaName={{schemaName}}&versionId={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata",
+                "nodes"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "{{schemaName}}"
+                },
+                {
+                  "key": "versionId",
+                  "value": "{{versionId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04 Nodes 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Fetch DataSource Graph",
           "request": {
             "method": "POST",
             "header": [
@@ -341,19 +372,18 @@
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/lumen/embed/datasource",
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "lumen",
-                "embed",
-                "datasource"
+                "metadata-graph",
+                "fetch-data-source"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"{{versionUri}}\",\n  \"overwrite\": false\n}",
+              "raw": "{\n  \"uri\": \"{{metaDsId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -384,7 +414,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04 Embed 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,404]));"
+                  "pm.test('05 Fetch DS graph 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
                 ]
               }
             }
@@ -392,7 +422,7 @@
           "response": []
         },
         {
-          "name": "05 Cluster Preview",
+          "name": "06 Add Description",
           "request": {
             "method": "POST",
             "header": [
@@ -406,19 +436,18 @@
               }
             ],
             "url": {
-              "raw": "{{lumen_base_url}}/lumen/cluster/final-clusters",
+              "raw": "{{app_base_url}}/metadata-graph/add-description",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "lumen",
-                "cluster",
-                "final-clusters"
+                "metadata-graph",
+                "add-description"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"{{versionUri}}\"\n}",
+              "raw": "{\n  \"nodeUri\": \"pm-flow-test-node\",\n  \"description\": \"Test description by FLOW\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -449,73 +478,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 Clusters 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "if(b.clusters) console.log('Clusters: '+b.clusters.length);"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "06 Semantic Chat",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{lumen_base_url}}/semantic-chat/getAnswer",
-              "host": [
-                "{{lumen_base_url}}"
-              ],
-              "path": [
-                "semantic-chat",
-                "getAnswer"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"messageContextModels\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a data analyst. Data: [{'id':1,'name':'test'}]\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"What is in the data?\"\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('06 Semantic chat 2xx or 400', () => pm.expect(pm.response.code).to.be.oneOf([200,400,404]));"
+                  "pm.test('06 Add description 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"
                 ]
               }
             }
@@ -541,9 +504,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{lumen_base_url}}/actuator/health",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
-                "{{lumen_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
                 "actuator",

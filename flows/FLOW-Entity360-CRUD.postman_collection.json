@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-schema-crud-auto",
-    "name": "FLOW - Schema CRUD",
-    "description": "Schema lifecycle with entities from datasource.",
+    "_postman_id": "flow-entity360-crud-auto",
+    "name": "FLOW - Entity360 CRUD",
+    "description": "Entity360 with entities.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -114,11 +114,21 @@
       "key": "_graphLinks",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "e360Id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pathId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Schema CRUD",
+      "name": "Entity360 CRUD",
       "item": [
         {
           "name": "00 Setup",
@@ -139,6 +149,8 @@
                   "pm.collectionVariables.unset('realmName');",
                   "pm.collectionVariables.unset('_graphNodes');",
                   "pm.collectionVariables.unset('_graphLinks');",
+                  "pm.collectionVariables.unset('e360Id');",
+                  "pm.collectionVariables.unset('pathId');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -323,57 +335,7 @@
           "response": []
         },
         {
-          "name": "02 List Schemas",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/schema",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "schema"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('02 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "03 Create Schema",
+          "name": "01c Create Schema",
           "request": {
             "method": "POST",
             "header": [
@@ -397,7 +359,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"pm-flow-schema-{{$timestamp}}\",\n  \"description\": \"Auto-created by FLOW\"\n}",
+              "raw": "{\n  \"schemaName\": \"pm-flow-e360-schema-{{$timestamp}}\",\n  \"description\": \"Auto-created by FLOW\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -429,7 +391,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('03 Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01c Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01c');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.schemaModel||b.data||b;",
                   "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
@@ -442,7 +404,7 @@
           "response": []
         },
         {
-          "name": "03b Create Version",
+          "name": "01d Create Version",
           "request": {
             "method": "POST",
             "header": [
@@ -508,7 +470,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('03b Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03b');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01d Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01d');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.data||b;",
                   "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));",
@@ -520,7 +482,7 @@
           "response": []
         },
         {
-          "name": "03c Fetch DS Graph",
+          "name": "01e Fetch DS Graph",
           "request": {
             "method": "POST",
             "header": [
@@ -576,7 +538,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03c Graph 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('01e Graph 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const newNodes=b.nodes||[]; const newLinks=b.links||[];",
                   "let nodes=[]; try{nodes=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
@@ -592,7 +554,7 @@
           "response": []
         },
         {
-          "name": "03d Save Schema Graph",
+          "name": "01f Save Schema Graph",
           "request": {
             "method": "POST",
             "header": [
@@ -652,7 +614,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03d Graph saved 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,204]));",
+                  "pm.test('01f Graph saved 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,204]));",
                   "console.log('Schema graph saved');"
                 ]
               }
@@ -661,68 +623,9 @@
           "response": []
         },
         {
-          "name": "04 Get Schema by Name",
+          "name": "02 Create Entity360",
           "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "schema",
-                "name"
-              ],
-              "query": [
-                {
-                  "key": "schemaName",
-                  "value": "{{schemaName}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('04 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.schemaModel||b.data||b;",
-                  "pm.test('04 name matches', () => pm.expect(String(d.name||d.schemaName||'')).to.eql(pm.collectionVariables.get('schemaName')));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "05 Update Schema",
-          "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               {
                 "key": "X-TENANT-ID",
@@ -734,17 +637,23 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema",
+              "raw": "{{app_base_url}}/entity-360?versionsId={{versionId}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema"
+                "entity-360"
+              ],
+              "query": [
+                {
+                  "key": "versionsId",
+                  "value": "{{versionId}}"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"{{schemaName}}\",\n  \"description\": \"Updated by FLOW test\"\n}",
+              "raw": "{\n  \"namedEntity\": \"pm-flow-e360-{{$timestamp}}\",\n  \"description\": \"FLOW\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -775,7 +684,11 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 200', () => pm.response.to.have.status(200));"
+                  "const code=pm.response.code;",
+                  "pm.test('02 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
+                  "if(d.id||d.entity360Id) pm.collectionVariables.set('e360Id', String(d.id||d.entity360Id));",
+                  "if(d.pathId) pm.collectionVariables.set('pathId', String(d.pathId));"
                 ]
               }
             }
@@ -783,7 +696,7 @@
           "response": []
         },
         {
-          "name": "06 Verify Update",
+          "name": "03 Get",
           "request": {
             "method": "GET",
             "header": [
@@ -793,18 +706,21 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
+              "raw": "{{app_base_url}}/entity-360?namedEntity=pm-flow-e360&versionsId={{versionId}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema",
-                "name"
+                "entity-360"
               ],
               "query": [
                 {
-                  "key": "schemaName",
-                  "value": "{{schemaName}}"
+                  "key": "namedEntity",
+                  "value": "pm-flow-e360"
+                },
+                {
+                  "key": "versionsId",
+                  "value": "{{versionId}}"
                 }
               ]
             }
@@ -832,9 +748,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('06 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.schemaModel||b.data||b;",
-                  "pm.test('06 updated', () => pm.expect(String(d.description||'')).to.include('Updated by FLOW'));"
+                  "pm.test('03 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
                 ]
               }
             }
@@ -842,7 +756,521 @@
           "response": []
         },
         {
-          "name": "07 Del Graph",
+          "name": "04 Get All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/all?versionsId={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "versionsId",
+                  "value": "{{versionId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 By VersionIds",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/all/versionIds?versionsIds={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "all",
+                "versionIds"
+              ],
+              "query": [
+                {
+                  "key": "versionsIds",
+                  "value": "{{versionId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('05 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 ERFlow",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/erflow-enabled",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "erflow-enabled"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('06 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 Flow Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/entity-360-flow-info?versionsId={{versionId}}&pathId={{pathId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "entity-360-flow-info"
+              ],
+              "query": [
+                {
+                  "key": "versionsId",
+                  "value": "{{versionId}}"
+                },
+                {
+                  "key": "pathId",
+                  "value": "{{pathId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('07 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "08 Vector Search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/vector-search-with-status?versionId={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "vector-search-with-status"
+              ],
+              "query": [
+                {
+                  "key": "versionId",
+                  "value": "{{versionId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('08 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "09 Get by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/entity360entity/{{e360Id}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "entity360entity",
+                "{{e360Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('09 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "10 By PathID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/entity360-path-id?pathId={{pathId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "entity360-path-id"
+              ],
+              "query": [
+                {
+                  "key": "pathId",
+                  "value": "{{pathId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('10 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "11 Update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360?versionsId={{versionId}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360"
+              ],
+              "query": [
+                {
+                  "key": "versionsId",
+                  "value": "{{versionId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('e360Id')),namedEntity:'pm-flow-e360-updated',description:'Updated'});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('11 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "12 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/entity-360/{{e360Id}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "entity-360",
+                "{{e360Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('12 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "13 Del Graph",
           "request": {
             "method": "DELETE",
             "header": [
@@ -890,7 +1318,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('07 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('13 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -898,7 +1326,7 @@
           "response": []
         },
         {
-          "name": "08 Del Version",
+          "name": "14 Del Version",
           "request": {
             "method": "DELETE",
             "header": [
@@ -947,7 +1375,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('08 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('14 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -955,7 +1383,7 @@
           "response": []
         },
         {
-          "name": "09 Del Schema",
+          "name": "15 Del Schema",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1003,7 +1431,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('09 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "pm.test('15 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }
@@ -1011,7 +1439,7 @@
           "response": []
         },
         {
-          "name": "10 Del DS",
+          "name": "16 Del DS",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1054,7 +1482,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
+                  "pm.test('16 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }

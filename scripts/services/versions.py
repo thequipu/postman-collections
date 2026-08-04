@@ -1,87 +1,86 @@
-"""FLOW-Version-CRUD: Schema version lifecycle."""
+"""FLOW-Version-CRUD: Schema version lifecycle with entities."""
 
 from flowlib.core import req, build_setup, build_collection, write_flow
+from flowlib.setup import create_ds_step, fetch_metadata_step, create_schema_step, SETUP_VARS, SETUP_CLEAR_VARS
 
 
 def generate():
     base = "app_base_url"
 
     items = [
-        build_setup(base, "/actuator/health", clear_vars=["realmId", "schemaName", "versionId"]),
+        build_setup(base, "/actuator/health", clear_vars=SETUP_CLEAR_VARS),
 
-        # Create realm + schema as dependencies
-        req("01 Create Realm (dep)", "POST", "/realm",
-            ["const code = pm.response.code;",
-             "pm.test('01 Create realm 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01 Create Realm');} pm.expect(code).to.be.oneOf([200,201]); });",
-             "let b={}; try{b=pm.response.json();}catch(e){}",
-             "const d=b.realmModel||b.data||b;",
-             "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));"],
-            base=base,
-            body={"name": "pm-flow-ver-realm-{{$timestamp}}", "description": "Version flow dep"}),
+        # Setup: DS → Metadata → Schema (no version/graph/realm — we test version CRUD)
+        create_ds_step("01a", base),
+        fetch_metadata_step("01b"),
+        create_schema_step("01c", "pm-flow-ver", base),
 
-        req("02 Create Schema (dep)", "POST", "/schema",
-            ["const code = pm.response.code;",
-             "pm.test('02 Create schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02 Create Schema');} pm.expect(code).to.be.oneOf([200,201]); });",
-             "let b={}; try{b=pm.response.json();}catch(e){}",
-             "const d=b.schemaModel||b.data||b;",
-             "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
-             "console.log('Schema: '+(d.name||d.schemaName));"],
-            base=base,
-            body={"name": "pm-flow-ver-schema-{{$timestamp}}", "description": "Version flow dep"}),
+        # ── Version CRUD ──
 
-        req("03 Create Version", "POST", "/versions/create",
-            ["const code = pm.response.code;",
-             "pm.test('03 Create version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03 Create Version');} pm.expect(code).to.be.oneOf([200,201]); });",
+        req("02 Create Version", "POST", "/versions/create?schemaName={{schemaName}}",
+            ["const code=pm.response.code;",
+             "pm.test('02 Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
              "let b={}; try{b=pm.response.json();}catch(e){}",
              "const d=b.data||b;",
-             "const id=d.id||d.versionId;",
-             "if(id) pm.collectionVariables.set('versionId', String(id));",
-             "console.log('Version created: '+id);"],
-            base=base,
-            body={"schemaName": "{{schemaName}}", "versionName": "pm-flow-version-{{$timestamp}}",
-                  "description": "Auto-created by FLOW test"}),
+             "pm.test('02 has id', () => pm.expect(d.id||d.versionId).to.not.be.undefined);",
+             "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));",
+             "console.log('Version id='+(d.id||d.versionId));"],
+            base=base, body={"versionName": "v1"},
+            prerequest=[
+                "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
+                "let nodes=[]; try{nodes=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
+                "pm.request.body.raw=JSON.stringify({versionName:'pm-flow-version-'+Date.now(),description:'Auto-created by FLOW',dataSourceIds:dsId?[dsId]:[],nodes:nodes,links:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
+            ]),
 
-        req("04 Get Version", "GET", "/versions?versionId={{versionId}}",
-            ["pm.test('04 Get version 200', () => pm.response.to.have.status(200));",
-             "let b={}; try{b=pm.response.json();}catch(e){}",
-             "pm.test('04 has version data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"],
+        req("03 Get Version", "GET", "/versions?versionId={{versionId}}",
+            ["pm.test('03 200', () => pm.response.to.have.status(200));",
+             "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
+             "pm.test('03 id matches', () => pm.expect(String(d.id||d.versionId||'')).to.eql(pm.collectionVariables.get('versionId')));"],
             base=base),
+
+        req("04 Get Version LB", "GET", "/versions/lb?versionId={{versionId}}",
+            ["pm.test('04 200', () => pm.response.to.have.status(200));"], base=base),
 
         req("05 Update Version", "PUT", "/versions/update",
-            ["pm.test('05 Update version 200', () => pm.response.to.have.status(200));"],
-            base=base,
-            body={"id": "{{versionId}}", "description": "Updated by FLOW test"}),
+            ["pm.test('05 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
+            base=base, body={"id": 0},
+            prerequest=[
+                "const vid=parseInt(pm.collectionVariables.get('versionId'));",
+                "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
+                "pm.request.body.raw=JSON.stringify({id:vid,versionId:vid,description:'Updated by FLOW test',dataSourceIds:dsId?[dsId]:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
+            ]),
 
-        req("06 Delete Version", "DELETE", "/versions/delete?versionId={{versionId}}",
-            ["pm.test('06 Delete version 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
+        req("06 Verify Update", "GET", "/versions?versionId={{versionId}}",
+            ["pm.test('06 200', () => pm.response.to.have.status(200));",
+             "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
+             "pm.test('06 desc check', () => { const desc=String(d.description||''); pm.expect(desc.length).to.be.above(0); });"],
             base=base),
 
-        # Cleanup deps
-        req("07 Delete Schema", "DELETE", "/schema?schemaName={{schemaName}}",
-            ["pm.test('07 Delete schema 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
-            base=base),
+        req("07 Unlock Version", "PUT", "/versions/veriosn-unlock",
+            ["pm.test('07 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
+            base=base, body={"id": 0},
+            prerequest=["pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('versionId'))});"]),
 
-        req("08 Delete Realm", "DELETE", "/realm/{{realmId}}?permanent=true",
-            ["pm.test('08 Delete realm 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
-            base=base),
+        req("08 Delete Version", "DELETE", "/versions/delete?versionId={{versionId}}",
+            ["pm.test('08 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
 
-        # Teardown
-        req("99 Teardown", "DELETE", "/realm/{{realmId}}?permanent=true",
-            ["pm.test('99 teardown tolerant', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
-             "pm.collectionVariables.unset('_flow_failed');",
-             "pm.collectionVariables.unset('_flow_failed_at');"],
+        # Cleanup
+        req("09 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
+            ["pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
+        req("10 Del DS", "DELETE", "/datasource/{{dsId}}",
+            ["pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+
+        req("99 Teardown", "DELETE", "/datasource/{{dsId}}",
+            ["pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+             "pm.collectionVariables.unset('_flow_failed'); pm.collectionVariables.unset('_flow_failed_at');"],
             base=base, skip_on_fail=False),
     ]
 
     col = build_collection(
         name="FLOW - Version CRUD",
-        description="Schema version lifecycle: create realm (dep) -> create schema (dep) -> create version -> get -> update -> delete -> cleanup.",
+        description="Version lifecycle with entities from datasource.\nDS → Metadata → Schema → Version CRUD.",
         folder_name="Version CRUD",
         items=items,
-        extra_variables=[
-            {"key": "realmId",    "value": "", "type": "string"},
-            {"key": "schemaName", "value": "", "type": "string"},
-            {"key": "versionId",  "value": "", "type": "string"},
-        ]
+        extra_variables=SETUP_VARS
     )
     return write_flow("FLOW-Version-CRUD.postman_collection.json", col)

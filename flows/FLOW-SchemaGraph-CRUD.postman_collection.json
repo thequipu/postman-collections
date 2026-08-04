@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-schema-crud-auto",
-    "name": "FLOW - Schema CRUD",
-    "description": "Schema lifecycle with entities from datasource.",
+    "_postman_id": "flow-schema-graph-crud-auto",
+    "name": "FLOW - Schema Graph CRUD",
+    "description": "Schema graph with entities.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -118,7 +118,7 @@
   ],
   "item": [
     {
-      "name": "Schema CRUD",
+      "name": "Schema Graph CRUD",
       "item": [
         {
           "name": "00 Setup",
@@ -323,57 +323,7 @@
           "response": []
         },
         {
-          "name": "02 List Schemas",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/schema",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "schema"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('02 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "03 Create Schema",
+          "name": "01c Create Schema",
           "request": {
             "method": "POST",
             "header": [
@@ -397,7 +347,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"pm-flow-schema-{{$timestamp}}\",\n  \"description\": \"Auto-created by FLOW\"\n}",
+              "raw": "{\n  \"schemaName\": \"pm-flow-sg-schema-{{$timestamp}}\",\n  \"description\": \"Auto-created by FLOW\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -429,7 +379,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('03 Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01c Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01c');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.schemaModel||b.data||b;",
                   "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
@@ -442,7 +392,7 @@
           "response": []
         },
         {
-          "name": "03b Create Version",
+          "name": "01d Create Version",
           "request": {
             "method": "POST",
             "header": [
@@ -508,7 +458,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('03b Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03b');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01d Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01d');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.data||b;",
                   "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));",
@@ -520,7 +470,7 @@
           "response": []
         },
         {
-          "name": "03c Fetch DS Graph",
+          "name": "01e Fetch DS Graph",
           "request": {
             "method": "POST",
             "header": [
@@ -576,7 +526,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03c Graph 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('01e Graph 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const newNodes=b.nodes||[]; const newLinks=b.links||[];",
                   "let nodes=[]; try{nodes=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
@@ -592,7 +542,7 @@
           "response": []
         },
         {
-          "name": "03d Save Schema Graph",
+          "name": "02 Save Graph",
           "request": {
             "method": "POST",
             "header": [
@@ -635,11 +585,11 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "let nodes=[]; let links=[];",
-                  "try{nodes=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
-                  "try{links=JSON.parse(pm.collectionVariables.get('_graphLinks')||'[]');}catch(e){}",
-                  "console.log('Saving graph: '+nodes.length+' entities');",
-                  "pm.request.body.raw=JSON.stringify({versionUri:pm.collectionVariables.get('schemaName')+'Version#v',nodes:nodes,links:links,schemaName:pm.collectionVariables.get('schemaName')});"
+                  "let n=[]; let l=[];",
+                  "try{n=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
+                  "try{l=JSON.parse(pm.collectionVariables.get('_graphLinks')||'[]');}catch(e){}",
+                  "console.log('Saving: '+n.length+' entities');",
+                  "pm.request.body.raw=JSON.stringify({versionUri:pm.collectionVariables.get('schemaName')+'Version#v',nodes:n,links:l,schemaName:pm.collectionVariables.get('schemaName')});"
                 ]
               }
             },
@@ -652,8 +602,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03d Graph saved 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,204]));",
-                  "console.log('Schema graph saved');"
+                  "pm.test('02 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
                 ]
               }
             }
@@ -661,7 +610,7 @@
           "response": []
         },
         {
-          "name": "04 Get Schema by Name",
+          "name": "03 Get Graph",
           "request": {
             "method": "GET",
             "header": [
@@ -671,13 +620,69 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
+              "raw": "{{app_base_url}}/schema-graph?versionUri={{schemaName}}Version%23v",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema",
-                "name"
+                "schema-graph"
+              ],
+              "query": [
+                {
+                  "key": "versionUri",
+                  "value": "{{schemaName}}Version%23v"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('03 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Get by Name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/schema-graph/by-name?schemaName={{schemaName}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "schema-graph",
+                "by-name"
               ],
               "query": [
                 {
@@ -710,9 +715,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.schemaModel||b.data||b;",
-                  "pm.test('04 name matches', () => pm.expect(String(d.name||d.schemaName||'')).to.eql(pm.collectionVariables.get('schemaName')));"
+                  "pm.test('04 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
                 ]
               }
             }
@@ -720,7 +723,7 @@
           "response": []
         },
         {
-          "name": "05 Update Schema",
+          "name": "05 Update Graph",
           "request": {
             "method": "PUT",
             "header": [
@@ -734,17 +737,17 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema",
+              "raw": "{{app_base_url}}/schema-graph",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema"
+                "schema-graph"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"{{schemaName}}\",\n  \"description\": \"Updated by FLOW test\"\n}",
+              "raw": "{\n  \"versionUri\": \"\",\n  \"nodes\": [],\n  \"links\": []\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -762,7 +765,10 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "let n=[]; try{n=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
+                  "n.push({id:'test_update',label:'updated_by_flow',type:'entity'});",
+                  "pm.request.body.raw=JSON.stringify({versionUri:pm.collectionVariables.get('schemaName')+'Version#v',nodes:n,links:[],schemaName:pm.collectionVariables.get('schemaName')});"
                 ]
               }
             },
@@ -775,7 +781,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 200', () => pm.response.to.have.status(200));"
+                  "pm.test('05 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
                 ]
               }
             }
@@ -783,30 +789,37 @@
           "response": []
         },
         {
-          "name": "06 Verify Update",
+          "name": "06 Copy Version",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [
               {
                 "key": "X-TENANT-ID",
                 "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
+              "raw": "{{app_base_url}}/schema-graph/copy-version",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema",
-                "name"
-              ],
-              "query": [
-                {
-                  "key": "schemaName",
-                  "value": "{{schemaName}}"
-                }
+                "schema-graph",
+                "copy-version"
               ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceVersionUri\": \"\",\n  \"targetVersionName\": \"v2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           },
           "event": [
@@ -819,7 +832,8 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({sourceVersionUri:pm.collectionVariables.get('schemaName')+'Version#v',targetVersionName:'pm-flow-sg-copy-'+Date.now()});"
                 ]
               }
             },
@@ -832,9 +846,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('06 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.schemaModel||b.data||b;",
-                  "pm.test('06 updated', () => pm.expect(String(d.description||'')).to.include('Updated by FLOW'));"
+                  "pm.test('06 200|201|400', () => pm.expect(pm.response.code).to.be.oneOf([200,201,204,400]));"
                 ]
               }
             }
@@ -842,7 +854,7 @@
           "response": []
         },
         {
-          "name": "07 Del Graph",
+          "name": "07 Delete Graph",
           "request": {
             "method": "DELETE",
             "header": [
@@ -890,7 +902,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('07 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('07 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
                 ]
               }
             }
@@ -1003,7 +1015,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('09 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
             }

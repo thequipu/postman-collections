@@ -1,0 +1,11 @@
+{
+  "driverType": "ORACLE",
+  "dbHost": "207.180.249.216",
+  "dbPort": "1521",
+  "dbName": "FREE",
+  "dbUser": "DATATYPE_TESTING",
+  "dbPassword": "zI5GFHxjf/gQZXa0i1Rpu6ki7zHM3Q4RS15anjLOWeg=",
+  "dbSchema": "DATATYPE_TESTING",
+  "driverClassName": "oracle.jdbc.driver.OracleDriver",
+  "aesRandomIV": "HUiF90E0qdPC3MtCIvxyBw=="
+}

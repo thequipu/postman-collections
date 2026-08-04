@@ -1,0 +1,11 @@
+{
+  "driverType": "POSTGRES",
+  "dbHost": "207.180.249.216",
+  "dbPort": "5433",
+  "dbName": "datatypetesting_postgres",
+  "dbUser": "postgres",
+  "dbPassword": "NDTbF7vkDydz1frCAa0NRXO4gzJjiS/wSJFauDNf3apZJyS7yEgxQ24woZZq3MR5",
+  "dbSchema": "public",
+  "driverClassName": "org.postgresql.Driver",
+  "aesRandomIV": "FU+6SzNoA/DGMJGg4YTX6w=="
+}
