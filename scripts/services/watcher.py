@@ -18,7 +18,7 @@ def generate():
              "if(id) pm.collectionVariables.set('watcherId', String(id));",
              "console.log('Watcher created: '+id);"],
             base=base,
-            body={"name": "pm-flow-watcher-{{$timestamp}}", "namespace": "{{realm}}"}),
+            body={"name": "pm_flow_watcher_{{$timestamp}}", "namespace": "{{realm}}"}),
 
         req("02 List Watchers", "GET", "/watcher",
             ["pm.test('02 List watchers 200', () => pm.response.to.have.status(200));",

@@ -15,7 +15,7 @@ def generate():
              "console.log('Namespaces: '+(Array.isArray(b)?b.length:'?'));"],
             base=base),
 
-        req("02 Create Namespace", "POST", "/namespaces/create?name=pm-flow-ns-{{$timestamp}}&isHistoricIngestRequired=false",
+        req("02 Create Namespace", "POST", "/namespaces/create?name=pm_flow_ns_{{$timestamp}}&isHistoricIngestRequired=false",
             ["const code = pm.response.code;",
              "pm.test('02 Create namespace 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02 Create Namespace');} pm.expect(code).to.be.oneOf([200,201]); });",
              "// Extract namespace name from request URL",

@@ -7,5 +7,6 @@
   "dbPassword": "RMBUOBkBZbZBLM4/v5SakQ==",
   "dbSchema": "admin",
   "driverClassName": "",
-  "aesRandomIV": "sKJtPIkVxxfO2wE3Qyp4uQ=="
+  "aesRandomIV": "sKJtPIkVxxfO2wE3Qyp4uQ==",
+  "shapeCypher": "CREATE\n  (g2:dt_mongo_group_2 {uri: '$._id',\n    _id: '$._id',\n    id: '$.id',\n    note: '$.note',\n    f_decimal: '$.f_decimal',\n    f_bool: '$.f_bool',\n    f_boolean: '$.f_boolean',\n    f_date: '$.f_date',\n    f_isodate: '$.f_isodate',\n    f_timestamp: '$.f_timestamp',\n    f_bindata: '$.f_bindata'}),\n\n  (g1:dt_mongo_group_1 {uri: '$._id',\n    _id: '$._id',\n    id: '$.id',\n    note: '$.note',\n    f_objectid: '$.f_objectid',\n    f_int32: '$.f_int32',\n    f_numberint: '$.f_numberint',\n    f_int64: '$.f_int64',\n    f_numberlong: '$.f_numberlong',\n    f_double: '$.f_double',\n    f_numberdecimal: '$.f_numberdecimal'}),\n\n  (g3:dt_mongo_group_3 {uri: '$._id',\n    _id: '$._id',\n    id: '$.id',\n    note: '$.note',\n    f_binary: '$.f_binary',\n    f_array: '$.f_array',\n    f_object: '$.f_object',\n    f_document: '$.f_document',\n    f_string: '$.f_string',\n    f_null: '$.f_null'});"
 }

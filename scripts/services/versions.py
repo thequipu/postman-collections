@@ -1,7 +1,8 @@
-"""FLOW-Version-CRUD: Schema version lifecycle with entities."""
+"""FLOW-Version-CRUD: Schema version lifecycle with real entities."""
 
 from flowlib.core import req, build_setup, build_collection, write_flow
-from flowlib.setup import create_ds_step, fetch_metadata_step, create_schema_step, SETUP_VARS, SETUP_CLEAR_VARS
+from flowlib.setup import (create_ds_step, fetch_entities_step,
+                           create_schema_graph_step, SETUP_VARS, SETUP_CLEAR_VARS)
 
 
 def generate():
@@ -10,27 +11,26 @@ def generate():
     items = [
         build_setup(base, "/actuator/health", clear_vars=SETUP_CLEAR_VARS),
 
-        # Setup: DS → Metadata → Schema (no version/graph/realm — we test version CRUD)
+        # Setup: DS → Fetch Entities → Schema (we test version CRUD via schema-graph)
         create_ds_step("01a", base),
-        fetch_metadata_step("01b"),
-        create_schema_step("01c", "pm-flow-ver", base),
+        fetch_entities_step("01b", base),
 
-        # ── Version CRUD ──
-
-        req("02 Create Version", "POST", "/versions/create?schemaName={{schemaName}}",
+        req("01c Create Schema", "POST", "/schema",
             ["const code=pm.response.code;",
-             "pm.test('02 Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
+             "pm.test('01c Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01c');} pm.expect(code).to.be.oneOf([200,201]); });",
              "let b={}; try{b=pm.response.json();}catch(e){}",
-             "const d=b.data||b;",
-             "pm.test('02 has id', () => pm.expect(d.id||d.versionId).to.not.be.undefined);",
-             "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));",
-             "console.log('Version id='+(d.id||d.versionId));"],
-            base=base, body={"versionName": "v1"},
+             "const d=b.schemaModel||b.data||b;",
+             "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
+             "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
+             "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"],
+            base=base, body={"schemaName": "x"},
             prerequest=[
-                "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
-                "let nodes=[]; try{nodes=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
-                "pm.request.body.raw=JSON.stringify({versionName:'pm-flow-version-'+Date.now(),description:'Auto-created by FLOW',dataSourceIds:dsId?[dsId]:[],nodes:nodes,links:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
+                "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
+                "pm.request.body.raw=JSON.stringify({schemaName:'pm_flow_ver_schema_'+Date.now(),prefix:dsPrefix,description:'Version flow dep'});",
             ]),
+
+        # ── Create version + schema graph correctly (version+MinIO, UI/Neo4j, verify) ──
+        *create_schema_graph_step("02", base),
 
         req("03 Get Version", "GET", "/versions?versionId={{versionId}}",
             ["pm.test('03 200', () => pm.response.to.have.status(200));",
@@ -47,13 +47,13 @@ def generate():
             prerequest=[
                 "const vid=parseInt(pm.collectionVariables.get('versionId'));",
                 "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
-                "pm.request.body.raw=JSON.stringify({id:vid,versionId:vid,description:'Updated by FLOW test',dataSourceIds:dsId?[dsId]:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
+                "pm.request.body.raw=JSON.stringify({id:vid,versionId:vid,description:'Updated by FLOW',dataSourceIds:dsId?[dsId]:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
             ]),
 
         req("06 Verify Update", "GET", "/versions?versionId={{versionId}}",
             ["pm.test('06 200', () => pm.response.to.have.status(200));",
              "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
-             "pm.test('06 desc check', () => { const desc=String(d.description||''); pm.expect(desc.length).to.be.above(0); });"],
+             "pm.test('06 has desc', () => pm.expect(String(d.description||'').length).to.be.above(0));"],
             base=base),
 
         req("07 Unlock Version", "PUT", "/versions/veriosn-unlock",
@@ -65,22 +65,21 @@ def generate():
             ["pm.test('08 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
 
         # Cleanup
-        req("09 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
+        req("09 Del Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
             ["pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
-        req("10 Del DS", "DELETE", "/datasource/{{dsId}}",
-            ["pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+        req("10 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
+            ["pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
+        req("11 Del DS", "DELETE", "/datasource/{{dsId}}",
+            ["pm.test('11 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
 
         req("99 Teardown", "DELETE", "/datasource/{{dsId}}",
-            ["pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+            ["pm.test('99 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
              "pm.collectionVariables.unset('_flow_failed'); pm.collectionVariables.unset('_flow_failed_at');"],
             base=base, skip_on_fail=False),
     ]
 
     col = build_collection(
         name="FLOW - Version CRUD",
-        description="Version lifecycle with entities from datasource.\nDS → Metadata → Schema → Version CRUD.",
-        folder_name="Version CRUD",
-        items=items,
-        extra_variables=SETUP_VARS
-    )
+        description="Version lifecycle with real entities from datasource.",
+        folder_name="Version CRUD", items=items, extra_variables=SETUP_VARS)
     return write_flow("FLOW-Version-CRUD.postman_collection.json", col)

@@ -19,7 +19,7 @@ from services import tenant, security, realm, schema, entity, permissions
 from services import transformation, kg, synapse, nexus, lumen, docgraph, nlp
 from services import ingestion, versions, watcher, document_extraction, synapse_query
 from services import namespace, entity360, schema_graph, metadata, app_misc
-from services import ds_migration, datasource_extended
+from services import ds_migration, datasource_extended, single_ds_realm
 
 SERVICES = {
     # Core services
@@ -50,6 +50,7 @@ SERVICES = {
     "app_misc":            ("App Misc",                  app_misc.generate),
     "ds_migration":        ("DS Migration",              ds_migration.generate),
     "ds_extended":         ("DataSource Extended",       datasource_extended.generate),
+    "single_ds_realm":     ("Single-DS Realm + Ingestion", single_ds_realm.generate),
 }
 
 

@@ -49,7 +49,7 @@ def generate():
         req("06 Add Description", "POST", "/metadata-graph/add-description",
             ["pm.test('06 Add description 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
             base=base,
-            body={"nodeUri": "pm-flow-test-node", "description": "Test description by FLOW"}),
+            body={"nodeUri": "pm_flow_test_node", "description": "Test description by FLOW"}),
 
         build_teardown(base),
     ]

@@ -6,6 +6,7 @@ Keycloak admin creds from S3: kc_admin_user, kc_admin_password.
 """
 
 from flowlib.core import req, build_setup, build_collection, write_flow
+from flowlib.setup import realm_delete_prereq
 
 
 def generate():
@@ -55,7 +56,7 @@ def generate():
              "const d=b.dataSourceModel||b.data||b;",
              "if(d.id||d.sourceId) pm.collectionVariables.set('dsId', String(d.id||d.sourceId));"],
             base=base,
-            body={"name": "pm-flow-perm-ds-{{$timestamp}}",
+            body={"name": "pm_flow_perm_ds_{{$timestamp}}",
                   "driverType": "{{driverType}}", "dbHostName": "{{dbHost}}",
                   "dbPort": "{{dbPort}}", "databaseName": "{{dbName}}",
                   "dbUserName": "{{dbUser}}", "dbPassword": "{{dbPassword}}",
@@ -70,7 +71,7 @@ def generate():
              "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
              "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));"],
             base=base,
-            body={"schemaName": "pm-flow-perm-schema-{{$timestamp}}",
+            body={"schemaName": "pm_flow_perm_schema_{{$timestamp}}",
                   "description": "Permissions flow dep"}),
 
         req("01c Create Realm (dep)", "POST", "/realm",
@@ -80,7 +81,7 @@ def generate():
              "const d=b.realmModel||b.data||b;",
              "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));"],
             base=base,
-            body={"name": "pm-flow-perm-realm-{{$timestamp}}",
+            body={"name": "pm_flow_perm_realm_{{$timestamp}}",
                   "description": "Permissions flow dep"}),
 
         # ═══ PHASE 1: Create 2 Test Users via Keycloak Admin API ═══
@@ -173,7 +174,7 @@ def generate():
              "if(arr[0]&&arr[0].id) pm.collectionVariables.set('viewerRoleId', String(arr[0].id));",
              "console.log('Viewer role id='+pm.collectionVariables.get('viewerRoleId'));"],
             base=base,
-            body=[{"name": "pm-flow-viewer", "description": "View only role"}]),
+            body=[{"name": "pm_flow_viewer", "description": "View only role"}]),
 
         req("10 Create Admin Role", "POST", "/roles",
             ["pm.test('10 Create admin role 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
@@ -181,14 +182,14 @@ def generate():
              "const arr=Array.isArray(b)?b:[b];",
              "if(arr[0]&&arr[0].id) pm.collectionVariables.set('adminRoleId', String(arr[0].id));"],
             base=base,
-            body=[{"name": "pm-flow-admin", "description": "Admin role"}]),
+            body=[{"name": "pm_flow_admin", "description": "Admin role"}]),
 
         req("11 Verify Roles", "GET", "/roles",
             ["pm.test('11 Roles 200', () => pm.response.to.have.status(200));",
              "let b=[]; try{b=pm.response.json();}catch(e){}",
              "const names=(Array.isArray(b)?b:[]).map(r=>r.name);",
-             "pm.test('11 has viewer role', () => pm.expect(names).to.include('pm-flow-viewer'));",
-             "pm.test('11 has admin role', () => pm.expect(names).to.include('pm-flow-admin'));"],
+             "pm.test('11 has viewer role', () => pm.expect(names).to.include('pm_flow_viewer'));",
+             "pm.test('11 has admin role', () => pm.expect(names).to.include('pm_flow_admin'));"],
             base=base),
 
         # ═══ PHASE 4: Assign User-Permissions on REAL entities ═══
@@ -377,11 +378,11 @@ def generate():
             ["pm.test('35 Role-perms 200', () => pm.response.to.have.status(200));"],
             base=base),
 
-        req("36 Viewer has VIEW", "GET", "/role-permission/exists?entityType=DATA_FABRIC&role=pm-flow-viewer&permissionNames=VIEW",
+        req("36 Viewer has VIEW", "GET", "/role-permission/exists?entityType=DATA_FABRIC&role=pm_flow_viewer&permissionNames=VIEW",
             ["pm.test('36 viewer VIEW = true', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(true); });"],
             base=base),
 
-        req("37 Viewer NOT ADMIN", "GET", "/role-permission/exists?entityType=DATA_FABRIC&role=pm-flow-viewer&permissionNames=ADMIN",
+        req("37 Viewer NOT ADMIN", "GET", "/role-permission/exists?entityType=DATA_FABRIC&role=pm_flow_viewer&permissionNames=ADMIN",
             ["pm.test('37 viewer ADMIN = false', () => { pm.response.to.have.status(200); let b=pm.response.json(); pm.expect(b).to.eql(false); });"],
             base=base),
 
@@ -429,9 +430,9 @@ def generate():
             prerequest=kc_admin_pre,
             extra_headers=[{"key": "Authorization", "value": "Bearer {{_kc_admin_token}}"}]),
 
-        req("47 Delete Realm", "DELETE", "/realm/{{realmId}}?permanent=true",
+        req("47 Delete Realm", "DELETE", "/realm/{{realmId}}",
             ["pm.test('47 Delete realm 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
-            base=base),
+            base=base, prerequest=realm_delete_prereq()),
 
         req("48 Delete Schema", "DELETE", "/schema?schemaName={{schemaName}}",
             ["pm.test('48 Delete schema 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
@@ -442,11 +443,11 @@ def generate():
             base=base),
 
         # Teardown
-        req("99 Teardown", "DELETE", "/realm/{{realmId}}?permanent=true",
+        req("99 Teardown", "DELETE", "/realm/{{realmId}}",
             ["pm.test('99 teardown tolerant', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
              "pm.collectionVariables.unset('_flow_failed');",
              "pm.collectionVariables.unset('_flow_failed_at');"],
-            base=base, skip_on_fail=False),
+            base=base, skip_on_fail=False, prerequest=realm_delete_prereq()),
     ]
 
     col = build_collection(

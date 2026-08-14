@@ -1,8 +1,8 @@
-"""FLOW-Schema-CRUD: Schema lifecycle with entities from datasource."""
+"""FLOW-Schema-CRUD: Schema lifecycle with real entities from datasource."""
 
 from flowlib.core import req, build_setup, build_collection, write_flow
-from flowlib.setup import (create_ds_step, fetch_metadata_step, create_version_step,
-                           fetch_graph_step, save_graph_step, SETUP_VARS, SETUP_CLEAR_VARS)
+from flowlib.setup import (create_ds_step, fetch_entities_step, create_schema_graph_step,
+                           SETUP_VARS, SETUP_CLEAR_VARS)
 
 
 def generate():
@@ -11,9 +11,9 @@ def generate():
     items = [
         build_setup(base, "/actuator/health", clear_vars=SETUP_CLEAR_VARS),
 
-        # Setup: DS → Metadata
+        # Setup: DS → Fetch Entities
         create_ds_step("01a", base),
-        fetch_metadata_step("01b"),
+        fetch_entities_step("01b", base),
 
         # ── Schema CRUD ──
         req("02 List Schemas", "GET", "/schema",
@@ -26,14 +26,17 @@ def generate():
              "const d=b.schemaModel||b.data||b;",
              "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
              "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
-             "console.log('Schema: '+(d.name||d.schemaName));"],
-            base=base,
-            body={"schemaName": "pm-flow-schema-{{$timestamp}}", "description": "Auto-created by FLOW"}),
+             "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);",
+             "console.log('Schema: '+(d.name||d.schemaName)+', prefix='+(d.prefix||''));"],
+            base=base, body={"schemaName": "x", "prefix": "x"},
+            prerequest=[
+                "const schemaName='pm_flow_schema_'+Date.now();",
+                "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:dsPrefix,description:'Auto-created by FLOW'});",
+            ]),
 
-        # Create version with entities from metadata
-        create_version_step("03b", base),
-        fetch_graph_step("03c", base),
-        save_graph_step("03d", base),
+        # Create version + schema graph with entities (version+MinIO, UI/Neo4j, verify)
+        *create_schema_graph_step("03b", base),
 
         req("04 Get Schema by Name", "GET", "/schema/name?schemaName={{schemaName}}",
             ["pm.test('04 200', () => pm.response.to.have.status(200));",
@@ -55,7 +58,7 @@ def generate():
             base=base),
 
         # Cleanup
-        req("07 Del Graph", "DELETE", "/schema-graph?prefix={{schemaName}}",
+        req("07 Del Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
             ["pm.test('07 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
         req("08 Del Version", "DELETE", "/versions/delete?versionId={{versionId}}",
             ["pm.test('08 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
@@ -72,6 +75,6 @@ def generate():
 
     col = build_collection(
         name="FLOW - Schema CRUD",
-        description="Schema lifecycle with entities from datasource.",
+        description="Schema lifecycle with real entities from datasource metadata.",
         folder_name="Schema CRUD", items=items, extra_variables=SETUP_VARS)
     return write_flow("FLOW-Schema-CRUD.postman_collection.json", col)

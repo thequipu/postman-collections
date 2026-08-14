@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-schema-crud-auto",
-    "name": "FLOW - Schema CRUD",
-    "description": "Schema lifecycle with real entities from datasource metadata.",
+    "_postman_id": "flow-single-ds-realm-auto",
+    "name": "FLOW - Single-DS Realm + Ingestion",
+    "description": "Full realm + real ingestion for ONE datasource (creds via env-vars). Point it at a specific DB (e.g. user_management). Any stream that does not land rows fails the flow.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -176,11 +176,46 @@
       "key": "awsVersionId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "realmId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmReferenceName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_streamCount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_streamNames",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_nsAttempt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_ingAttempt",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Schema CRUD",
+      "name": "Single-DS Realm",
       "item": [
         {
           "name": "00 Setup",
@@ -208,6 +243,13 @@
                   "pm.collectionVariables.unset('_versionUri');",
                   "pm.collectionVariables.unset('_versionUriEnc');",
                   "pm.collectionVariables.unset('awsVersionId');",
+                  "pm.collectionVariables.unset('realmId');",
+                  "pm.collectionVariables.unset('realmName');",
+                  "pm.collectionVariables.unset('realmReferenceName');",
+                  "pm.collectionVariables.unset('_streamCount');",
+                  "pm.collectionVariables.unset('_streamNames');",
+                  "pm.collectionVariables.unset('_nsAttempt');",
+                  "pm.collectionVariables.unset('_ingAttempt');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -426,57 +468,7 @@
           "response": []
         },
         {
-          "name": "02 List Schemas",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/schema",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "schema"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('02 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "03 Create Schema",
+          "name": "02 Create Schema",
           "request": {
             "method": "POST",
             "header": [
@@ -500,7 +492,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"x\",\n  \"prefix\": \"x\"\n}",
+              "raw": "{\n  \"schemaName\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -519,9 +511,9 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "const schemaName='pm_flow_schema_'+Date.now();",
-                  "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
-                  "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:dsPrefix,description:'Auto-created by FLOW'});"
+                  "const sn='pm_flow_singleds_'+Date.now();",
+                  "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||sn;",
+                  "pm.request.body.raw=JSON.stringify({schemaName:sn,prefix:dsPrefix,description:'Single-DS realm flow'});"
                 ]
               }
             },
@@ -535,13 +527,12 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('03 Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('02 Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.schemaModel||b.data||b;",
                   "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
                   "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
-                  "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);",
-                  "console.log('Schema: '+(d.name||d.schemaName)+', prefix='+(d.prefix||''));"
+                  "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"
                 ]
               }
             }
@@ -549,7 +540,7 @@
           "response": []
         },
         {
-          "name": "03bi Save Schema Graph + Version (Neo4j)",
+          "name": "03i Save Schema Graph + Version (Neo4j)",
           "request": {
             "method": "POST",
             "header": [
@@ -673,11 +664,11 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('03bi 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03bi');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('03i 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03i');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const vid=b.versionId||b.id;",
                   "if(vid) pm.collectionVariables.set('versionId', String(vid));",
-                  "pm.test('03bi version created', () => pm.expect(vid, 'versionId from /schema-graph').to.not.be.undefined);",
+                  "pm.test('03i version created', () => pm.expect(vid, 'versionId from /schema-graph').to.not.be.undefined);",
                   "let nc=0; try{nc=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]').length;}catch(e){}",
                   "console.log('Schema graph saved + version minted: versionId='+vid+', '+nc+' nodes');"
                 ]
@@ -687,7 +678,7 @@
           "response": []
         },
         {
-          "name": "03biii Verify Schema Graph (UI read)",
+          "name": "03iii Verify Schema Graph (UI read)",
           "request": {
             "method": "GET",
             "header": [
@@ -739,11 +730,11 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('03biii 200', () => pm.response.to.have.status(200));",
+                  "pm.test('03iii 200', () => pm.response.to.have.status(200));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const ns=b.nodes||[];",
                   "const entities=ns.filter(n=>n.node_type==='Node');",
-                  "pm.test('03biii has entities', () => pm.expect(entities.length).to.be.above(0));",
+                  "pm.test('03iii has entities', () => pm.expect(entities.length).to.be.above(0));",
                   "console.log('UI schema-graph read back: '+ns.length+' nodes, '+entities.length+' entities');"
                 ]
               }
@@ -752,68 +743,9 @@
           "response": []
         },
         {
-          "name": "04 Get Schema by Name",
+          "name": "04 Create Realm",
           "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "schema",
-                "name"
-              ],
-              "query": [
-                {
-                  "key": "schemaName",
-                  "value": "{{schemaName}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('04 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.schemaModel||b.data||b;",
-                  "pm.test('04 name matches', () => pm.expect(String(d.name||d.schemaName||'')).to.eql(pm.collectionVariables.get('schemaName')));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "05 Update Schema",
-          "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               {
                 "key": "X-TENANT-ID",
@@ -825,17 +757,17 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema",
+              "raw": "{{app_base_url}}/realm",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema"
+                "realm"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": 0\n}",
+              "raw": "{\n  \"name\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -854,7 +786,7 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('schemaId')),schemaName:pm.collectionVariables.get('schemaName'),description:'Updated by FLOW test'});"
+                  "pm.request.body.raw=JSON.stringify({name:'pm_flow_singleds_realm_'+Date.now(),description:'Single-DS fabric',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId'))});"
                 ]
               }
             },
@@ -867,7 +799,13 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "const code=pm.response.code;",
+                  "pm.test('04 Realm 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','04');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.realmModel||b.data||b;",
+                  "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));",
+                  "if(d.name||d.realmName) pm.collectionVariables.set('realmName', d.name||d.realmName);",
+                  "if(d.referenceName) pm.collectionVariables.set('realmReferenceName', d.referenceName);",
+                  "console.log('Realm id='+(d.id||d.realmId)+' ref='+d.referenceName);"
                 ]
               }
             }
@@ -875,7 +813,145 @@
           "response": []
         },
         {
-          "name": "06 Verify Update",
+          "name": "05 Create Namespace (Synapse)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/create",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const historic=String(pm.environment.get('requiresHistoricIngest')||'true')!=='false';",
+                  "const vector=String(pm.environment.get('vectorIngestionRequired')||'true')!=='false';",
+                  "pm.request.body.raw=JSON.stringify({name:pm.collectionVariables.get('realmReferenceName'),schemaName:pm.collectionVariables.get('schemaName'),schemaVersion:'v1',requiresHistoricIngest:historic,type:null,vectorIngestionRequired:vector});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code=pm.response.code;",
+                  "pm.test('05 namespace 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','05');} pm.expect(code).to.be.oneOf([200,201]); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Generate Ingest Streams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/streams/generate",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('06 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let arr=[]; try{arr=pm.response.json();}catch(e){} if(!Array.isArray(arr)) arr=[];",
+                  "pm.collectionVariables.set('_streamCount', String(arr.length));",
+                  "pm.collectionVariables.set('_streamNames', JSON.stringify(arr.map(s=>s.name).filter(Boolean)));",
+                  "console.log('streams generated: '+arr.length+(arr.length?(' e.g. '+arr[0].name):''));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "07 Verify Streams Generated",
           "request": {
             "method": "GET",
             "header": [
@@ -885,19 +961,13 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema",
-                "name"
-              ],
-              "query": [
-                {
-                  "key": "schemaName",
-                  "value": "{{schemaName}}"
-                }
+                "actuator",
+                "health"
               ]
             }
           },
@@ -924,9 +994,9 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('06 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.schemaModel||b.data||b;",
-                  "pm.test('06 has desc', () => pm.expect(String(d.description||'').length).to.be.above(0));"
+                  "pm.test('07 health', () => pm.response.to.have.status(200));",
+                  "const n=parseInt(pm.collectionVariables.get('_streamCount')||'0');",
+                  "pm.test('07 streams generated (>0)', () => pm.expect(n).to.be.above(0));"
                 ]
               }
             }
@@ -934,7 +1004,226 @@
           "response": []
         },
         {
-          "name": "07 Del Graph",
+          "name": "08 Wait Namespace UP",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/status?name={{realmReferenceName}}",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{realmReferenceName}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "if(parseInt(pm.collectionVariables.get('_nsAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "let st=''; try{st=(pm.response.json().status||'').toUpperCase();}catch(e){}",
+                  "const a=parseInt(pm.collectionVariables.get('_nsAttempt')||'0');",
+                  "console.log('namespace status attempt '+a+': '+st);",
+                  "if(st==='UP'){ pm.collectionVariables.unset('_nsAttempt'); }",
+                  "else if(a<18){ pm.collectionVariables.set('_nsAttempt', String(a+1)); postman.setNextRequest('08 Wait Namespace UP'); }",
+                  "else { pm.collectionVariables.unset('_nsAttempt'); }",
+                  "pm.test('08 namespace reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "09 Save + Run Ingestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/streams/generate",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "pm.test('09 regen 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let arr=[]; try{arr=pm.response.json();}catch(e){} if(!Array.isArray(arr)) arr=[];",
+                  "const rid=parseInt(pm.collectionVariables.get('realmId'));",
+                  "arr.forEach(s=>{ s.realmId=rid; });",
+                  "const app=pm.environment.get('app_base_url'); const txn=pm.environment.get('transform_base_url');",
+                  "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                  "const raw=JSON.stringify(arr);",
+                  "pm.sendRequest({url:app+'/atomicIngestStream/create-streams', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e1,r1)=>{",
+                  "  pm.test('09 create-streams 2xx', () => pm.expect(r1 && r1.code).to.be.oneOf([200,201]));",
+                  "  console.log('create-streams: '+(r1?r1.code:e1));",
+                  "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
+                  "    pm.test('09 event/ingest 2xx', () => pm.expect(r2 && r2.code).to.be.oneOf([200,201,204]));",
+                  "    console.log('event/ingest: '+(r2?r2.code:e2));",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "10 Verify Tables Landed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/stats?namespace={{realmReferenceName}}",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "{{realmReferenceName}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "if(parseInt(pm.collectionVariables.get('_ingAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "let expected=[]; try{expected=JSON.parse(pm.collectionVariables.get('_streamNames')||'[]');}catch(e){}",
+                  "let landed={}; try{(pm.response.json().labels||[]).forEach(l=>{ if((l.count||0)>0) landed[l.label]=l.count; });}catch(e){}",
+                  "const missing=expected.filter(n=>!(n in landed));",
+                  "const a=parseInt(pm.collectionVariables.get('_ingAttempt')||'0');",
+                  "console.log('ingest verify attempt '+a+' landed='+JSON.stringify(landed)+' missing='+JSON.stringify(missing));",
+                  "const done=(expected.length>0 && missing.length===0) || a>=18;",
+                  "if(!done){ pm.collectionVariables.set('_ingAttempt', String(a+1)); postman.setNextRequest('10 Verify Tables Landed'); return; }",
+                  "pm.collectionVariables.unset('_ingAttempt');",
+                  "if(missing.length===0 && expected.length>0){ console.log('INGESTION VALIDATED: '+expected.length+' tables, rows='+JSON.stringify(landed)); }",
+                  "else { console.log('DATAFLOW FAILED: '+missing.length+'/'+expected.length+' stream(s) did not land: '+JSON.stringify(missing)); }",
+                  "pm.test('10 all '+expected.length+' table(s) ingested rows (missing: '+JSON.stringify(missing)+')', () => { pm.expect(expected.length).to.be.above(0); pm.expect(missing, 'tables with 0 rows').to.eql([]); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "20 Del Realm",
           "request": {
             "method": "DELETE",
             "header": [
@@ -944,45 +1233,29 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema-graph?prefix={{schemaPrefix}}",
+              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=false",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema-graph"
+                "realm",
+                "{{realmId}}"
               ],
               "query": [
                 {
-                  "key": "prefix",
-                  "value": "{{schemaPrefix}}"
+                  "key": "permanent",
+                  "value": "false"
                 }
               ]
             }
           },
           "event": [
             {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('07 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('20 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }
@@ -990,7 +1263,7 @@
           "response": []
         },
         {
-          "name": "08 Del Version",
+          "name": "21 Remove Namespace",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1000,46 +1273,34 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/versions/delete?versionId={{versionId}}",
+              "raw": "{{kg_base_url}}/synapse/namespace/remove?name={{realmReferenceName}}&permanent=true",
               "host": [
-                "{{app_base_url}}"
+                "{{kg_base_url}}"
               ],
               "path": [
-                "versions",
-                "delete"
+                "synapse",
+                "namespace",
+                "remove"
               ],
               "query": [
                 {
-                  "key": "versionId",
-                  "value": "{{versionId}}"
+                  "key": "name",
+                  "value": "{{realmReferenceName}}"
+                },
+                {
+                  "key": "permanent",
+                  "value": "true"
                 }
               ]
             }
           },
           "event": [
             {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('08 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('21 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }
@@ -1047,7 +1308,7 @@
           "response": []
         },
         {
-          "name": "09 Del Schema",
+          "name": "22 Del Schema",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1074,28 +1335,11 @@
           },
           "event": [
             {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('09 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "pm.test('22 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }
@@ -1103,58 +1347,7 @@
           "response": []
         },
         {
-          "name": "10 Del DS",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/datasource/{{dsId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "datasource",
-                "{{dsId}}"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "99 Teardown",
+          "name": "99 Teardown (Del DS)",
           "request": {
             "method": "DELETE",
             "header": [

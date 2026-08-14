@@ -109,7 +109,7 @@ def req(name, method, path, tests, body=None, base="app_base_url",
 # ============================================================
 
 conn_cfg = {
-    "name": "pm-flow-ds-{{$timestamp}}",
+    "name": "pm_flow_ds_{{$timestamp}}",
     "driverType": "{{driverType}}",
     "dbHostName": "{{dbHost}}",
     "dbPort": "{{dbPort}}",
@@ -122,7 +122,7 @@ conn_cfg = {
 }
 
 create_body = {
-    "name": "pm-flow-ds-{{$timestamp}}",
+    "name": "pm_flow_ds_{{$timestamp}}",
     "driverType": "{{driverType}}",
     "dbHostName": "{{dbHost}}",
     "dbPort": "{{dbPort}}",
@@ -290,7 +290,7 @@ t_run_query = [
 t_update = [
     "pm.test('08 Update returns 200', () => pm.response.to.have.status(200));",
     "let b={}; try{b=pm.response.json();}catch(e){}",
-    "const desc = pm.collectionVariables.get('updateDescription') || 'pm-flow-updated';",
+    "const desc = pm.collectionVariables.get('updateDescription') || 'pm_flow_updated';",
     "pm.test('08 update reflected', () => pm.expect(JSON.stringify(b)).to.include(desc));",
 ]
 
@@ -298,7 +298,7 @@ t_verify_upd = [
     "pm.test('09 Get(verify update) 200', () => pm.response.to.have.status(200));",
     "let b={}; try{b=pm.response.json();}catch(e){}",
     "const d=b.dataSourceModel||b.data||b;",
-    "const desc = pm.collectionVariables.get('updateDescription') || 'pm-flow-updated';",
+    "const desc = pm.collectionVariables.get('updateDescription') || 'pm_flow_updated';",
     "pm.test('09 description updated', () => pm.expect(String(d.description||'')).to.eql(desc));",
 ]
 
@@ -346,7 +346,7 @@ setup = {
             "",
             "// Set default updateDescription if not provided",
             "if (!pm.collectionVariables.get('updateDescription')) {",
-            "  pm.collectionVariables.set('updateDescription', 'pm-flow-updated-' + Date.now());",
+            "  pm.collectionVariables.set('updateDescription', 'pm_flow_updated_' + Date.now());",
             "}",
             "",
             "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));",
@@ -435,7 +435,7 @@ items = [
          "  let b={}; try{b=pm.response.json();}catch(e){}",
          "  pm.test('07b has data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));",
          "}"],
-        body={**conn_cfg, "tableName": "{{firstTableName}}", "name": "pm-flow-sample"},
+        body={**conn_cfg, "tableName": "{{firstTableName}}", "name": "pm_flow_sample"},
         base="transform_base_url"),
 
     req("07c Upload Sample", "POST", "/test-connection/upload-sample",

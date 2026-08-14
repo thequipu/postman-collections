@@ -162,6 +162,29 @@ def build_teardown(base_var, health_path="/actuator/health"):
     }
 
 
+def global_capture_test():
+    """Collection-level test that runs after EVERY request: surface any API error's status +
+    message (so tolerant per-step assertions can't hide it), record it for review, and FAIL on
+    server errors (5xx) — a 5xx is never a legitimate outcome, so it must not pass silently.
+    Health/skip URLs are excluded (they are intentional redirects)."""
+    return [
+        "(function(){",
+        "  const code=pm.response.code;",
+        "  let u=''; try{u=pm.request.url.toString();}catch(e){}",
+        "  if(code<400 || u.indexOf('__skip__')>=0 || u.indexOf('/actuator/health')>=0) return;",
+        "  let msg='';",
+        "  try{const b=pm.response.json(); msg=b.message||b.error||b.errorCode||JSON.stringify(b);}catch(e){try{msg=pm.response.text();}catch(x){}}",
+        "  if(msg && msg.length>300) msg=msg.slice(0,300);",
+        "  console.log('API FAIL ['+pm.info.requestName+'] '+code+' '+pm.request.method+' '+u+' :: '+msg);",
+        "  let fails=[]; try{fails=JSON.parse(pm.collectionVariables.get('_api_failures')||'[]');}catch(e){}",
+        "  fails.push({step:pm.info.requestName, code:code, message:msg});",
+        "  pm.collectionVariables.set('_api_failures', JSON.stringify(fails));",
+        "  // 5xx is a real server failure — register a failing assertion so it can't pass silently.",
+        "  if(code>=500){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
+        "})();",
+    ]
+
+
 def build_collection(name, description, folder_name, items, extra_variables=None):
     """Assemble a complete Postman collection JSON.
 
@@ -178,6 +201,7 @@ def build_collection(name, description, folder_name, items, extra_variables=None
         {"key": "_flow_failed",      "value": "", "type": "string"},
         {"key": "_flow_failed_at",   "value": "", "type": "string"},
         {"key": "_skip_url",         "value": "", "type": "string"},
+        {"key": "_api_failures",     "value": "", "type": "string"},
     ]
     if extra_variables:
         variables += extra_variables
@@ -190,7 +214,10 @@ def build_collection(name, description, folder_name, items, extra_variables=None
             "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
         },
         "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]},
-        "event": [{"listen": "prerequest", "script": {"type": "text/javascript", "exec": keycloak_prerequest()}}],
+        "event": [
+            {"listen": "prerequest", "script": {"type": "text/javascript", "exec": keycloak_prerequest()}},
+            {"listen": "test", "script": {"type": "text/javascript", "exec": global_capture_test()}},
+        ],
         "variable": variables,
         "item": [{"name": folder_name, "item": items}]
     }

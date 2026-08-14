@@ -42,6 +42,28 @@
           "    pm.environment.set('access_token', b.access_token); });"
         ]
       }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "(function(){",
+          "  const code=pm.response.code;",
+          "  let u=''; try{u=pm.request.url.toString();}catch(e){}",
+          "  if(code<400 || u.indexOf('__skip__')>=0 || u.indexOf('/actuator/health')>=0) return;",
+          "  let msg='';",
+          "  try{const b=pm.response.json(); msg=b.message||b.error||b.errorCode||JSON.stringify(b);}catch(e){try{msg=pm.response.text();}catch(x){}}",
+          "  if(msg && msg.length>300) msg=msg.slice(0,300);",
+          "  console.log('API FAIL ['+pm.info.requestName+'] '+code+' '+pm.request.method+' '+u+' :: '+msg);",
+          "  let fails=[]; try{fails=JSON.parse(pm.collectionVariables.get('_api_failures')||'[]');}catch(e){}",
+          "  fails.push({step:pm.info.requestName, code:code, message:msg});",
+          "  pm.collectionVariables.set('_api_failures', JSON.stringify(fails));",
+          "  // 5xx is a real server failure — register a failing assertion so it can't pass silently.",
+          "  if(code>=500){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
+          "})();"
+        ]
+      }
     }
   ],
   "variable": [
@@ -67,6 +89,11 @@
     },
     {
       "key": "_skip_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_api_failures",
       "value": "",
       "type": "string"
     },
@@ -352,7 +379,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dataSourceModel\": {\n    \"driverType\": \"{{driverType}}\",\n    \"dbHostName\": \"{{dbHost}}\",\n    \"dbPort\": {{dbPort}},\n    \"databaseName\": \"{{dbName}}\",\n    \"dbUserName\": \"{{dbUser}}\",\n    \"dbPassword\": \"{{dbPassword}}\",\n    \"aesRandomIV\": \"{{aesRandomIV}}\",\n    \"dbSchema\": \"{{dbSchema}}\",\n    \"driverClassName\": \"{{driverClassName}}\"\n  },\n  \"tableName\": \"{{firstTableName}}\",\n  \"name\": \"pm-flow-sample\"\n}",
+              "raw": "{\n  \"dataSourceModel\": {\n    \"driverType\": \"{{driverType}}\",\n    \"dbHostName\": \"{{dbHost}}\",\n    \"dbPort\": {{dbPort}},\n    \"databaseName\": \"{{dbName}}\",\n    \"dbUserName\": \"{{dbUser}}\",\n    \"dbPassword\": \"{{dbPassword}}\",\n    \"aesRandomIV\": \"{{aesRandomIV}}\",\n    \"dbSchema\": \"{{dbSchema}}\",\n    \"driverClassName\": \"{{driverClassName}}\"\n  },\n  \"tableName\": \"{{firstTableName}}\",\n  \"name\": \"pm_flow_sample\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -615,7 +642,7 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/s3-upload/getExcelHeader?datasourceName=pm-flow-test",
+              "raw": "{{transform_base_url}}/s3-upload/getExcelHeader?datasourceName=pm_flow_test",
               "host": [
                 "{{transform_base_url}}"
               ],
@@ -626,7 +653,7 @@
               "query": [
                 {
                   "key": "datasourceName",
-                  "value": "pm-flow-test"
+                  "value": "pm_flow_test"
                 }
               ]
             },
@@ -689,7 +716,7 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/s3-upload/getExcelHeaderFromUrl?datasourceName=pm-flow-test",
+              "raw": "{{transform_base_url}}/s3-upload/getExcelHeaderFromUrl?datasourceName=pm_flow_test",
               "host": [
                 "{{transform_base_url}}"
               ],
@@ -700,7 +727,7 @@
               "query": [
                 {
                   "key": "datasourceName",
-                  "value": "pm-flow-test"
+                  "value": "pm_flow_test"
                 }
               ]
             },
@@ -763,7 +790,7 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/s3-upload/getCsvHeadersFromUrl?datasourceName=pm-flow-test",
+              "raw": "{{transform_base_url}}/s3-upload/getCsvHeadersFromUrl?datasourceName=pm_flow_test",
               "host": [
                 "{{transform_base_url}}"
               ],
@@ -774,7 +801,7 @@
               "query": [
                 {
                   "key": "datasourceName",
-                  "value": "pm-flow-test"
+                  "value": "pm_flow_test"
                 }
               ]
             },
@@ -837,7 +864,7 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/s3-upload/getCsvHeader?datasourceName=pm-flow-test",
+              "raw": "{{transform_base_url}}/s3-upload/getCsvHeader?datasourceName=pm_flow_test",
               "host": [
                 "{{transform_base_url}}"
               ],
@@ -848,7 +875,7 @@
               "query": [
                 {
                   "key": "datasourceName",
-                  "value": "pm-flow-test"
+                  "value": "pm_flow_test"
                 }
               ]
             },
@@ -911,7 +938,7 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/s3-upload/getPdf?datasourceName=pm-flow-test",
+              "raw": "{{transform_base_url}}/s3-upload/getPdf?datasourceName=pm_flow_test",
               "host": [
                 "{{transform_base_url}}"
               ],
@@ -922,7 +949,7 @@
               "query": [
                 {
                   "key": "datasourceName",
-                  "value": "pm-flow-test"
+                  "value": "pm_flow_test"
                 }
               ]
             },
@@ -985,7 +1012,7 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/s3-upload/getPdfFromUrl?datasourceName=pm-flow-test",
+              "raw": "{{transform_base_url}}/s3-upload/getPdfFromUrl?datasourceName=pm_flow_test",
               "host": [
                 "{{transform_base_url}}"
               ],
@@ -996,7 +1023,7 @@
               "query": [
                 {
                   "key": "datasourceName",
-                  "value": "pm-flow-test"
+                  "value": "pm_flow_test"
                 }
               ]
             },
@@ -1405,7 +1432,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "[\n  {\n    \"name\": \"pm-flow-stream\",\n    \"realmId\": {{realmId}},\n    \"streamType\": \"DBT-NODE\",\n    \"sqlQuery\": \"SELECT 1\"\n  }\n]",
+              "raw": "[\n  {\n    \"name\": \"pm_flow_stream\",\n    \"realmId\": {{realmId}},\n    \"streamType\": \"DBT-NODE\",\n    \"sqlQuery\": \"SELECT 1\"\n  }\n]",
               "options": {
                 "raw": {
                   "language": "json"
