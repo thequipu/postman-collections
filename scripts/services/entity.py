@@ -196,8 +196,10 @@ def generate():
              "console.log('Schema: '+(d.name||d.schemaName));"],
             base=base, body={"schemaName": "x"},
             prerequest=[
-                "const prefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
-                "pm.request.body.raw=JSON.stringify({schemaName:'pm_flow_entity_schema_'+Date.now(),prefix:prefix,description:'Entity flow schema'});",
+                "const schemaName='pm_flow_entity_schema_'+Date.now();",
+                "const prefix=schemaName.replace(/_/g,'-');",
+                "pm.collectionVariables.set('schemaPrefix', prefix);",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'Entity flow schema'});",
             ]),
 
         # Re-fetch DS metadata so the schema-graph builder has fresh tables+columns.

@@ -29,7 +29,7 @@ def graph_builder_js(version_name="v1"):
     matching nodes. Also sets _versionUri = schemaPrefix + 'Version#<version_name>'.
     """
     return [
-        "const P=pm.collectionVariables.get('schemaPrefix')||pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
+        "const P=pm.collectionVariables.get('schemaPrefix')||pm.collectionVariables.get('_dsPrefix')||'pmflow';",
         f"const VNAME='{version_name}'; const versionUri=P+'Version#'+VNAME;",
         "pm.collectionVariables.set('_versionUri', versionUri);",
         "// URL-encoded form for query params — versionUri contains '#' which must be %23",
@@ -49,7 +49,7 @@ def graph_builder_js(version_name="v1"):
         "  const entPrefix='http://'+dsName+'.in/';",
         "  // dataSourceID is REQUIRED — without it the stream generator resolves the Trino catalog to",
         "  // 'unknown' and ingestion fails ('Schema unknown does not exist').",
-        "  nodes.push({node_type:'data_source',id:dsShort,node_id:dsShort,uri:dsShort,nodeId:nid(dsShort),label:dsName,driverType:driver,dataSourceID:dsIdVal});",
+        "  nodes.push({node_type:'data_source',id:dsShort,node_id:dsShort,uri:dsShort,nodeId:nid(dsShort),label:dsName,driverType:driver,driver_type:driver,dataSourceID:dsIdVal});",
         "  edges.forEach(te=>{",
         "    const tn=te.tableNode||{}; const tShort=tn.nodeId; const tLong=tn.uri; const tLabel=tn.label;",
         "    if(!tShort||!tLong) return;",
@@ -86,9 +86,28 @@ def graph_builder_js(version_name="v1"):
         "    }",
         "  });",
         "});",
+        "// FULL-FIDELITY stamping — make every node match the shape the UICore schema editor",
+        "// persists (verified against a working DemoTest read-back). The UI's canvas nodes carry",
+        "// these fields (from the server-side entity fetch) and round-trip them on POST /schema-graph;",
+        "// our fabricated nodes must set them explicitly or they persist as null.",
+        "const _sidRaw=pm.collectionVariables.get('schemaId');",
+        "const _sid=(_sidRaw&&!isNaN(_sidRaw))?parseInt(_sidRaw):(_sidRaw||'');",
+        "const _TEN=pm.environment.get('tenant_id')||'eksquipu';",
+        "const _USER=pm.collectionVariables.get('test_username')||pm.environment.get('test_username')||_TEN;",
+        "function _uuid(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);});}",
+        "nodes.forEach(n=>{",
+        "  n.schemaId=_sid;",
+        "  if(n.node_type==='Version') return;",  # Version: only schemaId/description/tags (already set)
+        "  n.identity=_uuid();",
+        "  n.tenantId=_TEN; n.tenant_id=_TEN; n.createdBy=_USER; n.created_by=_USER;",
+        "  if(n.description===undefined) n.description='';",
+        "  if(n.node_type==='property'){ n.primary_key=!!n.primaryKey; n.foreign_key=!!n.foreignKey; n.unique_key=!!n.uniqueKey; }",
+        "  if(n.node_type==='Node'){ n.entity_label=n.entityLabel; n.named_entity=!!n.namedEntity; n.updatedBy=_USER; n.updated_by=_USER; }",
+        "  if(n.node_type==='Node Property'){ n.primary_key=!!n.primaryKey; n.unique_key=!!n.uniqueKey; n.alternateLabel=false; n.alternate_label=false; n.preferredLabel=false; n.preferred_label=false; n.freeText=false; n.timeLabel=false; n.time_label=false; n.timeFormat=''; n.time_format=''; }",
+        "});",
         "pm.collectionVariables.set('_graphNodes', JSON.stringify(nodes));",
         "pm.collectionVariables.set('_graphLinks', JSON.stringify(links));",
-        "console.log('Built UI schema graph: '+nodes.length+' nodes, '+links.length+' links');",
+        "console.log('Built UI schema graph: '+nodes.length+' nodes, '+links.length+' links (schemaId='+_sid+', full-fidelity)');",
     ]
 
 
@@ -110,13 +129,19 @@ def create_ds_step(step, base="app_base_url"):
          "if(dsName) pm.collectionVariables.set('dsMetaName', dsName);",
          "console.log('dsMetaName='+dsName);",
          f"console.log('DS id='+(d.id||d.sourceId)+', catalog='+cat);"],
-        base=base,
-        body={"name": "pm_flow_ds_{{$timestamp}}",
-              "driverType": "{{driverType}}", "dbHostName": "{{dbHost}}",
-              "dbPort": "{{dbPort}}", "databaseName": "{{dbName}}",
-              "dbUserName": "{{dbUser}}", "dbPassword": "{{dbPassword}}",
-              "aesRandomIV": "{{aesRandomIV}}", "dbSchema": "{{dbSchema}}",
-              "driverClassName": "{{driverClassName}}", "deleted": False})
+        base=base, body={"name": "x"},
+        prerequest=[
+            "// Build the JDBC datasource body dynamically. dbPort is OMITTED when empty — snowflake",
+            "// has no port, and sending dbPort:'' makes the server 400 'Failed to read request'",
+            "// (Jackson can't deserialize '' into an Integer).",
+            "const g=k=>pm.variables.get(k)||pm.environment.get(k)||'';",
+            "const body={name:'pm_flow_ds_'+Date.now(),driverType:g('driverType'),dbHostName:g('dbHost'),"
+            "databaseName:g('dbName'),dbUserName:g('dbUser'),dbPassword:g('dbPassword'),"
+            "aesRandomIV:g('aesRandomIV'),dbSchema:g('dbSchema'),driverClassName:g('driverClassName'),deleted:false};",
+            "const port=String(g('dbPort')).trim();",
+            "if(port!=='' && !isNaN(port)){ body.dbPort=parseInt(port); }",
+            "pm.request.body.raw=JSON.stringify(body);",
+        ])
 
 
 def fetch_entities_step(step, base="app_base_url"):
@@ -126,7 +151,7 @@ def fetch_entities_step(step, base="app_base_url"):
     return req(f"{step} Fetch DS Entities", "POST", "/metadata-graph/fetch-data-source",
         [f"pm.test('{step} Graph 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
          "let b={}; try{b=pm.response.json();}catch(e){}",
-         "// Build dsPrefix from datasource name",
+         "// Build dsPrefix from datasource name (DS-side entity namespace — unchanged).",
          "const dsName=pm.collectionVariables.get('dsMetaName')||'pmflow';",
          "const dsPrefix='http://'+dsName.toLowerCase().replace(/[^a-z0-9_]/g,'_')+'.in/';",
          "pm.collectionVariables.set('_dsPrefix', dsPrefix);",
@@ -179,8 +204,10 @@ def create_schema_step(step, name_prefix="pm_flow", base="app_base_url"):
         base=base, body={"schemaName": "x", "prefix": "x"},
         prerequest=[
             f"const schemaName='{name_prefix}_schema_'+Date.now();",
-            "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
-            "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:dsPrefix,description:'Auto-created by FLOW'});",
+            "// prefix = schema name, hyphenated (letters/digits/hyphen) — the schema's ingest-namespace URI.",
+            "const prefix=schemaName.replace(/_/g,'-');",
+            "pm.collectionVariables.set('schemaPrefix', prefix);",
+            "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'Auto-created by FLOW'});",
         ])
 
 
@@ -244,6 +271,115 @@ def verify_schema_graph_step(step, base="app_base_url"):
          f"pm.test('{step} has entities', () => pm.expect(entities.length).to.be.above(0));",
          "console.log('UI schema-graph read back: '+ns.length+' nodes, '+entities.length+' entities');"],
         base=base)
+
+
+# ── Entity-layer schema build (product-faithful) ─────────────────────────────
+# Instead of fabricating the schema graph client-side (graph_builder_js), create each business
+# entity one-by-one via POST /entity so the SERVER stamps identity/tenant/createdBy and links each
+# Node Property to its physical column. Then assemble the schema graph from the fully-stamped
+# entity-graph (datasource-subgraph per DS) and save it (+versionsModel). Mirrors the UI.
+
+# Postgres/generic raw type -> canonical Node-Property dataType (matches the server's output, where
+# every integer family collapses to BIGINT).
+ENTITY_DT_JS = (
+    "const _DT={int8:'BIGINT',int4:'BIGINT',int2:'BIGINT',serial:'BIGINT',bigserial:'BIGINT',"
+    "smallserial:'BIGINT',numeric:'DECIMAL',decimal:'DECIMAL',float8:'DOUBLE',float4:'DOUBLE',"
+    "bool:'BOOLEAN',timestamp:'TIMESTAMP',timestamptz:'TIMESTAMP',date:'DATE',time:'TIME',"
+    "json:'JSON',jsonb:'JSON',uuid:'VARCHAR',bytea:'VARBINARY'};"
+    "function cdt(t){t=(t||'').toLowerCase();return _DT[t]||(t?t.toUpperCase():'VARCHAR');}")
+
+
+def create_entities_loop_step(step, base="app_base_url"):
+    """Self-looping step: create ONE business entity per table across ALL datasources in
+    _dsMetaList via POST /entity. Advances _entIdx and setNextRequest's itself until every table
+    (flattened across datasources) has an entity. Mongo columns are synthesized from _mongoShape."""
+    name = f"{step} Create Entity"
+    return req(name, "POST", "/entity",
+        ["const code=pm.response.code;",
+         f"pm.test('{step} entity 2xx (idx '+(pm.collectionVariables.get('_entIdx')||'0')+')', () => {{ if(![200,201].includes(code)){{pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','{step}');}} pm.expect(code).to.be.oneOf([200,201]); }});",
+         "let b={}; try{b=pm.response.json();}catch(e){}",
+         "const i=parseInt(pm.collectionVariables.get('_entIdx')||'0');",
+         "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+         "let flat=[]; meta.forEach(m=>{(m.hasTableEdges||[]).forEach(te=>flat.push(te));});",
+         "console.log('entity['+i+'/'+flat.length+'] created: '+(b.entityUri||'?')+' props='+((b.properties||[]).length));",
+         "const next=i+1;",
+         f"if(next<flat.length){{ pm.collectionVariables.set('_entIdx', String(next)); postman.setNextRequest('{name}'); }}",
+         "else { pm.collectionVariables.set('_entCount', String(flat.length)); pm.collectionVariables.unset('_entIdx'); console.log('ALL '+flat.length+' entities created'); }"],
+        base=base, body={"label": "x"},
+        prerequest=[
+            ENTITY_DT_JS,
+            "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+            "let flat=[]; meta.forEach(m=>{(m.hasTableEdges||[]).forEach(te=>flat.push(te));});",
+            "const i=parseInt(pm.collectionVariables.get('_entIdx')||'0');",
+            "const te=flat[i]||{}; const tn=te.tableNode||{};",
+            "const tShort=tn.nodeId||''; const segs=tShort.split(':');",
+            "const dsName=segs[segs.length-2]||'ds'; const dsUrn=segs.slice(0,-1).join(':');",
+            "const driver=(segs[segs.length-3]||'postgres').toUpperCase();",
+            "const entPrefix='http://'+dsName+'.in/';",
+            "let cols=(tn.hasPropertyEdges||[]).map(pe=>pe.propertyNode||{});",
+            "let props=cols.map(c=>({label:c.label,dataType:cdt(c.dataType),primaryKey:!!c.primaryKey,uniqueKey:!!c.uniqueKey,foreignKey:!!c.foreignKey,nullable:c.nullable!==false,mappedColumnUri:(c.nodeId||c.node_id||c.uri),mappedColumnUris:[(c.nodeId||c.node_id||c.uri)]}));",
+            "// MONGO: fetch-data-source returns 0 columns — synthesize from the captured shapeCypher fields.",
+            "if(driver==='MONGO' && props.length===0){ let ms={}; try{ms=JSON.parse(pm.collectionVariables.get('_mongoShape')||'{}');}catch(e){} (ms[tn.label]||[]).forEach(f=>{ const cu=tShort+':'+f; props.push({label:f,dataType:'VARCHAR',primaryKey:false,uniqueKey:false,foreignKey:false,nullable:true,mappedColumnUri:cu,mappedColumnUris:[cu]}); }); }",
+            "const body={label:tn.label,prefix:entPrefix,dataSourceUri:dsUrn,namedEntity:false,description:'',tags:[],properties:props};",
+            "pm.request.body.raw=JSON.stringify(body);",
+        ])
+
+
+def save_schema_graph_from_entities_step(step, base="app_base_url", ds_id_vars=("dsId",)):
+    """Assemble the schema graph from the server-stamped entity-graph: GET
+    entity-graph/datasource-subgraph for each datasource, merge, stamp schema nodeId+schemaId, add
+    the Version node + Has_Node links, then POST /schema-graph (+versionsModel) to mint versionId.
+    All fetch+save happens in one closure (sendRequest) to avoid collection-var body corruption."""
+    ids_js = "const ids=[]; " + " ".join(
+        f"(function(){{const v=parseInt(pm.collectionVariables.get('{v}'));if(v&&!isNaN(v))ids.push(v);}})();"
+        for v in ds_id_vars)
+    return req(f"{step} Save Schema Graph from Entities", "GET", "/actuator/health",
+        [f"pm.test('{step} health', () => pm.response.to.have.status(200));",
+         "const P=pm.collectionVariables.get('schemaPrefix'); const sn=pm.collectionVariables.get('schemaName');",
+         "const sidRaw=pm.collectionVariables.get('schemaId'); const sid=(sidRaw&&!isNaN(sidRaw))?parseInt(sidRaw):sidRaw;",
+         "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+         "const dsUrns=[]; meta.forEach(m=>{const te=(m.hasTableEdges||[])[0]; if(te&&te.tableNode){const segs=(te.tableNode.nodeId||'').split(':'); const uu=segs.slice(0,-1).join(':'); if(uu&&dsUrns.indexOf(uu)<0)dsUrns.push(uu);}});",
+         ids_js,
+         "const app=pm.environment.get('app_base_url');",
+         "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+         "let nodes=[]; let links=[];",
+         "function finalize(){",
+         "  const VN=P+'Version#v1';",
+         "  nodes.forEach(n=>{ n.nodeId=P+(n.uri||n.id||''); n.schemaId=sid; });",
+         "  nodes.push({node_type:'Version',id:VN,uri:VN,nodeId:VN,label:'v1',schemaId:sid,tags:[],description:''});",
+         "  nodes.filter(n=>n.node_type==='Node').forEach(en=>{ links.push({source:VN,target:(en.id||en.uri),relationship:'Has_Node',direction:'FORWARD',node_uri:VN}); });",
+         "  pm.collectionVariables.set('_versionUri', VN); pm.collectionVariables.set('_versionUriEnc', encodeURIComponent(VN));",
+         "  const body={prefix:P,schemaName:sn,schemaUri:P+'Schema#'+sn,nodes:nodes,links:links,versionsModel:{versionName:'v1',description:'',defaultVersion:false,latest:true,deleted:false,versionLocked:false,dataSourceIds:ids,entity360Flows:[]}};",
+         "  pm.sendRequest({url:app+'/schema-graph', method:'POST', header:hdr, body:{mode:'raw', raw:JSON.stringify(body)}}, (e,r)=>{",
+         "    const ok=r&&[200,201].includes(r.code);",
+         f"    pm.test('{step} schema-graph saved 2xx', () => {{ if(!ok){{pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','{step}');}} pm.expect(ok).to.be.true; }});",
+         "    let rb={}; try{rb=r.json();}catch(x){}",
+         "    const vid=rb.versionId||rb.id; if(vid) pm.collectionVariables.set('versionId', String(vid));",
+         "    const ent=nodes.filter(n=>n.node_type==='Node').length;",
+         "    console.log('schema-graph saved from '+ent+' entities ('+nodes.length+' nodes, '+dsUrns.length+' DS) versionId='+vid);",
+         "  });",
+         "}",
+         "function fetchNext(k){",
+         "  if(k>=dsUrns.length){ finalize(); return; }",
+         "  pm.sendRequest({url:app+'/entity-graph/datasource-subgraph?uri='+encodeURIComponent(dsUrns[k]), method:'GET', header:hdr}, (e,r)=>{",
+         "    let g={}; try{g=r.json();}catch(x){}",
+         "    (g.nodes||[]).forEach(n=>nodes.push(n)); (g.links||[]).forEach(l=>links.push(l));",
+         "    fetchNext(k+1);",
+         "  });",
+         "}",
+         "if(!P){ pm.test('"+step+" prefix present', () => pm.expect(P,'schemaPrefix').to.be.ok); } else { fetchNext(0); }"],
+        base=base)
+
+
+def create_entity_schema_graph_step(step, base="app_base_url", ds_id_vars=("dsId",)):
+    """Product-faithful replacement for create_schema_graph_step: create entities one-by-one via
+    POST /entity (server stamps identity/tenant/FK-ready), assemble the schema graph from the
+    entity-graph, save (+versionsModel), verify. Returns a LIST of steps — splice with * ."""
+    return [
+        create_entities_loop_step(f"{step}a", base),
+        save_schema_graph_from_entities_step(f"{step}b", base, ds_id_vars),
+        verify_schema_graph_step(f"{step}c", base),
+    ]
 
 
 def save_schema_graph_version_step(step, base="app_base_url", ds_id_vars=("dsId",)):

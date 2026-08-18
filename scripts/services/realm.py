@@ -11,7 +11,7 @@ Then tests all realm + ingest stream endpoints.
 import json
 
 from flowlib.core import req, build_setup, build_collection, write_flow
-from flowlib.setup import (create_schema_graph_step, KG_ACCEPT,
+from flowlib.setup import (create_schema_graph_step, create_entity_schema_graph_step, KG_ACCEPT,
                            SKIP_CLEANUP_PRE, SKIP_CLEANUP_TEST)
 
 # Real shapeCypher for datatypetesting_mongo (maps the 3 collections). Embedded directly (NOT via
@@ -105,6 +105,7 @@ def generate():
                                           "_dsMetaList", "_graphNodes", "_graphLinks",
                                           "_versionUri", "_versionUriEnc", "awsVersionId", "_streamCount", "_genStreams", "_streamNames",
                                           "_nsAttempt", "_nsUp", "_ingAttempt", "_mongoShape",
+                                          "_entIdx", "_entCount",
                                           "excelDsName", "_excelStagedKey", "_excelCols"]),
 
         # ═══ PHASE 0: Create 8 DataSources ═══
@@ -259,8 +260,10 @@ def generate():
              "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"],
             base=base, body={"schemaName": "x"},
             prerequest=[
-                "const prefix='http://pm_flow_multi_ds.in/';",
-                "pm.request.body.raw=JSON.stringify({schemaName:'pm_flow_realm_schema_'+Date.now(),prefix:prefix,description:'8-DS fabric'});",
+                "// prefix = schema name, hyphenated (letters/digits/hyphen) — the schema's ingest-namespace URI.",
+                "const schemaName='pm_flow_realm_schema_'+Date.now();",
+                "const prefix=schemaName.replace(/_/g,'-');",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'8-DS fabric'});",
                 "pm.collectionVariables.set('schemaPrefix', prefix);",
             ]),
 
@@ -287,8 +290,10 @@ def generate():
              "pm.test('03z every created DS added entities', () => { if(withEntities<created||total===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03z entities missing');} pm.expect(withEntities, 'created DSs vs DSs with entities').to.eql(created); pm.expect(total).to.be.above(0); });"],
             base=base),
 
-        # Create version+MinIO (KG) -> UI/Neo4j schema-graph -> verify (entities visible in UI)
-        *create_schema_graph_step("04", base,
+        # PRODUCT-FAITHFUL: create each business entity one-by-one via POST /entity (server stamps
+        # identity/tenant/createdBy + links Node Property -> physical column), then assemble the
+        # schema graph from the entity-graph (datasource-subgraph per DS) and save (+versionsModel).
+        *create_entity_schema_graph_step("04", base,
             ds_id_vars=("pgDsId", "mysqlDsId", "mariaDsId", "oracleDsId",
                         "snowDsId", "mongoDsId", "csvDsId", "excelDsId")),
 
@@ -457,7 +462,7 @@ def generate():
              "pm.sendRequest({url:app+'/atomicIngestStream/create-streams', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e1,r1)=>{",
              "  pm.test('22 create-streams 2xx', () => pm.expect(r1 && r1.code, 'create-streams code').to.be.oneOf([200,201]));",
              "  console.log('create-streams: '+(r1?r1.code:e1));",
-             "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
+             "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
              "    pm.test('22 event/ingest 2xx', () => pm.expect(r2 && r2.code, 'event/ingest code').to.be.oneOf([200,201,204]));",
              "    console.log('event/ingest: '+(r2?r2.code:e2));",
              "  });",
@@ -584,6 +589,7 @@ def generate():
                        "realmName", "realmReferenceName", "versionName", "streamId", "_allNodes", "_allLinks", "_ingestion_status",
                        "_dsMetaList", "_graphNodes", "_graphLinks", "_versionUri", "_versionUriEnc", "awsVersionId", "_streamCount", "_genStreams", "_streamNames",
                        "_nsAttempt", "_nsUp", "_ingAttempt", "_mongoShape",
+                       "_entIdx", "_entCount",
                        "excelDsName", "_excelStagedKey", "_excelCols"]]
     )
     return write_flow("FLOW-Realm-CRUD.postman_collection.json", col)

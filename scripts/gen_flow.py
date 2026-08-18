@@ -19,7 +19,8 @@ from services import tenant, security, realm, schema, entity, permissions
 from services import transformation, kg, synapse, nexus, lumen, docgraph, nlp
 from services import ingestion, versions, watcher, document_extraction, synapse_query
 from services import namespace, entity360, schema_graph, metadata, app_misc
-from services import ds_migration, datasource_extended, single_ds_realm
+from services import ds_migration, datasource_extended, single_ds_realm, single_ds_entity_realm
+from services import csv_snow_entity_realm, csv_entity_realm
 
 SERVICES = {
     # Core services
@@ -51,6 +52,9 @@ SERVICES = {
     "ds_migration":        ("DS Migration",              ds_migration.generate),
     "ds_extended":         ("DataSource Extended",       datasource_extended.generate),
     "single_ds_realm":     ("Single-DS Realm + Ingestion", single_ds_realm.generate),
+    "single_ds_entity_realm": ("Single-DS Entity-Layer Realm + Ingestion", single_ds_entity_realm.generate),
+    "csv_snow_entity_realm": ("CSV + Snowflake Entity-Layer Realm", csv_snow_entity_realm.generate),
+    "csv_entity_realm": ("CSV-only Entity-Layer Realm", csv_entity_realm.generate),
 }
 
 

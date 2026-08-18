@@ -31,8 +31,9 @@ def generate():
             base=base, body={"schemaName": "x", "prefix": "x"},
             prerequest=[
                 "const schemaName='pm_flow_schema_'+Date.now();",
-                "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
-                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:dsPrefix,description:'Auto-created by FLOW'});",
+                "const prefix=schemaName.replace(/_/g,'-');",
+                "pm.collectionVariables.set('schemaPrefix', prefix);",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'Auto-created by FLOW'});",
             ]),
 
         # Create version + schema graph with entities (version+MinIO, UI/Neo4j, verify)

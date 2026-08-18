@@ -12,6 +12,9 @@ from flowlib.setup import (create_ds_step, fetch_entities_step, create_schema_gr
                            SETUP_VARS, SETUP_CLEAR_VARS)
 
 
+_SKIP = ["if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }"]
+
+
 def generate():
     base = "app_base_url"
 
@@ -35,8 +38,11 @@ def generate():
             base=base, body={"schemaName": "x"},
             prerequest=[
                 "const sn='pm_flow_singleds_'+Date.now();",
-                "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||sn;",
-                "pm.request.body.raw=JSON.stringify({schemaName:sn,prefix:dsPrefix,description:'Single-DS realm flow'});",
+                "// prefix = the schema's ingest-namespace URI: plain, hyphenated (letters/digits/-).",
+                "// A URL prefix (http://x.in/) breaks nodeId persistence -> 0 rows ingest.",
+                "const prefix=sn.replace(/_/g,'-');",
+                "pm.collectionVariables.set('schemaPrefix', prefix);",
+                "pm.request.body.raw=JSON.stringify({schemaName:sn,prefix:prefix,description:'Single-DS realm flow'});",
             ]),
 
         *create_schema_graph_step("03", base),   # mints versionId via /schema-graph + versionsModel
@@ -110,7 +116,7 @@ def generate():
              "pm.sendRequest({url:app+'/atomicIngestStream/create-streams', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e1,r1)=>{",
              "  pm.test('09 create-streams 2xx', () => pm.expect(r1 && r1.code).to.be.oneOf([200,201]));",
              "  console.log('create-streams: '+(r1?r1.code:e1));",
-             "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
+             "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
              "    pm.test('09 event/ingest 2xx', () => pm.expect(r2 && r2.code).to.be.oneOf([200,201,204]));",
              "    console.log('event/ingest: '+(r2?r2.code:e2));",
              "  });",
@@ -141,20 +147,20 @@ def generate():
                 "if(parseInt(pm.collectionVariables.get('_ingAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }",
             ]),
 
-        # ── Cleanup ──
+        # ── Cleanup (honors skip_cleanup=true to keep resources for inspection) ──
         req("20 Del Realm", "DELETE", "/realm/{{realmId}}?permanent=false",
             ["pm.test('20 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
-            base=base, skip_on_fail=False),
+            base=base, skip_on_fail=False, prerequest=_SKIP),
         req("21 Remove Namespace", "DELETE", "/synapse/namespace/remove?name={{realmReferenceName}}&permanent=true",
             ["pm.test('21 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
-            base="kg_base_url", skip_on_fail=False),
+            base="kg_base_url", skip_on_fail=False, prerequest=_SKIP),
         req("22 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
             ["pm.test('22 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
-            base=base, skip_on_fail=False),
+            base=base, skip_on_fail=False, prerequest=_SKIP),
         req("99 Teardown (Del DS)", "DELETE", "/datasource/{{dsId}}",
             ["pm.test('99 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
              "pm.collectionVariables.unset('_flow_failed'); pm.collectionVariables.unset('_flow_failed_at');"],
-            base=base, skip_on_fail=False),
+            base=base, skip_on_fail=False, prerequest=_SKIP),
     ]
 
     col = build_collection(

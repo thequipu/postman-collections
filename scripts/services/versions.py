@@ -25,8 +25,10 @@ def generate():
              "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"],
             base=base, body={"schemaName": "x"},
             prerequest=[
-                "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
-                "pm.request.body.raw=JSON.stringify({schemaName:'pm_flow_ver_schema_'+Date.now(),prefix:dsPrefix,description:'Version flow dep'});",
+                "const schemaName='pm_flow_ver_schema_'+Date.now();",
+                "const prefix=schemaName.replace(/_/g,'-');",
+                "pm.collectionVariables.set('schemaPrefix', prefix);",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'Version flow dep'});",
             ]),
 
         # ── Create version + schema graph correctly (version+MinIO, UI/Neo4j, verify) ──

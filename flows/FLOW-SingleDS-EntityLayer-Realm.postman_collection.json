@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "flow-entity360-crud-auto",
-    "name": "FLOW - Entity360 CRUD",
-    "description": "Entity360 with entities.",
+    "_postman_id": "flow-single-ds-entity-realm-auto",
+    "name": "FLOW - Single-DS Entity-Layer Realm + Ingestion",
+    "description": "Product-faithful schema build: create each entity one-by-one via POST /entity (server stamps identity/tenant), assemble the schema graph from the entity-graph (datasource-subgraph), then realm + real ingestion. Creds via env-vars. Any stream that does not land rows fails the flow.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -178,19 +178,54 @@
       "type": "string"
     },
     {
-      "key": "e360Id",
+      "key": "realmId",
       "value": "",
       "type": "string"
     },
     {
-      "key": "pathId",
+      "key": "realmName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmReferenceName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_streamCount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_streamNames",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_nsAttempt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_ingAttempt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_entIdx",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_entCount",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Entity360 CRUD",
+      "name": "Single-DS Entity Realm",
       "item": [
         {
           "name": "00 Setup",
@@ -218,8 +253,15 @@
                   "pm.collectionVariables.unset('_versionUri');",
                   "pm.collectionVariables.unset('_versionUriEnc');",
                   "pm.collectionVariables.unset('awsVersionId');",
-                  "pm.collectionVariables.unset('e360Id');",
-                  "pm.collectionVariables.unset('pathId');",
+                  "pm.collectionVariables.unset('realmId');",
+                  "pm.collectionVariables.unset('realmName');",
+                  "pm.collectionVariables.unset('realmReferenceName');",
+                  "pm.collectionVariables.unset('_streamCount');",
+                  "pm.collectionVariables.unset('_streamNames');",
+                  "pm.collectionVariables.unset('_nsAttempt');",
+                  "pm.collectionVariables.unset('_ingAttempt');",
+                  "pm.collectionVariables.unset('_entIdx');",
+                  "pm.collectionVariables.unset('_entCount');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -284,7 +326,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm_flow_ds_{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -302,7 +344,15 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "// Build the JDBC datasource body dynamically. dbPort is OMITTED when empty — snowflake",
+                  "// has no port, and sending dbPort:'' makes the server 400 'Failed to read request'",
+                  "// (Jackson can't deserialize '' into an Integer).",
+                  "const g=k=>pm.variables.get(k)||pm.environment.get(k)||'';",
+                  "const body={name:'pm_flow_ds_'+Date.now(),driverType:g('driverType'),dbHostName:g('dbHost'),databaseName:g('dbName'),dbUserName:g('dbUser'),dbPassword:g('dbPassword'),aesRandomIV:g('aesRandomIV'),dbSchema:g('dbSchema'),driverClassName:g('driverClassName'),deleted:false};",
+                  "const port=String(g('dbPort')).trim();",
+                  "if(port!=='' && !isNaN(port)){ body.dbPort=parseInt(port); }",
+                  "pm.request.body.raw=JSON.stringify(body);"
                 ]
               }
             },
@@ -438,7 +488,7 @@
           "response": []
         },
         {
-          "name": "01c Create Schema",
+          "name": "02 Create Schema",
           "request": {
             "method": "POST",
             "header": [
@@ -462,7 +512,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"x\",\n  \"prefix\": \"x\"\n}",
+              "raw": "{\n  \"schemaName\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -481,11 +531,10 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "const schemaName='pm_flow_e360_schema_'+Date.now();",
-                  "// prefix = schema name, hyphenated (letters/digits/hyphen) — the schema's ingest-namespace URI.",
-                  "const prefix=schemaName.replace(/_/g,'-');",
+                  "const sn='pm_flow_entity_'+Date.now();",
+                  "const prefix=sn.replace(/_/g,'-');",
                   "pm.collectionVariables.set('schemaPrefix', prefix);",
-                  "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'Auto-created by FLOW'});"
+                  "pm.request.body.raw=JSON.stringify({schemaName:sn,prefix:prefix,description:'Entity-layer realm flow'});"
                 ]
               }
             },
@@ -499,13 +548,12 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01c Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01c');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('02 Schema 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.schemaModel||b.data||b;",
                   "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
                   "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
-                  "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);",
-                  "console.log('Schema: '+(d.name||d.schemaName)+', prefix='+(d.prefix||''));"
+                  "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"
                 ]
               }
             }
@@ -513,7 +561,7 @@
           "response": []
         },
         {
-          "name": "01di Save Schema Graph + Version (Neo4j)",
+          "name": "03 Create Entity",
           "request": {
             "method": "POST",
             "header": [
@@ -527,17 +575,17 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema-graph",
+              "raw": "{{app_base_url}}/entity",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema-graph"
+                "entity"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"\"\n}",
+              "raw": "{\n  \"label\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -556,79 +604,16 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "const P=pm.collectionVariables.get('schemaPrefix')||pm.collectionVariables.get('_dsPrefix')||'pmflow';",
-                  "const VNAME='v1'; const versionUri=P+'Version#'+VNAME;",
-                  "pm.collectionVariables.set('_versionUri', versionUri);",
-                  "// URL-encoded form for query params — versionUri contains '#' which must be %23",
-                  "pm.collectionVariables.set('_versionUriEnc', encodeURIComponent(versionUri));",
-                  "const DT={int8:'BIGINT',int4:'INTEGER',int2:'SMALLINT',serial:'INTEGER',bigserial:'BIGINT',varchar:'VARCHAR',bpchar:'VARCHAR',char:'VARCHAR',text:'VARCHAR',bool:'BOOLEAN',float8:'DOUBLE',float4:'FLOAT',numeric:'DECIMAL',decimal:'DECIMAL',timestamp:'TIMESTAMP',timestamptz:'TIMESTAMP',date:'DATE',time:'TIME',uuid:'VARCHAR',json:'VARCHAR',jsonb:'VARCHAR'};",
-                  "function nid(u){return P+u;}",
-                  "let metaList=[]; try{metaList=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
-                  "const nodes=[{node_type:'Version',id:versionUri,uri:versionUri,nodeId:versionUri,label:VNAME,tags:[],description:''}];",
-                  "const links=[];",
-                  "metaList.forEach(meta=>{",
-                  "  const edges=(meta&&meta.hasTableEdges)||[];",
-                  "  if(edges.length===0) return;",
-                  "  const t0=edges[0].tableNode||{}; const tshort=t0.nodeId||''; const segs=tshort.split(':');",
-                  "  const dsName=segs[segs.length-2]||'ds'; const dsShort=segs.slice(0,-1).join(':');",
-                  "  const driver=(segs[segs.length-3]||'postgres').toUpperCase();",
-                  "  const dsIdVal=(meta&&meta._dsId!=null)?parseInt(meta._dsId):null;",
-                  "  const entPrefix='http://'+dsName+'.in/';",
-                  "  // dataSourceID is REQUIRED — without it the stream generator resolves the Trino catalog to",
-                  "  // 'unknown' and ingestion fails ('Schema unknown does not exist').",
-                  "  nodes.push({node_type:'data_source',id:dsShort,node_id:dsShort,uri:dsShort,nodeId:nid(dsShort),label:dsName,driverType:driver,driver_type:driver,dataSourceID:dsIdVal});",
-                  "  edges.forEach(te=>{",
-                  "    const tn=te.tableNode||{}; const tShort=tn.nodeId; const tLong=tn.uri; const tLabel=tn.label;",
-                  "    if(!tShort||!tLong) return;",
-                  "    nodes.push({node_type:'table',id:tShort,node_id:tShort,uri:tLong,nodeId:nid(tLong),label:tLabel});",
-                  "    links.push({source:dsShort,target:tShort,relationship:'has_tables',direction:'FORWARD'});",
-                  "    const entUri=entPrefix+'Node#'+tLabel;",
-                  "    nodes.push({node_type:'Node',id:entUri,uri:entUri,nodeId:nid(entUri),label:tLabel,entityLabel:tLabel,namedEntity:false,prefix:entPrefix,tags:[]});",
-                  "    links.push({source:versionUri,target:entUri,relationship:'Has_Node',direction:'FORWARD',node_uri:versionUri});",
-                  "    (tn.hasPropertyEdges||[]).forEach(pe=>{",
-                  "      const pn=pe.propertyNode||{}; const cShort=pn.nodeId; const cLong=pn.uri; const cLabel=pn.label;",
-                  "      if(!cShort||!cLong) return;",
-                  "      const rawdt=(pn.dataType||'').toLowerCase();",
-                  "      nodes.push({node_type:'property',id:cShort,node_id:cShort,uri:cLong,nodeId:nid(cLong),label:cLabel,dataType:pn.dataType,data_type:pn.dataType,primaryKey:!!pn.primaryKey,primary_key:!!pn.primaryKey,uniqueKey:!!pn.uniqueKey,foreignKey:!!pn.foreignKey,nullable:pn.nullable!==false});",
-                  "      links.push({source:tShort,target:cShort,relationship:'has_property',direction:'FORWARD'});",
-                  "      const npUri=entPrefix+'NodeProperty#'+tLabel+'#'+cLabel;",
-                  "      const ndt=DT[rawdt]||(pn.dataType||'VARCHAR').toUpperCase();",
-                  "      nodes.push({node_type:'Node Property',id:npUri,uri:npUri,nodeId:nid(npUri),label:cLabel,dataType:ndt,data_type:ndt,primaryKey:!!pn.primaryKey,primary_key:!!pn.primaryKey,uniqueKey:!!pn.uniqueKey,tags:[]});",
-                  "      links.push({source:entUri,target:npUri,relationship:'has_node_property',direction:'FORWARD',node_uri:entUri,prefix:entPrefix});",
-                  "      links.push({source:npUri,target:cShort,relationship:'maps_to_column',direction:'FORWARD',node_uri:entUri});",
-                  "    });",
-                  "    // MONGO: fetch-data-source returns 0 columns — synthesize property/NodeProperty nodes",
-                  "    // from the shapeCypher fields captured in _mongoShape by the Create Mongo DS step.",
-                  "    if(driver==='MONGO' && (tn.hasPropertyEdges||[]).length===0){",
-                  "      let mshape={}; try{mshape=JSON.parse(pm.collectionVariables.get('_mongoShape')||'{}');}catch(e){}",
-                  "      (mshape[tLabel]||[]).forEach(fld=>{",
-                  "        const cShort=tShort+':'+fld; const cLong=tLong+':'+fld; const ndt='VARCHAR';",
-                  "        nodes.push({node_type:'property',id:cShort,node_id:cShort,uri:cLong,nodeId:nid(cLong),label:fld,dataType:ndt,data_type:ndt,primaryKey:false,primary_key:false,uniqueKey:false,foreignKey:false,nullable:true});",
-                  "        links.push({source:tShort,target:cShort,relationship:'has_property',direction:'FORWARD'});",
-                  "        const npUri=entPrefix+'NodeProperty#'+tLabel+'#'+fld;",
-                  "        nodes.push({node_type:'Node Property',id:npUri,uri:npUri,nodeId:nid(npUri),label:fld,dataType:ndt,data_type:ndt,primaryKey:false,primary_key:false,uniqueKey:false,tags:[]});",
-                  "        links.push({source:entUri,target:npUri,relationship:'has_node_property',direction:'FORWARD',node_uri:entUri,prefix:entPrefix});",
-                  "        links.push({source:npUri,target:cShort,relationship:'maps_to_column',direction:'FORWARD',node_uri:entUri});",
-                  "      });",
-                  "    }",
-                  "  });",
-                  "});",
-                  "// Stamp schemaId on EVERY node — exactly what the UICore schema-workspace stampNodeIds()",
-                  "// does before POST /schema-graph. The server keys node ownership (and the identity/tenantId/",
-                  "// createdBy it stamps on persist) off schemaId; without it nodes land unowned (schemaId=null).",
-                  "const _sidRaw=pm.collectionVariables.get('schemaId');",
-                  "const _sid=(_sidRaw&&!isNaN(_sidRaw))?parseInt(_sidRaw):(_sidRaw||'');",
-                  "nodes.forEach(n=>{ n.schemaId=_sid; });",
-                  "pm.collectionVariables.set('_graphNodes', JSON.stringify(nodes));",
-                  "pm.collectionVariables.set('_graphLinks', JSON.stringify(links));",
-                  "console.log('Built UI schema graph: '+nodes.length+' nodes, '+links.length+' links (schemaId='+_sid+')');",
-                  "const sn=pm.collectionVariables.get('schemaName');",
-                  "// P is already declared by graph_builder_js above",
-                  "const schemaUri=P+'Schema#'+sn;",
-                  "const ids=[]; (function(){const v=parseInt(pm.collectionVariables.get('dsId'));if(v&&!isNaN(v))ids.push(v);})();",
-                  "let n=[]; try{n=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]');}catch(e){}",
-                  "let l=[]; try{l=JSON.parse(pm.collectionVariables.get('_graphLinks')||'[]');}catch(e){}",
-                  "const body={prefix:P,schemaName:sn,schemaUri:schemaUri,nodes:n,links:l,versionsModel:{versionName:'v1',description:'',defaultVersion:false,latest:true,deleted:false,versionLocked:false,dataSourceIds:ids,entity360Flows:[]}};",
+                  "const DT={int8:'BIGINT',int4:'BIGINT',int2:'BIGINT',serial:'BIGINT',bigserial:'BIGINT',smallserial:'BIGINT',numeric:'DECIMAL',decimal:'DECIMAL',float8:'DOUBLE',float4:'DOUBLE',bool:'BOOLEAN',timestamp:'TIMESTAMP',timestamptz:'TIMESTAMP',date:'DATE',time:'TIME',json:'JSON',jsonb:'JSON',uuid:'VARCHAR',bytea:'VARBINARY'};function cdt(t){t=(t||'').toLowerCase();return DT[t]||(t?t.toUpperCase():'VARCHAR');}",
+                  "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "const edges=(meta[0]&&meta[0].hasTableEdges)||[];",
+                  "const i=parseInt(pm.collectionVariables.get('_entIdx')||'0');",
+                  "const P=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
+                  "const dsCat=pm.collectionVariables.get('dataCatalogName');",
+                  "const te=edges[i]||{}; const tn=te.tableNode||{};",
+                  "const cols=(tn.hasPropertyEdges||[]).map(pe=>pe.propertyNode||{});",
+                  "const props=cols.map(c=>({label:c.label,dataType:cdt(c.dataType),primaryKey:!!c.primaryKey,uniqueKey:!!c.uniqueKey,foreignKey:!!c.foreignKey,nullable:c.nullable!==false,mappedColumnUri:(c.nodeId||c.node_id||c.uri),mappedColumnUris:[(c.nodeId||c.node_id||c.uri)]}));",
+                  "const body={label:tn.label,prefix:P,dataSourceUri:dsCat,namedEntity:false,description:'',tags:[],properties:props};",
                   "pm.request.body.raw=JSON.stringify(body);"
                 ]
               }
@@ -643,13 +628,15 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01di 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01di');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('03 entity 2xx (idx '+(pm.collectionVariables.get('_entIdx')||'0')+')', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "const vid=b.versionId||b.id;",
-                  "if(vid) pm.collectionVariables.set('versionId', String(vid));",
-                  "pm.test('01di version created', () => pm.expect(vid, 'versionId from /schema-graph').to.not.be.undefined);",
-                  "let nc=0; try{nc=JSON.parse(pm.collectionVariables.get('_graphNodes')||'[]').length;}catch(e){}",
-                  "console.log('Schema graph saved + version minted: versionId='+vid+', '+nc+' nodes');"
+                  "const i=parseInt(pm.collectionVariables.get('_entIdx')||'0');",
+                  "console.log('entity['+i+'] created: '+(b.entityUri||'?')+' props='+((b.properties||[]).length));",
+                  "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "const n=((meta[0]&&meta[0].hasTableEdges)||[]).length;",
+                  "const next=i+1;",
+                  "if(next<n){ pm.collectionVariables.set('_entIdx', String(next)); postman.setNextRequest('03 Create Entity'); }",
+                  "else { pm.collectionVariables.set('_entCount', String(n)); pm.collectionVariables.unset('_entIdx'); console.log('ALL '+n+' entities created'); }"
                 ]
               }
             }
@@ -657,7 +644,7 @@
           "response": []
         },
         {
-          "name": "01diii Verify Schema Graph (UI read)",
+          "name": "04 Save Schema Graph from Entities",
           "request": {
             "method": "GET",
             "header": [
@@ -667,21 +654,18 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema-graph?versionUri={{_versionUriEnc}}&includeEmbeddings=false",
+              "raw": "{{app_base_url}}/entity-graph/datasource-subgraph?uri={{dataCatalogName}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema-graph"
+                "entity-graph",
+                "datasource-subgraph"
               ],
               "query": [
                 {
-                  "key": "versionUri",
-                  "value": "{{_versionUriEnc}}"
-                },
-                {
-                  "key": "includeEmbeddings",
-                  "value": "false"
+                  "key": "uri",
+                  "value": "{{dataCatalogName}}"
                 }
               ]
             }
@@ -709,12 +693,33 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('01diii 200', () => pm.response.to.have.status(200));",
-                  "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "const ns=b.nodes||[];",
-                  "const entities=ns.filter(n=>n.node_type==='Node');",
-                  "pm.test('01diii has entities', () => pm.expect(entities.length).to.be.above(0));",
-                  "console.log('UI schema-graph read back: '+ns.length+' nodes, '+entities.length+' entities');"
+                  "pm.test('04 subgraph 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let g={}; try{g=pm.response.json();}catch(e){}",
+                  "let nodes=g.nodes||[]; let links=g.links||[];",
+                  "const ent=nodes.filter(n=>n.node_type==='Node').length;",
+                  "pm.test('04 entities in subgraph (>0)', () => pm.expect(ent).to.be.above(0));",
+                  "const P=pm.collectionVariables.get('schemaPrefix');",
+                  "const sn=pm.collectionVariables.get('schemaName');",
+                  "const sidRaw=pm.collectionVariables.get('schemaId'); const sid=(sidRaw&&!isNaN(sidRaw))?parseInt(sidRaw):sidRaw;",
+                  "const VN=P+'Version#v1';",
+                  "// stamp schema prefix nodeId + schemaId (exactly what UICore stampNodeIds does)",
+                  "nodes.forEach(n=>{ n.nodeId=P+(n.uri||n.id||''); n.schemaId=sid; });",
+                  "nodes.push({node_type:'Version',id:VN,uri:VN,nodeId:VN,label:'v1',schemaId:sid,tags:[],description:''});",
+                  "nodes.filter(n=>n.node_type==='Node').forEach(en=>{ links.push({source:VN,target:(en.id||en.uri),relationship:'Has_Node',direction:'FORWARD',node_uri:VN}); });",
+                  "pm.collectionVariables.set('_versionUri', VN);",
+                  "pm.collectionVariables.set('_versionUriEnc', encodeURIComponent(VN));",
+                  "const ids=[]; (function(){const v=parseInt(pm.collectionVariables.get('dsId'));if(v&&!isNaN(v))ids.push(v);})();",
+                  "const body={prefix:P,schemaName:sn,schemaUri:P+'Schema#'+sn,nodes:nodes,links:links,versionsModel:{versionName:'v1',description:'',defaultVersion:false,latest:true,deleted:false,versionLocked:false,dataSourceIds:ids,entity360Flows:[]}};",
+                  "const app=pm.environment.get('app_base_url');",
+                  "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                  "pm.sendRequest({url:app+'/schema-graph', method:'POST', header:hdr, body:{mode:'raw', raw:JSON.stringify(body)}}, (e,r)=>{",
+                  "  const ok=r&&[200,201].includes(r.code);",
+                  "  pm.test('04 schema-graph saved 2xx', () => { if(!ok){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','04');} pm.expect(ok).to.be.true; });",
+                  "  let rb={}; try{rb=r.json();}catch(x){}",
+                  "  const vid=rb.versionId||rb.id;",
+                  "  if(vid) pm.collectionVariables.set('versionId', String(vid));",
+                  "  console.log('schema-graph saved from '+ent+' entities ('+nodes.length+' nodes) versionId='+vid);",
+                  "});"
                 ]
               }
             }
@@ -722,7 +727,68 @@
           "response": []
         },
         {
-          "name": "02 Create Entity360",
+          "name": "05 Verify Schema Graph",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/schema-graph?versionUri={{_versionUriEnc}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "schema-graph"
+              ],
+              "query": [
+                {
+                  "key": "versionUri",
+                  "value": "{{_versionUriEnc}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('05 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const ns=b.nodes||[]; const ent=ns.filter(n=>n.node_type==='Node');",
+                  "const stamped=ns.filter(n=>n.identity).length;",
+                  "pm.test('05 entities present', () => pm.expect(ent.length).to.be.above(0));",
+                  "console.log('schema-graph read back: '+ns.length+' nodes, '+ent.length+' entities, '+stamped+' with identity');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Create Realm",
           "request": {
             "method": "POST",
             "header": [
@@ -736,23 +802,17 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/entity-360?versionsId={{versionId}}",
+              "raw": "{{app_base_url}}/realm",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "entity-360"
-              ],
-              "query": [
-                {
-                  "key": "versionsId",
-                  "value": "{{versionId}}"
-                }
+                "realm"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"namedEntity\": \"pm_flow_e360_{{$timestamp}}\",\n  \"description\": \"FLOW\"\n}",
+              "raw": "{\n  \"name\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -770,7 +830,8 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({name:'pm_flow_entity_realm_'+Date.now(),description:'Entity-layer fabric',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId'))});"
                 ]
               }
             },
@@ -784,10 +845,12 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('02 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','02');} pm.expect(code).to.be.oneOf([200,201]); });",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
-                  "if(d.id||d.entity360Id) pm.collectionVariables.set('e360Id', String(d.id||d.entity360Id));",
-                  "if(d.pathId) pm.collectionVariables.set('pathId', String(d.pathId));"
+                  "pm.test('06 Realm 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','06');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.realmModel||b.data||b;",
+                  "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));",
+                  "if(d.name||d.realmName) pm.collectionVariables.set('realmName', d.name||d.realmName);",
+                  "if(d.referenceName) pm.collectionVariables.set('realmReferenceName', d.referenceName);",
+                  "console.log('Realm id='+(d.id||d.realmId)+' ref='+d.referenceName);"
                 ]
               }
             }
@@ -795,462 +858,9 @@
           "response": []
         },
         {
-          "name": "03 Get",
+          "name": "07 Create Namespace (Synapse)",
           "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360?namedEntity=pm_flow_e360&versionsId={{versionId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360"
-              ],
-              "query": [
-                {
-                  "key": "namedEntity",
-                  "value": "pm_flow_e360"
-                },
-                {
-                  "key": "versionsId",
-                  "value": "{{versionId}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('03 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "04 Get All",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/all?versionsId={{versionId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "all"
-              ],
-              "query": [
-                {
-                  "key": "versionsId",
-                  "value": "{{versionId}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('04 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "05 By VersionIds",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/all/versionIds?versionsIds={{versionId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "all",
-                "versionIds"
-              ],
-              "query": [
-                {
-                  "key": "versionsIds",
-                  "value": "{{versionId}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('05 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "06 ERFlow",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/erflow-enabled",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "erflow-enabled"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('06 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "07 Flow Info",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/entity-360-flow-info?versionsId={{versionId}}&pathId={{pathId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "entity-360-flow-info"
-              ],
-              "query": [
-                {
-                  "key": "versionsId",
-                  "value": "{{versionId}}"
-                },
-                {
-                  "key": "pathId",
-                  "value": "{{pathId}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('07 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "08 Vector Search",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/vector-search-with-status?versionId={{versionId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "vector-search-with-status"
-              ],
-              "query": [
-                {
-                  "key": "versionId",
-                  "value": "{{versionId}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('08 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "09 Get by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/entity360entity/{{e360Id}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "entity360entity",
-                "{{e360Id}}"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('09 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "10 By PathID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/entity-360/entity360-path-id?pathId={{pathId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "entity-360",
-                "entity360-path-id"
-              ],
-              "query": [
-                {
-                  "key": "pathId",
-                  "value": "{{pathId}}"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('10 200|204|404', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "11 Update",
-          "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               {
                 "key": "X-TENANT-ID",
@@ -1262,23 +872,19 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/entity-360?versionsId={{versionId}}",
+              "raw": "{{kg_base_url}}/synapse/namespace/create",
               "host": [
-                "{{app_base_url}}"
+                "{{kg_base_url}}"
               ],
               "path": [
-                "entity-360"
-              ],
-              "query": [
-                {
-                  "key": "versionsId",
-                  "value": "{{versionId}}"
-                }
+                "synapse",
+                "namespace",
+                "create"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": 0\n}",
+              "raw": "{\n  \"name\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1297,7 +903,9 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('e360Id')),namedEntity:'pm_flow_e360_updated',description:'Updated'});"
+                  "const historic=String(pm.environment.get('requiresHistoricIngest')||'true')!=='false';",
+                  "const vector=String(pm.environment.get('vectorIngestionRequired')||'true')!=='false';",
+                  "pm.request.body.raw=JSON.stringify({name:pm.collectionVariables.get('realmReferenceName'),schemaName:pm.collectionVariables.get('schemaName'),schemaVersion:'v1',requiresHistoricIngest:historic,type:null,vectorIngestionRequired:vector});"
                 ]
               }
             },
@@ -1310,7 +918,8 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('11 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "const code=pm.response.code;",
+                  "pm.test('07 namespace 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','07');} pm.expect(code).to.be.oneOf([200,201]); });"
                 ]
               }
             }
@@ -1318,9 +927,78 @@
           "response": []
         },
         {
-          "name": "12 Delete",
+          "name": "08 Generate Ingest Streams",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/streams/generate",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('08 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let arr=[]; try{arr=pm.response.json();}catch(e){} if(!Array.isArray(arr)) arr=[];",
+                  "pm.collectionVariables.set('_streamCount', String(arr.length));",
+                  "pm.collectionVariables.set('_streamNames', JSON.stringify(arr.map(s=>s.name).filter(Boolean)));",
+                  "console.log('streams generated: '+arr.length+(arr.length?(' e.g. '+arr[0].name):''));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "09 Verify Streams Generated",
+          "request": {
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
@@ -1328,13 +1006,13 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/entity-360/{{e360Id}}",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "entity-360",
-                "{{e360Id}}"
+                "actuator",
+                "health"
               ]
             }
           },
@@ -1361,7 +1039,9 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('12 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "pm.test('09 health', () => pm.response.to.have.status(200));",
+                  "const n=parseInt(pm.collectionVariables.get('_streamCount')||'0');",
+                  "pm.test('09 streams generated (>0)', () => pm.expect(n).to.be.above(0));"
                 ]
               }
             }
@@ -1369,9 +1049,9 @@
           "response": []
         },
         {
-          "name": "13 Del Graph",
+          "name": "10 Wait Namespace UP",
           "request": {
-            "method": "DELETE",
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
@@ -1379,17 +1059,19 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema-graph?prefix={{schemaPrefix}}",
+              "raw": "{{kg_base_url}}/synapse/namespace/status?name={{realmReferenceName}}",
               "host": [
-                "{{app_base_url}}"
+                "{{kg_base_url}}"
               ],
               "path": [
-                "schema-graph"
+                "synapse",
+                "namespace",
+                "status"
               ],
               "query": [
                 {
-                  "key": "prefix",
-                  "value": "{{schemaPrefix}}"
+                  "key": "name",
+                  "value": "{{realmReferenceName}}"
                 }
               ]
             }
@@ -1405,12 +1087,8 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "// Check skip_cleanup flag — if true, skip this cleanup step",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
-                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
-                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
-                  "  return;",
-                  "}"
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "if(parseInt(pm.collectionVariables.get('_nsAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }"
                 ]
               }
             },
@@ -1423,8 +1101,14 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
-                  "pm.test('13 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "let st=''; try{st=(pm.response.json().status||'').toUpperCase();}catch(e){}",
+                  "const a=parseInt(pm.collectionVariables.get('_nsAttempt')||'0');",
+                  "console.log('namespace status attempt '+a+': '+st);",
+                  "if(st==='UP'){ pm.collectionVariables.unset('_nsAttempt'); }",
+                  "else if(a<18){ pm.collectionVariables.set('_nsAttempt', String(a+1)); postman.setNextRequest('10 Wait Namespace UP'); }",
+                  "else { pm.collectionVariables.unset('_nsAttempt'); }",
+                  "pm.test('10 namespace reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
                 ]
               }
             }
@@ -1432,9 +1116,90 @@
           "response": []
         },
         {
-          "name": "14 Del Version",
+          "name": "11 Save + Run Ingestion",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/streams/generate",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"realmId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "pm.test('11 regen 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let arr=[]; try{arr=pm.response.json();}catch(e){} if(!Array.isArray(arr)) arr=[];",
+                  "const rid=parseInt(pm.collectionVariables.get('realmId'));",
+                  "arr.forEach(s=>{ s.realmId=rid; });",
+                  "const app=pm.environment.get('app_base_url'); const txn=pm.environment.get('transform_base_url');",
+                  "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                  "const raw=JSON.stringify(arr);",
+                  "pm.sendRequest({url:app+'/atomicIngestStream/create-streams', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e1,r1)=>{",
+                  "  pm.test('11 create-streams 2xx', () => pm.expect(r1 && r1.code).to.be.oneOf([200,201]));",
+                  "  console.log('create-streams: '+(r1?r1.code:e1));",
+                  "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
+                  "    pm.test('11 event/ingest 2xx', () => pm.expect(r2 && r2.code).to.be.oneOf([200,201,204]));",
+                  "    console.log('event/ingest: '+(r2?r2.code:e2));",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "12 Verify Tables Landed",
+          "request": {
+            "method": "GET",
             "header": [
               {
                 "key": "X-TENANT-ID",
@@ -1442,18 +1207,19 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/versions/delete?versionId={{versionId}}",
+              "raw": "{{kg_base_url}}/synapse/namespace/stats?namespace={{realmReferenceName}}",
               "host": [
-                "{{app_base_url}}"
+                "{{kg_base_url}}"
               ],
               "path": [
-                "versions",
-                "delete"
+                "synapse",
+                "namespace",
+                "stats"
               ],
               "query": [
                 {
-                  "key": "versionId",
-                  "value": "{{versionId}}"
+                  "key": "namespace",
+                  "value": "{{realmReferenceName}}"
                 }
               ]
             }
@@ -1469,12 +1235,8 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "// Check skip_cleanup flag — if true, skip this cleanup step",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
-                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
-                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
-                  "  return;",
-                  "}"
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "if(parseInt(pm.collectionVariables.get('_ingAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }"
                 ]
               }
             },
@@ -1487,8 +1249,18 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
-                  "pm.test('14 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "let expected=[]; try{expected=JSON.parse(pm.collectionVariables.get('_streamNames')||'[]');}catch(e){}",
+                  "let landed={}; try{(pm.response.json().labels||[]).forEach(l=>{ if((l.count||0)>0) landed[l.label]=l.count; });}catch(e){}",
+                  "const missing=expected.filter(n=>!(n in landed));",
+                  "const a=parseInt(pm.collectionVariables.get('_ingAttempt')||'0');",
+                  "console.log('ingest verify attempt '+a+' landed='+JSON.stringify(landed)+' missing='+JSON.stringify(missing));",
+                  "const done=(expected.length>0 && missing.length===0) || a>=18;",
+                  "if(!done){ pm.collectionVariables.set('_ingAttempt', String(a+1)); postman.setNextRequest('12 Verify Tables Landed'); return; }",
+                  "pm.collectionVariables.unset('_ingAttempt');",
+                  "if(missing.length===0 && expected.length>0){ console.log('INGESTION VALIDATED: '+expected.length+' tables, rows='+JSON.stringify(landed)); }",
+                  "else { console.log('DATAFLOW FAILED: '+missing.length+'/'+expected.length+' stream(s) did not land: '+JSON.stringify(missing)); }",
+                  "pm.test('12 all '+expected.length+' table(s) ingested rows (missing: '+JSON.stringify(missing)+')', () => { pm.expect(expected.length).to.be.above(0); pm.expect(missing, 'tables with 0 rows').to.eql([]); });"
                 ]
               }
             }
@@ -1496,7 +1268,110 @@
           "response": []
         },
         {
-          "name": "15 Del Schema",
+          "name": "20 Del Realm",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=false",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "realm",
+                "{{realmId}}"
+              ],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('20 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "21 Remove Namespace",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/remove?name={{realmReferenceName}}&permanent=true",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "remove"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{realmReferenceName}}"
+                },
+                {
+                  "key": "permanent",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('21 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "22 Del Schema",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1527,17 +1402,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}",
-                  "// Check skip_cleanup flag — if true, skip this cleanup step",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
-                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
-                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
-                  "  return;",
-                  "}"
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }"
                 ]
               }
             },
@@ -1546,12 +1411,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
-                  "pm.test('15 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('22 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }
@@ -1559,7 +1419,7 @@
           "response": []
         },
         {
-          "name": "16 Del DS",
+          "name": "99 Teardown (Del DS)",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1585,59 +1445,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}",
-                  "// Check skip_cleanup flag — if true, skip this cleanup step",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
-                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
-                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
-                  "  return;",
-                  "}"
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }"
                 ]
               }
             },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
-                  "pm.test('16 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "99 Teardown",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/datasource/{{dsId}}",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "datasource",
-                "{{dsId}}"
-              ]
-            }
-          },
-          "event": [
             {
               "listen": "test",
               "script": {

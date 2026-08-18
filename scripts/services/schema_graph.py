@@ -22,8 +22,10 @@ def generate():
              "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"],
             base=base, body={"schemaName": "x"},
             prerequest=[
-                "const dsPrefix=pm.collectionVariables.get('_dsPrefix')||'http://pmflow.in/';",
-                "pm.request.body.raw=JSON.stringify({schemaName:'pm_flow_sg_schema_'+Date.now(),prefix:dsPrefix,description:'SchemaGraph dep'});",
+                "const schemaName='pm_flow_sg_schema_'+Date.now();",
+                "const prefix=schemaName.replace(/_/g,'-');",
+                "pm.collectionVariables.set('schemaPrefix', prefix);",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'SchemaGraph dep'});",
             ]),
 
         # ── Schema Graph CRUD ──
