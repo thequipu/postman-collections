@@ -41,12 +41,12 @@ def generate():
         req("07 S3 Get Files", "POST", "/entity-resolution-s3/get-files",
             ["pm.test('07 S3 get files 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
             base=base,
-            body={"folder": "pm-flow-test"}),
+            body={"folder": "pm_flow_test"}),
 
         req("08 S3 Get CSV Header", "POST", "/entity-resolution-s3/getCsvHeader",
             ["pm.test('08 S3 csv header 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
             base=base,
-            body={"fileName": "pm-flow-test.csv"}),
+            body={"fileName": "pm_flow_test.csv"}),
 
         build_teardown(base),
     ]

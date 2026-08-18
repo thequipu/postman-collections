@@ -14,6 +14,11 @@ __pycache__/
 config/secrets/
 *.secrets.env
 *.local.json
+# S3 datasource configs carry a RAW AWS secret — keep in S3, sync down at test time
+config/db-configs/csv-datatype.json
+config/db-configs/excel-datatype.json
+# temp globals built by scripts/run_realm_full.py
+realm_globals_*.json
 
 # IDE
 .idea/
@@ -22,3 +27,4 @@ config/secrets/
 # OS
 .DS_Store
 Thumbs.db
+config/db-configs/csv-users.json

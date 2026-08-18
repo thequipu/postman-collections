@@ -8,23 +8,47 @@ Fetches entities from each DS, builds schema graph, creates realm/fabric.
 Then tests all realm + ingest stream endpoints.
 """
 
+import json
+
 from flowlib.core import req, build_setup, build_collection, write_flow
+from flowlib.setup import (create_schema_graph_step, create_entity_schema_graph_step, KG_ACCEPT,
+                           SKIP_CLEANUP_PRE, SKIP_CLEANUP_TEST)
+
+# Real shapeCypher for datatypetesting_mongo (maps the 3 collections). Embedded directly (NOT via
+# --env-var, which truncates the multi-line value at the first newline). json.dumps -> valid JS literal.
+MONGO_SHAPE_CYPHER = (
+    "CREATE\n"
+    "  (g2:dt_mongo_group_2 {uri: '$._id', _id: '$._id', id: '$.id', note: '$.note', "
+    "f_decimal: '$.f_decimal', f_bool: '$.f_bool', f_boolean: '$.f_boolean', f_date: '$.f_date', "
+    "f_isodate: '$.f_isodate', f_timestamp: '$.f_timestamp', f_bindata: '$.f_bindata'}),\n"
+    "  (g1:dt_mongo_group_1 {uri: '$._id', _id: '$._id', id: '$.id', note: '$.note', "
+    "f_objectid: '$.f_objectid', f_int32: '$.f_int32', f_numberint: '$.f_numberint', "
+    "f_int64: '$.f_int64', f_numberlong: '$.f_numberlong', f_double: '$.f_double', "
+    "f_numberdecimal: '$.f_numberdecimal'}),\n"
+    "  (g3:dt_mongo_group_3 {uri: '$._id', _id: '$._id', id: '$.id', note: '$.note', "
+    "f_binary: '$.f_binary', f_array: '$.f_array', f_object: '$.f_object', "
+    "f_document: '$.f_document', f_string: '$.f_string', f_null: '$.f_null'});"
+)
 
 
 def _db_ds(step, label, prefix, var_id, var_cat, critical=True):
     """DB datasource creation step."""
     p = prefix + "_" if prefix else ""
+    # Critical DS must be created (fail flow otherwise). Non-critical DSs "continue": an
+    # unreachable host / missing creds is tolerated (accept 4xx/5xx) — the DS simply won't
+    # be created, so its cat var stays empty and 03* skips it (no entities required).
     fail = f"if(![200,201].includes(code)){{pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','{step}');}}" if critical else ""
+    ok_codes = "[200,201]" if critical else "[200,201,400,500]"
     return req(f"{step} Create {label} DS", "POST", "/datasource",
         [f"const code=pm.response.code;",
-         f"pm.test('{step} {label} 2xx', () => {{ {fail} pm.expect(code).to.be.oneOf([200,201]); }});",
+         f"pm.test('{step} {label} created or skipped', () => {{ {fail} pm.expect(code).to.be.oneOf({ok_codes}); }});",
          "let b={}; try{b=pm.response.json();}catch(e){}",
          "const d=b.dataSourceModel||b.data||b;",
          f"if(d.id||d.sourceId) pm.collectionVariables.set('{var_id}', String(d.id||d.sourceId));",
          f"if(d.dataCatalogName) pm.collectionVariables.set('{var_cat}', d.dataCatalogName);",
          f"console.log('{label} DS id='+(d.id||d.sourceId));"],
         base="app_base_url",
-        body={"name": f"pm-flow-{label.lower()}-" + "{{$timestamp}}",
+        body={"name": f"pm_flow_{label.lower()}_" + "{{$timestamp}}",
               "driverType": "{{" + p + "driverType}}",
               "dbHostName": "{{" + p + "dbHost}}",
               "dbPort": "{{" + p + "dbPort}}",
@@ -37,6 +61,35 @@ def _db_ds(step, label, prefix, var_id, var_cat, critical=True):
               "deleted": False})
 
 
+def _fetch_meta(step, label, cat_var, id_var, base="app_base_url"):
+    """Fetch one datasource's metadata and add its entities to the schema graph.
+
+    Contract requested for the realm flow:
+      - DS NOT created (cat var empty)      -> skipped (non-critical DSs may be absent).
+      - DS created but yields NO entities    -> FAIL the whole flow.
+    Accumulates the raw metadata (tagged with its datasource id via _dsId) into _dsMetaList so
+    the shared builder emits every DS's tables/columns/entities AND a resolvable dataSourceID.
+    """
+    return req(f"{step} Fetch {label} Entities", "POST", "/metadata-graph/fetch-data-source",
+        [f"const cat=pm.collectionVariables.get('{cat_var}')||'';",
+         f"if(!cat){{ pm.test('{step} {label} skipped (DS not created)', ()=>{{}}); return; }}",
+         "const code=pm.response.code;",
+         f"pm.test('{step} {label} fetch 2xx', () => {{ if(![200,201].includes(code)){{pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','{step} {label} fetch');}} pm.expect(code).to.be.oneOf([200,201]); }});",
+         "let b={}; try{b=pm.response.json();}catch(e){}",
+         f"b._dsId = pm.collectionVariables.get('{id_var}');",
+         "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+         "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+         "const tables=(b.hasTableEdges||[]).length;",
+         f"pm.test('{step} {label} adds entities to schema', () => {{ if(tables===0){{pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','{step} {label} added 0 entities');}} pm.expect(tables, '{label} was created but produced 0 entities').to.be.above(0); }});",
+         f"console.log('{label}: '+tables+' entities added to schema');"],
+        base=base, body={"uri": "{{" + cat_var + "}}"},
+        prerequest=[
+            # If the DS wasn't created, don't hit fetch with an empty uri — redirect to health.
+            f"const cat=pm.collectionVariables.get('{cat_var}')||'';",
+            "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }",
+        ])
+
+
 def generate():
     base = "app_base_url"
 
@@ -47,8 +100,13 @@ def generate():
     items = [
         build_setup(base, "/actuator/health",
                     clear_vars=ds_vars + ["schemaName", "schemaId", "versionId",
-                                          "realmId", "realmName", "streamId",
-                                          "_allNodes", "_allLinks", "_ingestion_status"]),
+                                          "realmId", "realmName", "realmReferenceName", "versionName", "streamId",
+                                          "_allNodes", "_allLinks", "_ingestion_status",
+                                          "_dsMetaList", "_graphNodes", "_graphLinks",
+                                          "_versionUri", "_versionUriEnc", "awsVersionId", "_streamCount", "_genStreams", "_streamNames",
+                                          "_nsAttempt", "_nsUp", "_ingAttempt", "_mongoShape",
+                                          "_entIdx", "_entCount",
+                                          "excelDsName", "_excelStagedKey", "_excelCols"]),
 
         # ═══ PHASE 0: Create 8 DataSources ═══
 
@@ -69,37 +127,57 @@ def generate():
              "console.log('Mongo DS id='+(d.id||d.sourceId||'skipped'));"],
             base=base, body={"name": "x"},
             prerequest=[
+                "// Mongo needs the REAL shapeCypher (maps collections) + a derived shapeParseResult",
+                "// (server 500s on null). Embedded below (json.dumps) — NOT via env-var, which",
+                "// truncates the multi-line value at the first newline (stored shapeCypher='CREATE').",
+                "// Also record collection->fields in _mongoShape so the schema-graph builder can",
+                "// synthesize column nodes (mongo fetch-data-source returns 0 columns).",
+                "const SC = " + json.dumps(MONGO_SHAPE_CYPHER) + ";",
+                "const mshape={}; const spNodes=[];",
+                "const reNode=/\\(g\\d+:(\\w+)\\s*\\{([^}]*)\\}\\)/g; let mm;",
+                "while((mm=reNode.exec(SC))!==null){",
+                "  const label=mm[1]; const fields=[]; const reP=/(\\w+):\\s*'(\\$[^']*)'/g; let pp;",
+                "  while((pp=reP.exec(mm[2]))!==null){ if(pp[1]!=='uri') fields.push(pp[1]); }",
+                "  mshape[label]=fields;",
+                "  spNodes.push({label:label, prefix:'http://mongo.in/', properties:fields.map(function(f){return {jsonPath:'$.'+f, propertyName:f};}), uriProperty:'$._id', edgeShapes:[]});",
+                "}",
+                "pm.collectionVariables.set('_mongoShape', JSON.stringify(mshape));",
                 "const body = {",
-                "  name: 'pm-flow-mongo-' + Date.now(),",
+                "  name: 'pm_flow_mongo_' + Date.now(),",
                 "  driverType: 'MONGO',",
-                "  dbHostName: pm.environment.get('mongo_dbHost') || '207.180.249.216',",
-                "  dbPort: parseInt(pm.environment.get('mongo_dbPort') || '27018'),",
-                "  databaseName: pm.environment.get('mongo_dbName') || 'datatypetesting_mongo',",
-                "  dbUserName: pm.environment.get('mongo_dbUser') || 'quipu_admin',",
-                "  dbPassword: pm.environment.get('mongo_dbPassword') || '',",
-                "  aesRandomIV: pm.environment.get('mongo_aesRandomIV') || '',",
-                "  dbSchema: pm.environment.get('mongo_dbSchema') || 'admin',",
+                "  dbHostName: pm.variables.get('mongo_dbHost') || '207.180.249.216',",
+                "  dbPort: parseInt(pm.variables.get('mongo_dbPort') || '27018'),",
+                "  databaseName: pm.variables.get('mongo_dbName') || 'datatypetesting_mongo',",
+                "  dbUserName: pm.variables.get('mongo_dbUser') || 'quipu_admin',",
+                "  dbPassword: pm.variables.get('mongo_dbPassword') || '',",
+                "  aesRandomIV: pm.variables.get('mongo_aesRandomIV') || '',",
+                "  dbSchema: pm.variables.get('mongo_dbSchema') || 'admin',",
                 "  deleted: false,",
-                "  shapeCypher: 'CREATE (g1:test {uri: \"$._id\", _id: \"$._id\"});',",
-                "  shapeParseResult: {shape: {prefix: 'http://test.in/', nodes: [{label: 'test', prefix: 'http://test.in/', properties: [{jsonPath: '$._id', propertyName: '_id'}], uriProperty: '$._id', edgeShapes: []}], namespace: 'public', shapeType: 'CYPHER_DSL'}, constraints: []}",
+                "  shapeCypher: SC,",
+                "  shapeParseResult: {shape: {prefix: 'http://mongo.in/', nodes: spNodes, namespace: 'public', shapeType: 'CYPHER_DSL'}, constraints: []}",
                 "};",
                 "pm.request.body.raw = JSON.stringify(body);",
             ]),
 
-        # CSV (S3 with files/columnDetails)
+        # CSV (S3). Unlike Excel, the CSV connector's checkConnection builds its S3 client
+        # from the request accessKey/secret (not server IAM) and requires a non-empty files[]
+        # of EXISTING object keys. Pass real S3 creds via env vars (s3_access_key/s3_secret_key);
+        # send them RAW with NO aesRandomIV so the server skips decryption and uses them directly.
         req("01g Create CSV DS", "POST", "/datasource",
-            ["pm.test('01g CSV 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
+            ["pm.test('01g CSV created or skipped', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,500]));",
              "let b={}; try{b=pm.response.json();}catch(e){}",
              "const d=b.dataSourceModel||b.data||b;",
              "if(d.id) pm.collectionVariables.set('csvDsId', String(d.id));",
              "if(d.dataCatalogName) pm.collectionVariables.set('csvCat', d.dataCatalogName);",
-             "console.log('CSV DS id='+(d.id||'skipped'));"],
+             "console.log('CSV DS id='+(d.id||'skipped (need s3_access_key/s3_secret_key)'));"],
             base=base, body={"name": "x"},
             prerequest=[
+                "// each files[] entry needs columnDetails (null -> server NPE). Default to the",
+                "// known sample-data.csv header; override the key via s3_csv_file if needed.",
                 "const body = {",
-                "  name: 'pm-flow-csv-' + Date.now(),",
+                "  name: 'pm_flow_csv_' + Date.now(),",
                 "  driverType: 'CSV',",
-                "  bucket: pm.environment.get('s3_bucket') || 'quipu-api-tests',",
+                "  bucket: pm.environment.get('s3_csv_bucket') || pm.environment.get('s3_bucket') || 'backupfor173',",
                 "  key: pm.environment.get('s3_csv_key') || 'csvfiles',",
                 "  region: pm.environment.get('s3_region') || 'ap-south-1',",
                 "  accessKey: pm.environment.get('s3_access_key') || '',",
@@ -111,13 +189,38 @@ def generate():
                 "    {name:'email',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
                 "    {name:'age',type:'INTEGER',nullable:true,primaryKey:false,uniqueKey:false},",
                 "    {name:'salary',type:'DOUBLE',nullable:true,primaryKey:false,uniqueKey:false},",
-                "    {name:'department',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false}",
+                "    {name:'department',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
+                "    {name:'hire_date',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
+                "    {name:'is_active',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false}",
                 "  ]}]",
                 "};",
                 "pm.request.body.raw = JSON.stringify(body);",
             ]),
 
-        # Excel (S3 with files/columnDetails)
+        # Excel (S3). Excel MUST be staged first: POST TXN /s3-upload/getExcelHeader converts the
+        # source .xlsx -> CSV into the server MinIO at datasource/<datasourceName>/<sheet>.csv and
+        # returns the header columns. The DS is then created pointing at that MinIO key. (Skipping the
+        # stage step is why a direct /datasource create 400s "connection details invalid".)
+        req("01h1 Stage Excel Header (getExcelHeader)", "POST",
+            "/s3-upload/getExcelHeader?datasourceName={{excelDsName}}",
+            ["const code=pm.response.code;",
+             "pm.test('01h1 getExcelHeader 200|400', () => pm.expect(code).to.be.oneOf([200,400]));",
+             "if(code===200){ let a=[]; try{a=pm.response.json();}catch(e){}",
+             "  if(a[0]&&a[0].key){ pm.collectionVariables.set('_excelStagedKey', a[0].key);",
+             "    const hdr=(a[0].content||'').split(',').map(s=>s.trim()).filter(Boolean);",
+             "    const cols=hdr.map((n,i)=>({name:n,type:'STRING',nullable:true,primaryKey:i===0,uniqueKey:i===0}));",
+             "    pm.collectionVariables.set('_excelCols', JSON.stringify(cols));",
+             "    console.log('Excel staged: '+a[0].key+', '+hdr.length+' cols'); } }",
+             "else console.log('Excel header stage skipped (need s3 creds) — Excel DS will be skipped');"],
+            base="transform_base_url", body={"bucket": "x"},
+            prerequest=[
+                "pm.collectionVariables.set('excelDsName', 'pm_flow_excel_' + Date.now());",
+                "// s3-upload endpoints require this vendor media type (plain application/json -> 415)",
+                "pm.request.headers.upsert({key:'Content-Type', value:'application/vnd.quipu.file-upload+json;version=1.0.0'});",
+                "const body={bucket: pm.environment.get('s3_excel_bucket')||pm.environment.get('s3_bucket')||'quipu-api-tests', key: pm.environment.get('s3_excel_key')||'excelfiles/Pharma_Drugs_V2.xlsx', region: pm.environment.get('s3_region')||'ap-south-1', accessKey: pm.environment.get('s3_access_key')||'', secret: pm.environment.get('s3_secret_key')||''};",
+                "pm.request.body.raw = JSON.stringify(body);",
+            ]),
+
         req("01h Create Excel DS", "POST", "/datasource",
             ["pm.test('01h Excel 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
              "let b={}; try{b=pm.response.json();}catch(e){}",
@@ -127,25 +230,25 @@ def generate():
              "console.log('Excel DS id='+(d.id||'skipped'));"],
             base=base, body={"name": "x"},
             prerequest=[
+                "const staged = pm.collectionVariables.get('_excelStagedKey');",
+                "let cols=[]; try{cols=JSON.parse(pm.collectionVariables.get('_excelCols')||'[]');}catch(e){}",
+                "// If staging didn't happen (no creds), skip the create so it stays non-critical",
+                "if(!staged){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
                 "const body = {",
-                "  name: 'pm-flow-excel-' + Date.now(),",
+                "  name: pm.collectionVariables.get('excelDsName'),",
                 "  driverType: 'EXCEL',",
-                "  bucket: pm.environment.get('s3_bucket') || 'quipu-api-tests',",
+                "  bucket: pm.environment.get('s3_excel_bucket') || pm.environment.get('s3_bucket') || 'quipu-api-tests',",
                 "  key: pm.environment.get('s3_excel_key') || 'excelfiles/Pharma_Drugs_V2.xlsx',",
                 "  region: pm.environment.get('s3_region') || 'ap-south-1',",
                 "  accessKey: pm.environment.get('s3_access_key') || '',",
                 "  secret: pm.environment.get('s3_secret_key') || '',",
                 "  deleted: false,",
-                "  files: [{key: pm.environment.get('s3_excel_file') || 'datasource/pm-flow-excel/molecule_apis.csv', columnDetails: [",
-                "    {name:'api_name',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
-                "    {name:'molecular_weight',type:'DOUBLE',nullable:true,primaryKey:false,uniqueKey:false},",
-                "    {name:'bioavailability',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false}",
-                "  ]}]",
+                "  files: [{key: staged, columnDetails: cols}]",
                 "};",
                 "pm.request.body.raw = JSON.stringify(body);",
             ]),
 
-        # ═══ PHASE 1: Schema → Version → Graph → Realm ═══
+        # ═══ PHASE 1: Schema (with prefix) → Fetch Entities → Schema-Graph (version+entities) → Realm ═══
 
         req("02 Create Schema", "POST", "/schema",
             ["const code=pm.response.code;",
@@ -153,109 +256,63 @@ def generate():
              "let b={}; try{b=pm.response.json();}catch(e){}",
              "const d=b.schemaModel||b.data||b;",
              "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
-             "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));"],
-            base=base,
-            body={"schemaName": "pm-flow-realm-schema-{{$timestamp}}", "description": "8-DS fabric"}),
+             "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
+             "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"],
+            base=base, body={"schemaName": "x"},
+            prerequest=[
+                "// prefix = schema name, hyphenated (letters/digits/hyphen) — the schema's ingest-namespace URI.",
+                "const schemaName='pm_flow_realm_schema_'+Date.now();",
+                "const prefix=schemaName.replace(/_/g,'-');",
+                "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'8-DS fabric'});",
+                "pm.collectionVariables.set('schemaPrefix', prefix);",
+            ]),
 
-        req("03 Create Version", "POST", "/versions/create?schemaName={{schemaName}}",
+        # Fetch metadata for EVERY created datasource and add its entities to the schema.
+        # Each created DS that yields zero entities FAILS the flow (see _fetch_meta).
+        _fetch_meta("03a", "Postgres",  "pgCat",     "pgDsId",     base),
+        _fetch_meta("03b", "MySQL",     "mysqlCat",  "mysqlDsId",  base),
+        _fetch_meta("03c", "MariaDB",   "mariaCat",  "mariaDsId",  base),
+        _fetch_meta("03d", "Oracle",    "oracleCat", "oracleDsId", base),
+        _fetch_meta("03e", "Snowflake", "snowCat",   "snowDsId",   base),
+        _fetch_meta("03f", "Mongo",     "mongoCat",  "mongoDsId",  base),
+        _fetch_meta("03g", "CSV",       "csvCat",    "csvDsId",    base),
+        _fetch_meta("03h", "Excel",     "excelCat",  "excelDsId",  base),
+
+        # Strict gate: every datasource that was created MUST have contributed entities.
+        req("03z Verify All DS Entities", "GET", "/actuator/health",
+            ["pm.test('03z health', () => pm.response.to.have.status(200));",
+             "let ml=[]; try{ml=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+             "const catVars=['pgCat','mysqlCat','mariaCat','oracleCat','snowCat','mongoCat','csvCat','excelCat'];",
+             "const created=catVars.filter(v=>pm.collectionVariables.get(v)).length;",
+             "const withEntities=ml.filter(m=>(m.hasTableEdges||[]).length>0).length;",
+             "const total=ml.reduce((a,m)=>a+((m.hasTableEdges||[]).length),0);",
+             "console.log('DSs created: '+created+', DSs with entities: '+withEntities+', total entities: '+total);",
+             "pm.test('03z every created DS added entities', () => { if(withEntities<created||total===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03z entities missing');} pm.expect(withEntities, 'created DSs vs DSs with entities').to.eql(created); pm.expect(total).to.be.above(0); });"],
+            base=base),
+
+        # PRODUCT-FAITHFUL: create each business entity one-by-one via POST /entity (server stamps
+        # identity/tenant/createdBy + links Node Property -> physical column), then assemble the
+        # schema graph from the entity-graph (datasource-subgraph per DS) and save (+versionsModel).
+        *create_entity_schema_graph_step("04", base,
+            ds_id_vars=("pgDsId", "mysqlDsId", "mariaDsId", "oracleDsId",
+                        "snowDsId", "mongoDsId", "csvDsId", "excelDsId")),
+
+        # Resolve the real versionId from the schema right before realm-create. The realm MUST
+        # carry a valid versionId, or streams/generate later 400s ("no versionId; cannot resolve
+        # schema graph"). Fetching it fresh here is robust regardless of the save-version response.
+        req("05b Resolve Version", "GET", "/schema/name?schemaName={{schemaName}}",
             ["const code=pm.response.code;",
-             "pm.test('03 Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03');} pm.expect(code).to.be.oneOf([200,201]); });",
+             "pm.test('05b 2xx', () => pm.expect(code).to.be.oneOf([200]));",
              "let b={}; try{b=pm.response.json();}catch(e){}",
-             "const d=b.data||b;",
-             "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));"],
-            base=base, body={"versionName": "v1"},
-            prerequest=[
-                "const ids=[];",
-                "['pgDsId','mysqlDsId','mariaDsId','oracleDsId','snowDsId','mongoDsId','csvDsId','excelDsId'].forEach(k=>{const v=parseInt(pm.collectionVariables.get(k));if(v&&!isNaN(v))ids.push(v);});",
-                "console.log('Version DSs: '+JSON.stringify(ids));",
-                "pm.request.body.raw=JSON.stringify({versionName:'pm-flow-ver-'+Date.now(),description:'8-DS',dataSourceIds:ids,defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
-            ]),
-
-        # Fetch metadata from each DS via transformation service → build entities
-        req("04a Fetch PG Metadata", "POST", "/test-connection/metadata",
-            ["pm.test('04a PG metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
-             "let tables = [];",
-             "if(pm.response.code===200){",
-             "  let b={}; try{b=pm.response.json();}catch(e){}",
-             "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-             "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-             "  else tables=Object.keys(b).filter(k=>k!=='error'&&k!=='status');",
-             "}",
-             "// Build entity nodes from table names",
-             "const nodes = tables.slice(0,10).map((t,i) => ({id:'pg_'+i, label:t, type:'entity', prefix:'pg:', properties:{source:'POSTGRES'}}));",
-             "pm.collectionVariables.set('_allNodes', JSON.stringify(nodes));",
-             "pm.collectionVariables.set('_allLinks', '[]');",
-             "console.log('PG tables: '+tables.slice(0,5).join(', ')+' → '+nodes.length+' entities');"],
-            base="transform_base_url",
-            body={"driverType": "{{driverType}}", "dbHostName": "{{dbHost}}", "dbPort": "{{dbPort}}",
-                  "databaseName": "{{dbName}}", "dbUserName": "{{dbUser}}", "dbPassword": "{{dbPassword}}",
-                  "aesRandomIV": "{{aesRandomIV}}", "dbSchema": "{{dbSchema}}", "driverClassName": "{{driverClassName}}"}),
-
-        req("04b Fetch MySQL Metadata", "POST", "/test-connection/metadata",
-            ["pm.test('04b MySQL metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
-             "if(pm.response.code===200){",
-             "  let b={}; try{b=pm.response.json();}catch(e){}",
-             "  let tables=[];",
-             "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-             "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-             "  const newNodes=tables.slice(0,10).map((t,i)=>({id:'mysql_'+i,label:t,type:'entity',prefix:'mysql:',properties:{source:'MYSQL'}}));",
-             "  let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-             "  all=all.concat(newNodes);",
-             "  pm.collectionVariables.set('_allNodes', JSON.stringify(all));",
-             "  console.log('MySQL: '+newNodes.length+' entities, total: '+all.length);",
-             "}"],
-            base="transform_base_url",
-            body={"driverType": "{{mysql_driverType}}", "dbHostName": "{{mysql_dbHost}}", "dbPort": "{{mysql_dbPort}}",
-                  "databaseName": "{{mysql_dbName}}", "dbUserName": "{{mysql_dbUser}}", "dbPassword": "{{mysql_dbPassword}}",
-                  "aesRandomIV": "{{mysql_aesRandomIV}}", "dbSchema": "{{mysql_dbSchema}}", "driverClassName": "{{mysql_driverClassName}}"}),
-
-        req("04c Fetch MariaDB Metadata", "POST", "/test-connection/metadata",
-            ["pm.test('04c Maria metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
-             "if(pm.response.code===200){",
-             "  let b={}; try{b=pm.response.json();}catch(e){}",
-             "  let tables=[];",
-             "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-             "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-             "  const newNodes=tables.slice(0,10).map((t,i)=>({id:'maria_'+i,label:t,type:'entity',prefix:'maria:',properties:{source:'MARIADB'}}));",
-             "  let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-             "  all=all.concat(newNodes);",
-             "  pm.collectionVariables.set('_allNodes', JSON.stringify(all));",
-             "  console.log('MariaDB: '+newNodes.length+' entities, total: '+all.length);",
-             "}"],
-            base="transform_base_url",
-            body={"driverType": "{{maria_driverType}}", "dbHostName": "{{maria_dbHost}}", "dbPort": "{{maria_dbPort}}",
-                  "databaseName": "{{maria_dbName}}", "dbUserName": "{{maria_dbUser}}", "dbPassword": "{{maria_dbPassword}}",
-                  "aesRandomIV": "{{maria_aesRandomIV}}", "dbSchema": "{{maria_dbSchema}}", "driverClassName": "{{maria_driverClassName}}"}),
-
-        # CSV and Excel entities come from their columnDetails (already known)
-        # Mongo entities come from shapeCypher (already defined)
-        # Add them to the graph
-        req("04d Add File+Mongo Entities", "GET", "/actuator/health",
-            ["pm.test('04d health', () => pm.response.to.have.status(200));"],
-            base=base,
-            prerequest=[
-                "// Add CSV entity node",
-                "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-                "all.push({id:'csv_0',label:'sample_data_csv',type:'entity',prefix:'csv:',properties:{source:'CSV',columns:'id,name,email,age,salary,department'}});",
-                "// Add Excel entity node",
-                "all.push({id:'excel_0',label:'pharma_drugs',type:'entity',prefix:'excel:',properties:{source:'EXCEL',columns:'api_name,molecular_weight,bioavailability'}});",
-                "// Add Mongo entity node",
-                "all.push({id:'mongo_0',label:'dt_mongo_group_1',type:'entity',prefix:'mongo:',properties:{source:'MONGO'}});",
-                "pm.collectionVariables.set('_allNodes', JSON.stringify(all));",
-                "console.log('Added CSV+Excel+Mongo entities, total: '+all.length);",
-            ]),
-
-        req("05 Save Schema Graph", "POST", "/schema-graph",
-            ["pm.test('05 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,204]));",
-             "console.log('Schema graph saved with entities from all DS types');"],
-            base=base, body={"versionUri":"","nodes":[],"links":[]},
-            prerequest=[
-                "let n=[]; let l=[];",
-                "try{n=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-                "try{l=JSON.parse(pm.collectionVariables.get('_allLinks')||'[]');}catch(e){}",
-                "console.log('Saving graph: '+n.length+' entities from PG+MySQL+MariaDB+CSV+Excel+Mongo');",
-                "pm.request.body.raw=JSON.stringify({versionUri:pm.collectionVariables.get('schemaName')+'Version#v',nodes:n,links:l,schemaName:pm.collectionVariables.get('schemaName')});",
-            ]),
+             "const d=b.schemaModel||b.data||b; const vs=(d.versions||[]);",
+             "const v=vs.find(x=>x.latest)||vs[vs.length-1]||{};",
+             "if(v.versionId){pm.collectionVariables.set('versionId', String(v.versionId)); if(v.versionName) pm.collectionVariables.set('versionName', v.versionName);}",
+             "// versionId is normally already minted by 04i (POST /schema-graph + versionsModel);",
+             "// this is a best-effort refresh — pass on whichever versionId we have.",
+             "const vid=pm.collectionVariables.get('versionId');",
+             "pm.test('05b has versionId', () => { if(!vid){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','05b no versionId');} pm.expect(vid, 'versionId (from 04i or schema)').to.not.be.undefined; });",
+             "console.log('Resolved versionId='+v.versionId+' ('+(v.versionName||'')+') for '+pm.collectionVariables.get('schemaName'));"],
+            base=base),
 
         req("06 Create Realm", "POST", "/realm",
             ["const code=pm.response.code;",
@@ -264,9 +321,42 @@ def generate():
              "const d=b.realmModel||b.data||b;",
              "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));",
              "if(d.name||d.realmName) pm.collectionVariables.set('realmName', d.name||d.realmName);",
-             "console.log('Realm id='+(d.id||d.realmId));"],
+             "if(d.referenceName) pm.collectionVariables.set('realmReferenceName', d.referenceName);",
+             "console.log('Realm id='+(d.id||d.realmId)+', ref='+(d.referenceName||''));"],
             base=base, body={"name":"x"},
-            prerequest=["pm.request.body.raw=JSON.stringify({name:'pm-flow-realm-'+Date.now(),description:'8-DS fabric',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId'))});"]),
+            prerequest=["pm.request.body.raw=JSON.stringify({name:'pm_flow_realm_'+Date.now(),description:'8-DS fabric',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId'))});"]),
+
+        # After the realm record is created, bind a Synapse namespace to the schema/version
+        # (the UI's second realm-creation call). Skips automatically if step 06 failed.
+        req("06b Create Namespace (Synapse)", "POST", "/synapse/namespace/create",
+            ["const code=pm.response.code;",
+             "pm.test('06b 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','06b namespace create');} pm.expect(code).to.be.oneOf([200,201]); });",
+             "if([200,201].includes(code)) console.log('Synapse namespace created for '+pm.collectionVariables.get('realmReferenceName'));"],
+            base="kg_base_url", body={"name": ""},
+            prerequest=[
+                "// Ingest flags default true; type is null unless memoryNamespace=true -> 'MEMORY' (matches UICore).",
+                "const memoryNamespace=String(pm.environment.get('memoryNamespace')||'false')==='true';",
+                "const ntype=memoryNamespace?'MEMORY':null;",
+                "const historic=String(pm.environment.get('requiresHistoricIngest')||'true')==='true';",
+                "const vector=String(pm.environment.get('vectorIngestionRequired')||'true')==='true';",
+                "const body={name:pm.collectionVariables.get('realmReferenceName'),schemaName:pm.collectionVariables.get('schemaName'),schemaVersion:'v1',requiresHistoricIngest:historic,type:ntype,vectorIngestionRequired:vector};",
+                "pm.request.body.raw=JSON.stringify(body);",
+            ]),
+
+        # Vectorize the realm (UICore realmVectorization) — non-memory fabrics only.
+        # Skips when memoryNamespace=true.
+        req("06c Vectorize Realm", "POST", "/schema/vectorize/{{realmReferenceName}}",
+            ["const mem=String(pm.environment.get('memoryNamespace')||'false')==='true';",
+             "pm.test('06c 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202,204]));",
+             "console.log(mem?'Vectorize skipped (memory fabric)':'Vectorize triggered for '+pm.collectionVariables.get('realmReferenceName'));"],
+            base="nexus_base_url",
+            prerequest=[
+                "// memory fabrics are not vectorized (matches UICore: if(!memoryFabric) realmVectorization)",
+                "if(String(pm.environment.get('memoryNamespace')||'false')==='true'){",
+                "  pm.request.method='GET';",
+                "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                "}",
+            ]),
 
         # ═══ PHASE 2: Realm API Testing (12 endpoints) ═══
 
@@ -287,14 +377,21 @@ def generate():
             ["pm.test('12 200', () => pm.response.to.have.status(200));"], base=base),
         req("13 References", "GET", "/realm/references",
             ["pm.test('13 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
+        # PUT /realm is a FULL replace — the body MUST carry schemaName/versionId/referenceName/
+        # type, or the update nulls them and breaks streams/generate ("no versionId"). Read the
+        # current realm first, then patch only description so nothing is lost.
         req("14 Update", "PUT", "/realm",
             ["pm.test('14 200', () => pm.response.to.have.status(200));"],
-            base=base, body={"id":0},
-            prerequest=["pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('realmId')),name:pm.collectionVariables.get('realmName'),description:'Updated by FLOW'});"]),
+            base=base, body={"id": 0},
+            prerequest=[
+                "const body={id:parseInt(pm.collectionVariables.get('realmId')),name:pm.collectionVariables.get('realmName'),description:'Updated by FLOW',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId')),referenceName:pm.collectionVariables.get('realmReferenceName'),type:'GRAPH',noSchema:false};",
+                "pm.request.body.raw=JSON.stringify(body);",
+            ]),
         req("15 Verify Update", "GET", "/realm/{{realmId}}",
             ["pm.test('15 200', () => pm.response.to.have.status(200));",
              "let b={}; try{b=pm.response.json();}catch(e){} const d=b.realmModel||b.data||b;",
-             "pm.test('15 updated', () => pm.expect(String(d.description||'')).to.include('Updated'));"],
+             "pm.test('15 updated', () => pm.expect(String(d.description||'')).to.include('Updated'));",
+             "pm.test('15 versionId preserved', () => pm.expect(d.versionId, 'update must not null versionId').to.not.be.null);"],
             base=base),
         req("16 CDC Active", "GET", "/realm/cdc-active-realms",
             ["pm.test('16 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
@@ -305,72 +402,180 @@ def generate():
 
         # ═══ PHASE 3: Ingestion ═══
 
-        req("19 Create Stream", "POST", "/atomicIngestStream/create-stream",
+        # Real ingestion chain — ported from scripts/test_single_ds_fabric.py (proven to land data):
+        #   19 generate -> 20 verify>0 -> 21 wait namespace UP -> 22 SAVE streams -> 23 event/ingest
+        #   -> 24 STRICT verify EVERY table landed rows.
+        # Failures fail the ASSERTION (non-zero newman exit) but do NOT set _flow_failed, so the
+        # cleanup below still runs and deletes the fabric.
+        req("19 Generate Ingest Streams", "POST", "/streams/generate",
             ["pm.test('19 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
-             "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
-             "if(d.id||d.streamId) pm.collectionVariables.set('streamId', String(d.id||d.streamId));"],
-            base=base,
-            body={"name":"pm-flow-stream-{{$timestamp}}","description":"FLOW","realmId":"{{realmId}}","streamType":"DBT-NODE","sqlQuery":"SELECT 1","cypherQuery":"","deleted":False}),
-        req("20 Get Streams", "GET", "/atomicIngestStream/get-atomic-stream/{{realmId}}",
-            ["pm.test('20 200', () => pm.response.to.have.status(200));"], base=base),
-        req("21 Start", "POST", "/atomicIngestStream/atomic/running-status-change?streamRunning=true",
-            ["pm.test('21 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
-            base=base, body=[0],
-            prerequest=["pm.request.body.raw=JSON.stringify([parseInt(pm.collectionVariables.get('streamId'))]);"]),
-        req("22 Wait", "GET", "/atomicIngestStream/{{realmId}}/atomic/any-running",
-            ["pm.test('22 200', () => pm.response.to.have.status(200));",
-             "const s=pm.collectionVariables.get('_ingestion_status')||'UNKNOWN';",
-             "pm.test('22 done', () => pm.expect(['COMPLETE','COMPLETED','STOPPED','TIMEOUT','false','UNKNOWN']).to.include(s));"],
-            base=base,
+             "let arr=[]; try{arr=pm.response.json();}catch(e){}",
+             "if(!Array.isArray(arr)) arr=[];",
+             "pm.collectionVariables.set('_streamCount', String(arr.length));",
+             "// store only the NAMES (small) for the verify step — the full stream payload is NOT",
+             "// round-tripped through a collection variable (that corrupts the body -> 400 'Failed to",
+             "// read request'). Streams are re-generated + saved+ingested IN-MEMORY at step 22.",
+             "pm.collectionVariables.set('_streamNames', JSON.stringify(arr.map(s=>s.name).filter(Boolean)));",
+             "console.log('Ingest streams generated: '+arr.length+(arr.length?(' e.g. '+arr[0].name):''));"],
+            base="transform_base_url", body={"realmId": 0},
+            prerequest=["pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"]),
+
+        req("20 Verify Streams Generated", "GET", "/actuator/health",
+            ["pm.test('20 health', () => pm.response.to.have.status(200));",
+             "const n=parseInt(pm.collectionVariables.get('_streamCount')||'0');",
+             "console.log(n>0 ? ('Streams generated OK: '+n) : 'STREAM GENERATION FAILED (0 streams)');",
+             "pm.test('20 streams generated (>0)', () => pm.expect(n, 'ingest streams generated').to.be.above(0));"],
+            base=base),
+
+        # 21 Poll synapse namespace status until UP (create at 06b is async). setNextRequest loop with
+        # a ~4s client-side spacer (newman has no sleep); caps at 18 tries (~72s) then proceeds.
+        req("21 Wait Namespace UP", "GET", "/synapse/namespace/status?name={{realmReferenceName}}",
+            ["if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+             "let st=''; try{st=(pm.response.json().status||'').toUpperCase();}catch(e){}",
+             "const a=parseInt(pm.collectionVariables.get('_nsAttempt')||'0');",
+             "console.log('namespace status attempt '+a+': '+st);",
+             "if(st==='UP'){ pm.collectionVariables.set('_nsUp','true'); pm.collectionVariables.unset('_nsAttempt'); }",
+             "else if(a < 18){ pm.collectionVariables.set('_nsAttempt', String(a+1)); postman.setNextRequest('21 Wait Namespace UP'); }",
+             "else { pm.collectionVariables.unset('_nsAttempt'); }",
+             "pm.test('21 namespace reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"],
+            base="kg_base_url",
             prerequest=[
-                "const bu=pm.environment.get('app_base_url'),ri=pm.collectionVariables.get('realmId'),si=parseInt(pm.collectionVariables.get('streamId')),tk=pm.collectionVariables.get('access_token')||pm.environment.get('access_token'),ti=pm.environment.get('tenant_id');",
-                "const mw=60000,iv=5000;let el=0;",
-                "function p(d){pm.sendRequest({url:bu+'/atomicIngestStream/'+ri+'/atomic/any-running',method:'GET',header:{'Authorization':'Bearer '+tk,'X-TENANT-ID':ti}},(e,r)=>{let ru=true;try{ru=r.json();}catch(x){try{ru=r.text()==='true';}catch(y){}}",
-                "if(ru===false||ru==='false'||el>=mw){pm.sendRequest({url:bu+'/atomic-ingestion-status/get-latest',method:'POST',header:{'Authorization':'Bearer '+tk,'X-TENANT-ID':ti,'Content-Type':'application/json'},body:{mode:'raw',raw:JSON.stringify([si])}},(e2,r2)=>{let st=el>=mw?'TIMEOUT':'COMPLETE';try{const a=r2.json();if(Array.isArray(a)&&a[0])st=a[0].statusMessage||st;}catch(x){}pm.collectionVariables.set('_ingestion_status',st);d();});}else{el+=iv;setTimeout(()=>p(d),iv);}});}",
-                "p(()=>{});",
+                "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                "if(parseInt(pm.collectionVariables.get('_nsAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }",
             ]),
-        req("23 Status", "POST", "/atomic-ingestion-status/get-latest",
-            ["pm.test('23 200', () => pm.response.to.have.status(200));"],
-            base=base, body=[0],
-            prerequest=["pm.request.body.raw=JSON.stringify([parseInt(pm.collectionVariables.get('streamId'))]);"]),
-        req("24 Stop", "POST", "/atomicIngestStream/atomic/running-status-change?streamRunning=false",
-            ["pm.test('24 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
-            base=base, body=[0],
-            prerequest=["pm.request.body.raw=JSON.stringify([parseInt(pm.collectionVariables.get('streamId'))]);"]),
 
-        # ═══ PHASE 4: Cleanup ═══
+        # 22 SAVE + RUN ingestion IN-MEMORY (mirrors scripts/test_single_ds_fabric.py).
+        # Main request re-generates the streams; the test then stamps realmId and posts them to
+        # create-streams (SAVE, required) and event/ingest (RUN) via sendRequest with the array held
+        # in the script scope — NEVER through a collection variable (that corrupts the 29-stream body
+        # -> 400 'Failed to read request').
+        req("22 Save + Run Ingestion", "POST", "/streams/generate",
+            ["if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+             "pm.test('22 regen 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+             "let arr=[]; try{arr=pm.response.json();}catch(e){}",
+             "if(!Array.isArray(arr)) arr=[];",
+             "const rid=parseInt(pm.collectionVariables.get('realmId'));",
+             "arr.forEach(s=>{ s.realmId=rid; });",
+             "const app=pm.environment.get('app_base_url'); const txn=pm.environment.get('transform_base_url');",
+             "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+             "const raw=JSON.stringify(arr);",
+             "pm.sendRequest({url:app+'/atomicIngestStream/create-streams', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e1,r1)=>{",
+             "  pm.test('22 create-streams 2xx', () => pm.expect(r1 && r1.code, 'create-streams code').to.be.oneOf([200,201]));",
+             "  console.log('create-streams: '+(r1?r1.code:e1));",
+             "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
+             "    pm.test('22 event/ingest 2xx', () => pm.expect(r2 && r2.code, 'event/ingest code').to.be.oneOf([200,201,204]));",
+             "    console.log('event/ingest: '+(r2?r2.code:e2));",
+             "  });",
+             "});"],
+            base="transform_base_url", body={"realmId": 0},
+            prerequest=[
+                "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});",
+            ]),
 
-        req("25 Del Realm", "DELETE", "/realm/{{realmId}}?permanent=true",
-            ["pm.test('25 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
+        # 24 STRICT verify: EVERY table must land rows or the flow FAILS. Polls stats up to ~18x
+        # (~72s), re-firing event/ingest once mid-way (forceIngest=true).
+        req("24 Verify Tables Landed", "GET", "/synapse/namespace/stats?namespace={{realmReferenceName}}",
+            ["if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+             "let expected=[]; try{expected=JSON.parse(pm.collectionVariables.get('_streamNames')||'[]');}catch(e){}",
+             "let landed={}; try{(pm.response.json().labels||[]).forEach(l=>{ if((l.count||0)>0) landed[l.label]=l.count; });}catch(e){}",
+             "const missing=expected.filter(n=>!(n in landed));",
+             "const a=parseInt(pm.collectionVariables.get('_ingAttempt')||'0');",
+             "console.log('ingest verify attempt '+a+' landed='+JSON.stringify(landed)+' missing='+JSON.stringify(missing));",
+             "const done=(expected.length>0 && missing.length===0) || a>=18;",
+             "if(!done){ pm.collectionVariables.set('_ingAttempt', String(a+1)); postman.setNextRequest('24 Verify Tables Landed'); return; }",
+             "pm.collectionVariables.unset('_ingAttempt');",
+             "if(missing.length===0 && expected.length>0){ console.log('INGESTION VALIDATED: '+expected.length+' tables, rows='+JSON.stringify(landed)); }",
+             "else { console.log('DATAFLOW FAILED: '+missing.length+'/'+expected.length+' stream(s) did not land: '+JSON.stringify(missing)); }",
+             "// ANY stream that does not land rows fails this assertion -> whole dataflow marked FAILED",
+             "// (non-zero newman exit; run_realm_full propagates it). Cleanup still runs (no _flow_failed).",
+             "pm.test('24 all '+expected.length+' table(s) ingested rows (missing: '+JSON.stringify(missing)+')', () => { pm.expect(expected.length, 'expected tables').to.be.above(0); pm.expect(missing, 'tables with 0 rows').to.eql([]); });"],
+            base="kg_base_url",
+            prerequest=[
+                "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                "const a=parseInt(pm.collectionVariables.get('_ingAttempt')||'0');",
+                "// re-fire ingestion once mid-way: re-generate streams then event/ingest (in-memory).",
+                "if(a===8){ const rid=parseInt(pm.collectionVariables.get('realmId')); const txn=pm.environment.get('transform_base_url'); const app=pm.environment.get('app_base_url'); const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                "  pm.sendRequest({url:txn+'/streams/generate', method:'POST', header:hdr, body:{mode:'raw', raw:JSON.stringify({realmId:rid})}}, (e,r)=>{ let arr=[]; try{arr=r.json();}catch(x){} if(!Array.isArray(arr))arr=[]; arr.forEach(s=>{s.realmId=rid;}); const raw=JSON.stringify(arr); pm.sendRequest({url:app+'/atomicIngestStream/create-streams',method:'POST',header:hdr,body:{mode:'raw',raw:raw}},()=>{ pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true',method:'POST',header:hdr,body:{mode:'raw',raw:raw}},()=>{}); }); }); }",
+                "if(a>0){ const t=Date.now(); while(Date.now()-t<4000){} }",
+            ]),
+
+        # ═══ PHASE 4: Cleanup (all steps honor skip_cleanup=true / run_realm_full.py --keep) ═══
+
+        # Realm teardown mirrors UICore: delete realm -> remove Synapse namespace -> delete vector
+        # collections (referenceName + referenceName_schema). Delete mode via `hardDelete` env:
+        #   hardDelete=false (default) -> permanent=false (soft; UI's default deleteById).
+        #   hardDelete=true            -> permanent=true (needs the memory_space migration V42-V44;
+        #                                  otherwise the server 500s on the missing table).
+        req("25 Del Realm", "DELETE", "/realm/{{realmId}}",
+            [SKIP_CLEANUP_TEST, "pm.test('25 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE + [
+                "const hard=String(pm.environment.get('hardDelete')||'false')==='true';",
+                "pm.request.url=pm.environment.get('app_base_url')+'/realm/'+pm.collectionVariables.get('realmId')+'?permanent='+hard;",
+            ]),
+        req("25b Remove Namespace (Synapse)", "DELETE",
+            "/synapse/namespace/remove?name={{realmReferenceName}}&permanent=true",
+            [SKIP_CLEANUP_TEST, "pm.test('25b ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base="kg_base_url", prerequest=SKIP_CLEANUP_PRE),
+        req("25c Del Vector Collection", "POST",
+            "/vector-client/delete-collection?collectionName={{realmReferenceName}}",
+            [SKIP_CLEANUP_TEST, "pm.test('25c ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base="kg_base_url", prerequest=SKIP_CLEANUP_PRE),
+        req("25d Del Vector Collection (schema)", "POST",
+            "/vector-client/delete-collection?collectionName={{realmReferenceName}}_schema",
+            [SKIP_CLEANUP_TEST, "pm.test('25d ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base="kg_base_url", prerequest=SKIP_CLEANUP_PRE),
         req("26 Verify Del", "GET", "/realm/{{realmId}}",
-            ["pm.test('26 gone', () => pm.expect(pm.response.code).to.be.oneOf([400,404,500]));"], base=base),
+            [SKIP_CLEANUP_TEST,
+             "let b={}; try{b=pm.response.json();}catch(e){} const d=b.realmModel||b.data||b;",
+             "const hard=String(pm.environment.get('hardDelete')||'false')==='true';",
+             "pm.test('26 removed', () => pm.expect(pm.response.code===200 ? (hard ? false : !!d.deleted) : [400,404,500].includes(pm.response.code)).to.be.true);"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("27 Del Graph", "DELETE", "/schema-graph?prefix={{schemaName}}",
-            ["pm.test('27 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('27 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("28 Del Version", "DELETE", "/versions/delete?versionId={{versionId}}",
-            ["pm.test('28 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('28 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("29 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
-            ["pm.test('29 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('29 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("30 Del PG", "DELETE", "/datasource/{{pgDsId}}",
-            ["pm.test('30 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('30 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("31 Del MySQL", "DELETE", "/datasource/{{mysqlDsId}}",
-            ["pm.test('31 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('31 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("32 Del Maria", "DELETE", "/datasource/{{mariaDsId}}",
-            ["pm.test('32 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('32 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("33 Del Oracle", "DELETE", "/datasource/{{oracleDsId}}",
-            ["pm.test('33 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('33 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("34 Del Snow", "DELETE", "/datasource/{{snowDsId}}",
-            ["pm.test('34 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('34 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("35 Del Mongo", "DELETE", "/datasource/{{mongoDsId}}",
-            ["pm.test('35 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('35 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("36 Del CSV", "DELETE", "/datasource/{{csvDsId}}",
-            ["pm.test('36 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('36 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE),
         req("37 Del Excel", "DELETE", "/datasource/{{excelDsId}}",
-            ["pm.test('37 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
+            [SKIP_CLEANUP_TEST, "pm.test('37 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
+            base=base, prerequest=SKIP_CLEANUP_PRE + [
+                "// Excel DS is optional (created only with S3 creds); skip delete if it was never created",
+                "if(!pm.collectionVariables.get('excelDsId')){ pm.request.url=pm.collectionVariables.get('_skip_url'); }",
+            ]),
 
-        req("99 Teardown", "DELETE", "/realm/{{realmId}}?permanent=true",
-            ["pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
+        req("99 Teardown", "DELETE", "/realm/{{realmId}}",
+            [SKIP_CLEANUP_TEST,
+             "pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
              "pm.collectionVariables.unset('_flow_failed'); pm.collectionVariables.unset('_flow_failed_at');"],
-            base=base, skip_on_fail=False),
+            base=base, skip_on_fail=False, prerequest=SKIP_CLEANUP_PRE + [
+                "const hard=String(pm.environment.get('hardDelete')||'false')==='true';",
+                "if(pm.collectionVariables.get('realmId')) pm.request.url=pm.environment.get('app_base_url')+'/realm/'+pm.collectionVariables.get('realmId')+'?permanent='+hard;",
+            ]),
     ]
 
     col = build_collection(
@@ -380,7 +585,11 @@ def generate():
         folder_name="Realm CRUD (8-DS)",
         items=items,
         extra_variables=[{"key": k, "value": "", "type": "string"} for k in
-            ds_vars + ["schemaName", "schemaId", "versionId", "realmId", "realmName",
-                       "streamId", "_allNodes", "_allLinks", "_ingestion_status"]]
+            ds_vars + ["schemaName", "schemaId", "schemaPrefix", "versionId", "realmId",
+                       "realmName", "realmReferenceName", "versionName", "streamId", "_allNodes", "_allLinks", "_ingestion_status",
+                       "_dsMetaList", "_graphNodes", "_graphLinks", "_versionUri", "_versionUriEnc", "awsVersionId", "_streamCount", "_genStreams", "_streamNames",
+                       "_nsAttempt", "_nsUp", "_ingAttempt", "_mongoShape",
+                       "_entIdx", "_entCount",
+                       "excelDsName", "_excelStagedKey", "_excelCols"]]
     )
     return write_flow("FLOW-Realm-CRUD.postman_collection.json", col)

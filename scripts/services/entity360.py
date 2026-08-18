@@ -9,7 +9,7 @@ def generate():
     items = [
         build_setup(base, "/actuator/health",
                     clear_vars=SETUP_CLEAR_VARS + ["e360Id", "pathId"]),
-        *full_setup_steps("01", "pm-flow-e360", include_realm=False, base=base),
+        *full_setup_steps("01", "pm_flow_e360", include_realm=False, base=base),
 
         req("02 Create Entity360", "POST", "/entity-360?versionsId={{versionId}}",
             ["const code=pm.response.code;",
@@ -17,8 +17,8 @@ def generate():
              "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
              "if(d.id||d.entity360Id) pm.collectionVariables.set('e360Id', String(d.id||d.entity360Id));",
              "if(d.pathId) pm.collectionVariables.set('pathId', String(d.pathId));"],
-            base=base, body={"namedEntity": "pm-flow-e360-{{$timestamp}}", "description": "FLOW"}),
-        req("03 Get", "GET", "/entity-360?namedEntity=pm-flow-e360&versionsId={{versionId}}",
+            base=base, body={"namedEntity": "pm_flow_e360_{{$timestamp}}", "description": "FLOW"}),
+        req("03 Get", "GET", "/entity-360?namedEntity=pm_flow_e360&versionsId={{versionId}}",
             ["pm.test('03 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
         req("04 Get All", "GET", "/entity-360/all?versionsId={{versionId}}",
             ["pm.test('04 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
@@ -37,7 +37,7 @@ def generate():
         req("11 Update", "PUT", "/entity-360?versionsId={{versionId}}",
             ["pm.test('11 200|204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
             base=base, body={"id":0},
-            prerequest=["pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('e360Id')),namedEntity:'pm-flow-e360-updated',description:'Updated'});"]),
+            prerequest=["pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('e360Id')),namedEntity:'pm_flow_e360_updated',description:'Updated'});"]),
         req("12 Delete", "DELETE", "/entity-360/{{e360Id}}",
             ["pm.test('12 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
 

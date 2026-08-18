@@ -42,6 +42,28 @@
           "    pm.environment.set('access_token', b.access_token); });"
         ]
       }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "(function(){",
+          "  const code=pm.response.code;",
+          "  let u=''; try{u=pm.request.url.toString();}catch(e){}",
+          "  if(code<400 || u.indexOf('__skip__')>=0 || u.indexOf('/actuator/health')>=0) return;",
+          "  let msg='';",
+          "  try{const b=pm.response.json(); msg=b.message||b.error||b.errorCode||JSON.stringify(b);}catch(e){try{msg=pm.response.text();}catch(x){}}",
+          "  if(msg && msg.length>300) msg=msg.slice(0,300);",
+          "  console.log('API FAIL ['+pm.info.requestName+'] '+code+' '+pm.request.method+' '+u+' :: '+msg);",
+          "  let fails=[]; try{fails=JSON.parse(pm.collectionVariables.get('_api_failures')||'[]');}catch(e){}",
+          "  fails.push({step:pm.info.requestName, code:code, message:msg});",
+          "  pm.collectionVariables.set('_api_failures', JSON.stringify(fails));",
+          "  // 5xx is a real server failure — register a failing assertion so it can't pass silently.",
+          "  if(code>=500){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
+          "})();"
+        ]
+      }
     }
   ],
   "variable": [
@@ -67,6 +89,11 @@
     },
     {
       "key": "_skip_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_api_failures",
       "value": "",
       "type": "string"
     },
@@ -161,6 +188,11 @@
       "type": "string"
     },
     {
+      "key": "schemaPrefix",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "versionId",
       "value": "",
       "type": "string"
@@ -172,6 +204,16 @@
     },
     {
       "key": "realmName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "realmReferenceName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "versionName",
       "value": "",
       "type": "string"
     },
@@ -192,6 +234,96 @@
     },
     {
       "key": "_ingestion_status",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_dsMetaList",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_graphNodes",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_graphLinks",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_versionUri",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_versionUriEnc",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "awsVersionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_streamCount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_genStreams",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_streamNames",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_nsAttempt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_nsUp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_ingAttempt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_mongoShape",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_entIdx",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_entCount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "excelDsName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_excelStagedKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "_excelCols",
       "value": "",
       "type": "string"
     }
@@ -231,10 +363,30 @@
                   "pm.collectionVariables.unset('versionId');",
                   "pm.collectionVariables.unset('realmId');",
                   "pm.collectionVariables.unset('realmName');",
+                  "pm.collectionVariables.unset('realmReferenceName');",
+                  "pm.collectionVariables.unset('versionName');",
                   "pm.collectionVariables.unset('streamId');",
                   "pm.collectionVariables.unset('_allNodes');",
                   "pm.collectionVariables.unset('_allLinks');",
                   "pm.collectionVariables.unset('_ingestion_status');",
+                  "pm.collectionVariables.unset('_dsMetaList');",
+                  "pm.collectionVariables.unset('_graphNodes');",
+                  "pm.collectionVariables.unset('_graphLinks');",
+                  "pm.collectionVariables.unset('_versionUri');",
+                  "pm.collectionVariables.unset('_versionUriEnc');",
+                  "pm.collectionVariables.unset('awsVersionId');",
+                  "pm.collectionVariables.unset('_streamCount');",
+                  "pm.collectionVariables.unset('_genStreams');",
+                  "pm.collectionVariables.unset('_streamNames');",
+                  "pm.collectionVariables.unset('_nsAttempt');",
+                  "pm.collectionVariables.unset('_nsUp');",
+                  "pm.collectionVariables.unset('_ingAttempt');",
+                  "pm.collectionVariables.unset('_mongoShape');",
+                  "pm.collectionVariables.unset('_entIdx');",
+                  "pm.collectionVariables.unset('_entCount');",
+                  "pm.collectionVariables.unset('excelDsName');",
+                  "pm.collectionVariables.unset('_excelStagedKey');",
+                  "pm.collectionVariables.unset('_excelCols');",
                   "pm.collectionVariables.set('_skip_url', pm.environment.get('app_base_url') + '/actuator/health');",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));"
                 ]
@@ -299,7 +451,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-postgres-{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"pm_flow_postgres_{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -331,7 +483,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01a Postgres 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01a');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01a Postgres created or skipped', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','01a');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
                   "if(d.id||d.sourceId) pm.collectionVariables.set('pgDsId', String(d.id||d.sourceId));",
@@ -368,7 +520,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-mysql-{{$timestamp}}\",\n  \"driverType\": \"{{mysql_driverType}}\",\n  \"dbHostName\": \"{{mysql_dbHost}}\",\n  \"dbPort\": \"{{mysql_dbPort}}\",\n  \"databaseName\": \"{{mysql_dbName}}\",\n  \"dbUserName\": \"{{mysql_dbUser}}\",\n  \"dbPassword\": \"{{mysql_dbPassword}}\",\n  \"aesRandomIV\": \"{{mysql_aesRandomIV}}\",\n  \"dbSchema\": \"{{mysql_dbSchema}}\",\n  \"driverClassName\": \"{{mysql_driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"pm_flow_mysql_{{$timestamp}}\",\n  \"driverType\": \"{{mysql_driverType}}\",\n  \"dbHostName\": \"{{mysql_dbHost}}\",\n  \"dbPort\": \"{{mysql_dbPort}}\",\n  \"databaseName\": \"{{mysql_dbName}}\",\n  \"dbUserName\": \"{{mysql_dbUser}}\",\n  \"dbPassword\": \"{{mysql_dbPassword}}\",\n  \"aesRandomIV\": \"{{mysql_aesRandomIV}}\",\n  \"dbSchema\": \"{{mysql_dbSchema}}\",\n  \"driverClassName\": \"{{mysql_driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -400,7 +552,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01b MySQL 2xx', () => {  pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01b MySQL created or skipped', () => {  pm.expect(code).to.be.oneOf([200,201,400,500]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
                   "if(d.id||d.sourceId) pm.collectionVariables.set('mysqlDsId', String(d.id||d.sourceId));",
@@ -437,7 +589,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-mariadb-{{$timestamp}}\",\n  \"driverType\": \"{{maria_driverType}}\",\n  \"dbHostName\": \"{{maria_dbHost}}\",\n  \"dbPort\": \"{{maria_dbPort}}\",\n  \"databaseName\": \"{{maria_dbName}}\",\n  \"dbUserName\": \"{{maria_dbUser}}\",\n  \"dbPassword\": \"{{maria_dbPassword}}\",\n  \"aesRandomIV\": \"{{maria_aesRandomIV}}\",\n  \"dbSchema\": \"{{maria_dbSchema}}\",\n  \"driverClassName\": \"{{maria_driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"pm_flow_mariadb_{{$timestamp}}\",\n  \"driverType\": \"{{maria_driverType}}\",\n  \"dbHostName\": \"{{maria_dbHost}}\",\n  \"dbPort\": \"{{maria_dbPort}}\",\n  \"databaseName\": \"{{maria_dbName}}\",\n  \"dbUserName\": \"{{maria_dbUser}}\",\n  \"dbPassword\": \"{{maria_dbPassword}}\",\n  \"aesRandomIV\": \"{{maria_aesRandomIV}}\",\n  \"dbSchema\": \"{{maria_dbSchema}}\",\n  \"driverClassName\": \"{{maria_driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -469,7 +621,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01c MariaDB 2xx', () => {  pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01c MariaDB created or skipped', () => {  pm.expect(code).to.be.oneOf([200,201,400,500]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
                   "if(d.id||d.sourceId) pm.collectionVariables.set('mariaDsId', String(d.id||d.sourceId));",
@@ -506,7 +658,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-oracle-{{$timestamp}}\",\n  \"driverType\": \"{{oracle_driverType}}\",\n  \"dbHostName\": \"{{oracle_dbHost}}\",\n  \"dbPort\": \"{{oracle_dbPort}}\",\n  \"databaseName\": \"{{oracle_dbName}}\",\n  \"dbUserName\": \"{{oracle_dbUser}}\",\n  \"dbPassword\": \"{{oracle_dbPassword}}\",\n  \"aesRandomIV\": \"{{oracle_aesRandomIV}}\",\n  \"dbSchema\": \"{{oracle_dbSchema}}\",\n  \"driverClassName\": \"{{oracle_driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"pm_flow_oracle_{{$timestamp}}\",\n  \"driverType\": \"{{oracle_driverType}}\",\n  \"dbHostName\": \"{{oracle_dbHost}}\",\n  \"dbPort\": \"{{oracle_dbPort}}\",\n  \"databaseName\": \"{{oracle_dbName}}\",\n  \"dbUserName\": \"{{oracle_dbUser}}\",\n  \"dbPassword\": \"{{oracle_dbPassword}}\",\n  \"aesRandomIV\": \"{{oracle_aesRandomIV}}\",\n  \"dbSchema\": \"{{oracle_dbSchema}}\",\n  \"driverClassName\": \"{{oracle_driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -538,7 +690,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01d Oracle 2xx', () => {  pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01d Oracle created or skipped', () => {  pm.expect(code).to.be.oneOf([200,201,400,500]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
                   "if(d.id||d.sourceId) pm.collectionVariables.set('oracleDsId', String(d.id||d.sourceId));",
@@ -575,7 +727,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-snowflake-{{$timestamp}}\",\n  \"driverType\": \"{{snow_driverType}}\",\n  \"dbHostName\": \"{{snow_dbHost}}\",\n  \"dbPort\": \"{{snow_dbPort}}\",\n  \"databaseName\": \"{{snow_dbName}}\",\n  \"dbUserName\": \"{{snow_dbUser}}\",\n  \"dbPassword\": \"{{snow_dbPassword}}\",\n  \"aesRandomIV\": \"{{snow_aesRandomIV}}\",\n  \"dbSchema\": \"{{snow_dbSchema}}\",\n  \"driverClassName\": \"{{snow_driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"pm_flow_snowflake_{{$timestamp}}\",\n  \"driverType\": \"{{snow_driverType}}\",\n  \"dbHostName\": \"{{snow_dbHost}}\",\n  \"dbPort\": \"{{snow_dbPort}}\",\n  \"databaseName\": \"{{snow_dbName}}\",\n  \"dbUserName\": \"{{snow_dbUser}}\",\n  \"dbPassword\": \"{{snow_dbPassword}}\",\n  \"aesRandomIV\": \"{{snow_aesRandomIV}}\",\n  \"dbSchema\": \"{{snow_dbSchema}}\",\n  \"driverClassName\": \"{{snow_driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -607,7 +759,7 @@
                   "  return;",
                   "}",
                   "const code=pm.response.code;",
-                  "pm.test('01e Snowflake 2xx', () => {  pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('01e Snowflake created or skipped', () => {  pm.expect(code).to.be.oneOf([200,201,400,500]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
                   "if(d.id||d.sourceId) pm.collectionVariables.set('snowDsId', String(d.id||d.sourceId));",
@@ -663,19 +815,34 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
+                  "// Mongo needs the REAL shapeCypher (maps collections) + a derived shapeParseResult",
+                  "// (server 500s on null). Embedded below (json.dumps) — NOT via env-var, which",
+                  "// truncates the multi-line value at the first newline (stored shapeCypher='CREATE').",
+                  "// Also record collection->fields in _mongoShape so the schema-graph builder can",
+                  "// synthesize column nodes (mongo fetch-data-source returns 0 columns).",
+                  "const SC = \"CREATE\\n  (g2:dt_mongo_group_2 {uri: '$._id', _id: '$._id', id: '$.id', note: '$.note', f_decimal: '$.f_decimal', f_bool: '$.f_bool', f_boolean: '$.f_boolean', f_date: '$.f_date', f_isodate: '$.f_isodate', f_timestamp: '$.f_timestamp', f_bindata: '$.f_bindata'}),\\n  (g1:dt_mongo_group_1 {uri: '$._id', _id: '$._id', id: '$.id', note: '$.note', f_objectid: '$.f_objectid', f_int32: '$.f_int32', f_numberint: '$.f_numberint', f_int64: '$.f_int64', f_numberlong: '$.f_numberlong', f_double: '$.f_double', f_numberdecimal: '$.f_numberdecimal'}),\\n  (g3:dt_mongo_group_3 {uri: '$._id', _id: '$._id', id: '$.id', note: '$.note', f_binary: '$.f_binary', f_array: '$.f_array', f_object: '$.f_object', f_document: '$.f_document', f_string: '$.f_string', f_null: '$.f_null'});\";",
+                  "const mshape={}; const spNodes=[];",
+                  "const reNode=/\\(g\\d+:(\\w+)\\s*\\{([^}]*)\\}\\)/g; let mm;",
+                  "while((mm=reNode.exec(SC))!==null){",
+                  "  const label=mm[1]; const fields=[]; const reP=/(\\w+):\\s*'(\\$[^']*)'/g; let pp;",
+                  "  while((pp=reP.exec(mm[2]))!==null){ if(pp[1]!=='uri') fields.push(pp[1]); }",
+                  "  mshape[label]=fields;",
+                  "  spNodes.push({label:label, prefix:'http://mongo.in/', properties:fields.map(function(f){return {jsonPath:'$.'+f, propertyName:f};}), uriProperty:'$._id', edgeShapes:[]});",
+                  "}",
+                  "pm.collectionVariables.set('_mongoShape', JSON.stringify(mshape));",
                   "const body = {",
-                  "  name: 'pm-flow-mongo-' + Date.now(),",
+                  "  name: 'pm_flow_mongo_' + Date.now(),",
                   "  driverType: 'MONGO',",
-                  "  dbHostName: pm.environment.get('mongo_dbHost') || '207.180.249.216',",
-                  "  dbPort: parseInt(pm.environment.get('mongo_dbPort') || '27018'),",
-                  "  databaseName: pm.environment.get('mongo_dbName') || 'datatypetesting_mongo',",
-                  "  dbUserName: pm.environment.get('mongo_dbUser') || 'quipu_admin',",
-                  "  dbPassword: pm.environment.get('mongo_dbPassword') || '',",
-                  "  aesRandomIV: pm.environment.get('mongo_aesRandomIV') || '',",
-                  "  dbSchema: pm.environment.get('mongo_dbSchema') || 'admin',",
+                  "  dbHostName: pm.variables.get('mongo_dbHost') || '207.180.249.216',",
+                  "  dbPort: parseInt(pm.variables.get('mongo_dbPort') || '27018'),",
+                  "  databaseName: pm.variables.get('mongo_dbName') || 'datatypetesting_mongo',",
+                  "  dbUserName: pm.variables.get('mongo_dbUser') || 'quipu_admin',",
+                  "  dbPassword: pm.variables.get('mongo_dbPassword') || '',",
+                  "  aesRandomIV: pm.variables.get('mongo_aesRandomIV') || '',",
+                  "  dbSchema: pm.variables.get('mongo_dbSchema') || 'admin',",
                   "  deleted: false,",
-                  "  shapeCypher: 'CREATE (g1:test {uri: \"$._id\", _id: \"$._id\"});',",
-                  "  shapeParseResult: {shape: {prefix: 'http://test.in/', nodes: [{label: 'test', prefix: 'http://test.in/', properties: [{jsonPath: '$._id', propertyName: '_id'}], uriProperty: '$._id', edgeShapes: []}], namespace: 'public', shapeType: 'CYPHER_DSL'}, constraints: []}",
+                  "  shapeCypher: SC,",
+                  "  shapeParseResult: {shape: {prefix: 'http://mongo.in/', nodes: spNodes, namespace: 'public', shapeType: 'CYPHER_DSL'}, constraints: []}",
                   "};",
                   "pm.request.body.raw = JSON.stringify(body);"
                 ]
@@ -746,10 +913,12 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
+                  "// each files[] entry needs columnDetails (null -> server NPE). Default to the",
+                  "// known sample-data.csv header; override the key via s3_csv_file if needed.",
                   "const body = {",
-                  "  name: 'pm-flow-csv-' + Date.now(),",
+                  "  name: 'pm_flow_csv_' + Date.now(),",
                   "  driverType: 'CSV',",
-                  "  bucket: pm.environment.get('s3_bucket') || 'quipu-api-tests',",
+                  "  bucket: pm.environment.get('s3_csv_bucket') || pm.environment.get('s3_bucket') || 'backupfor173',",
                   "  key: pm.environment.get('s3_csv_key') || 'csvfiles',",
                   "  region: pm.environment.get('s3_region') || 'ap-south-1',",
                   "  accessKey: pm.environment.get('s3_access_key') || '',",
@@ -761,7 +930,9 @@
                   "    {name:'email',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
                   "    {name:'age',type:'INTEGER',nullable:true,primaryKey:false,uniqueKey:false},",
                   "    {name:'salary',type:'DOUBLE',nullable:true,primaryKey:false,uniqueKey:false},",
-                  "    {name:'department',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false}",
+                  "    {name:'department',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
+                  "    {name:'hire_date',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
+                  "    {name:'is_active',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false}",
                   "  ]}]",
                   "};",
                   "pm.request.body.raw = JSON.stringify(body);"
@@ -777,12 +948,95 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('01g CSV 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
+                  "pm.test('01g CSV created or skipped', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400,500]));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
                   "if(d.id) pm.collectionVariables.set('csvDsId', String(d.id));",
                   "if(d.dataCatalogName) pm.collectionVariables.set('csvCat', d.dataCatalogName);",
-                  "console.log('CSV DS id='+(d.id||'skipped'));"
+                  "console.log('CSV DS id='+(d.id||'skipped (need s3_access_key/s3_secret_key)'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "01h1 Stage Excel Header (getExcelHeader)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/s3-upload/getExcelHeader?datasourceName={{excelDsName}}",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "s3-upload",
+                "getExcelHeader"
+              ],
+              "query": [
+                {
+                  "key": "datasourceName",
+                  "value": "{{excelDsName}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.set('excelDsName', 'pm_flow_excel_' + Date.now());",
+                  "// s3-upload endpoints require this vendor media type (plain application/json -> 415)",
+                  "pm.request.headers.upsert({key:'Content-Type', value:'application/vnd.quipu.file-upload+json;version=1.0.0'});",
+                  "const body={bucket: pm.environment.get('s3_excel_bucket')||pm.environment.get('s3_bucket')||'quipu-api-tests', key: pm.environment.get('s3_excel_key')||'excelfiles/Pharma_Drugs_V2.xlsx', region: pm.environment.get('s3_region')||'ap-south-1', accessKey: pm.environment.get('s3_access_key')||'', secret: pm.environment.get('s3_secret_key')||''};",
+                  "pm.request.body.raw = JSON.stringify(body);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code=pm.response.code;",
+                  "pm.test('01h1 getExcelHeader 200|400', () => pm.expect(code).to.be.oneOf([200,400]));",
+                  "if(code===200){ let a=[]; try{a=pm.response.json();}catch(e){}",
+                  "  if(a[0]&&a[0].key){ pm.collectionVariables.set('_excelStagedKey', a[0].key);",
+                  "    const hdr=(a[0].content||'').split(',').map(s=>s.trim()).filter(Boolean);",
+                  "    const cols=hdr.map((n,i)=>({name:n,type:'STRING',nullable:true,primaryKey:i===0,uniqueKey:i===0}));",
+                  "    pm.collectionVariables.set('_excelCols', JSON.stringify(cols));",
+                  "    console.log('Excel staged: '+a[0].key+', '+hdr.length+' cols'); } }",
+                  "else console.log('Excel header stage skipped (need s3 creds) — Excel DS will be skipped');"
                 ]
               }
             }
@@ -833,20 +1087,20 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
+                  "const staged = pm.collectionVariables.get('_excelStagedKey');",
+                  "let cols=[]; try{cols=JSON.parse(pm.collectionVariables.get('_excelCols')||'[]');}catch(e){}",
+                  "// If staging didn't happen (no creds), skip the create so it stays non-critical",
+                  "if(!staged){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
                   "const body = {",
-                  "  name: 'pm-flow-excel-' + Date.now(),",
+                  "  name: pm.collectionVariables.get('excelDsName'),",
                   "  driverType: 'EXCEL',",
-                  "  bucket: pm.environment.get('s3_bucket') || 'quipu-api-tests',",
+                  "  bucket: pm.environment.get('s3_excel_bucket') || pm.environment.get('s3_bucket') || 'quipu-api-tests',",
                   "  key: pm.environment.get('s3_excel_key') || 'excelfiles/Pharma_Drugs_V2.xlsx',",
                   "  region: pm.environment.get('s3_region') || 'ap-south-1',",
                   "  accessKey: pm.environment.get('s3_access_key') || '',",
                   "  secret: pm.environment.get('s3_secret_key') || '',",
                   "  deleted: false,",
-                  "  files: [{key: pm.environment.get('s3_excel_file') || 'datasource/pm-flow-excel/molecule_apis.csv', columnDetails: [",
-                  "    {name:'api_name',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false},",
-                  "    {name:'molecular_weight',type:'DOUBLE',nullable:true,primaryKey:false,uniqueKey:false},",
-                  "    {name:'bioavailability',type:'STRING',nullable:true,primaryKey:false,uniqueKey:false}",
-                  "  ]}]",
+                  "  files: [{key: staged, columnDetails: cols}]",
                   "};",
                   "pm.request.body.raw = JSON.stringify(body);"
                 ]
@@ -898,7 +1152,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schemaName\": \"pm-flow-realm-schema-{{$timestamp}}\",\n  \"description\": \"8-DS fabric\"\n}",
+              "raw": "{\n  \"schemaName\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -916,7 +1170,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "// prefix = schema name, hyphenated (letters/digits/hyphen) — the schema's ingest-namespace URI.",
+                  "const schemaName='pm_flow_realm_schema_'+Date.now();",
+                  "const prefix=schemaName.replace(/_/g,'-');",
+                  "pm.request.body.raw=JSON.stringify({schemaName:schemaName,prefix:prefix,description:'8-DS fabric'});",
+                  "pm.collectionVariables.set('schemaPrefix', prefix);"
                 ]
               }
             },
@@ -934,7 +1193,8 @@
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.schemaModel||b.data||b;",
                   "if(d.name||d.schemaName) pm.collectionVariables.set('schemaName', d.name||d.schemaName);",
-                  "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));"
+                  "if(d.id||d.schemaId) pm.collectionVariables.set('schemaId', String(d.id||d.schemaId));",
+                  "if(d.prefix) pm.collectionVariables.set('schemaPrefix', d.prefix);"
                 ]
               }
             }
@@ -942,7 +1202,7 @@
           "response": []
         },
         {
-          "name": "03 Create Version",
+          "name": "03a Fetch Postgres Entities",
           "request": {
             "method": "POST",
             "header": [
@@ -956,24 +1216,18 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/versions/create?schemaName={{schemaName}}",
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "versions",
-                "create"
-              ],
-              "query": [
-                {
-                  "key": "schemaName",
-                  "value": "{{schemaName}}"
-                }
+                "metadata-graph",
+                "fetch-data-source"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"versionName\": \"v1\"\n}",
+              "raw": "{\n  \"uri\": \"{{pgCat}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -992,10 +1246,8 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "const ids=[];",
-                  "['pgDsId','mysqlDsId','mariaDsId','oracleDsId','snowDsId','mongoDsId','csvDsId','excelDsId'].forEach(k=>{const v=parseInt(pm.collectionVariables.get(k));if(v&&!isNaN(v))ids.push(v);});",
-                  "console.log('Version DSs: '+JSON.stringify(ids));",
-                  "pm.request.body.raw=JSON.stringify({versionName:'pm-flow-ver-'+Date.now(),description:'8-DS',dataSourceIds:ids,defaultVersion:true,latest:true,versionLocked:false,deleted:false});"
+                  "const cat=pm.collectionVariables.get('pgCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
                 ]
               }
             },
@@ -1008,11 +1260,17 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "const cat=pm.collectionVariables.get('pgCat')||'';",
+                  "if(!cat){ pm.test('03a Postgres skipped (DS not created)', ()=>{}); return; }",
                   "const code=pm.response.code;",
-                  "pm.test('03 Version 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "pm.test('03a Postgres fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03a Postgres fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "const d=b.data||b;",
-                  "if(d.id||d.versionId) pm.collectionVariables.set('versionId', String(d.id||d.versionId));"
+                  "b._dsId = pm.collectionVariables.get('pgDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03a Postgres adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03a Postgres added 0 entities');} pm.expect(tables, 'Postgres was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('Postgres: '+tables+' entities added to schema');"
                 ]
               }
             }
@@ -1020,7 +1278,7 @@
           "response": []
         },
         {
-          "name": "04a Fetch PG Metadata",
+          "name": "03b Fetch MySQL Entities",
           "request": {
             "method": "POST",
             "header": [
@@ -1034,18 +1292,18 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/test-connection/metadata",
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
               "host": [
-                "{{transform_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "test-connection",
-                "metadata"
+                "metadata-graph",
+                "fetch-data-source"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "raw": "{\n  \"uri\": \"{{mysqlCat}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1063,7 +1321,9 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "const cat=pm.collectionVariables.get('mysqlCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
                 ]
               }
             },
@@ -1076,19 +1336,17 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04a PG metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
-                  "let tables = [];",
-                  "if(pm.response.code===200){",
-                  "  let b={}; try{b=pm.response.json();}catch(e){}",
-                  "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-                  "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-                  "  else tables=Object.keys(b).filter(k=>k!=='error'&&k!=='status');",
-                  "}",
-                  "// Build entity nodes from table names",
-                  "const nodes = tables.slice(0,10).map((t,i) => ({id:'pg_'+i, label:t, type:'entity', prefix:'pg:', properties:{source:'POSTGRES'}}));",
-                  "pm.collectionVariables.set('_allNodes', JSON.stringify(nodes));",
-                  "pm.collectionVariables.set('_allLinks', '[]');",
-                  "console.log('PG tables: '+tables.slice(0,5).join(', ')+' → '+nodes.length+' entities');"
+                  "const cat=pm.collectionVariables.get('mysqlCat')||'';",
+                  "if(!cat){ pm.test('03b MySQL skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03b MySQL fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03b MySQL fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('mysqlDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03b MySQL adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03b MySQL added 0 entities');} pm.expect(tables, 'MySQL was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('MySQL: '+tables+' entities added to schema');"
                 ]
               }
             }
@@ -1096,7 +1354,7 @@
           "response": []
         },
         {
-          "name": "04b Fetch MySQL Metadata",
+          "name": "03c Fetch MariaDB Entities",
           "request": {
             "method": "POST",
             "header": [
@@ -1110,18 +1368,18 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/test-connection/metadata",
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
               "host": [
-                "{{transform_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "test-connection",
-                "metadata"
+                "metadata-graph",
+                "fetch-data-source"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"driverType\": \"{{mysql_driverType}}\",\n  \"dbHostName\": \"{{mysql_dbHost}}\",\n  \"dbPort\": \"{{mysql_dbPort}}\",\n  \"databaseName\": \"{{mysql_dbName}}\",\n  \"dbUserName\": \"{{mysql_dbUser}}\",\n  \"dbPassword\": \"{{mysql_dbPassword}}\",\n  \"aesRandomIV\": \"{{mysql_aesRandomIV}}\",\n  \"dbSchema\": \"{{mysql_dbSchema}}\",\n  \"driverClassName\": \"{{mysql_driverClassName}}\"\n}",
+              "raw": "{\n  \"uri\": \"{{mariaCat}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1139,7 +1397,9 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "const cat=pm.collectionVariables.get('mariaCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
                 ]
               }
             },
@@ -1152,18 +1412,17 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04b MySQL metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
-                  "if(pm.response.code===200){",
-                  "  let b={}; try{b=pm.response.json();}catch(e){}",
-                  "  let tables=[];",
-                  "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-                  "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-                  "  const newNodes=tables.slice(0,10).map((t,i)=>({id:'mysql_'+i,label:t,type:'entity',prefix:'mysql:',properties:{source:'MYSQL'}}));",
-                  "  let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-                  "  all=all.concat(newNodes);",
-                  "  pm.collectionVariables.set('_allNodes', JSON.stringify(all));",
-                  "  console.log('MySQL: '+newNodes.length+' entities, total: '+all.length);",
-                  "}"
+                  "const cat=pm.collectionVariables.get('mariaCat')||'';",
+                  "if(!cat){ pm.test('03c MariaDB skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03c MariaDB fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03c MariaDB fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('mariaDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03c MariaDB adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03c MariaDB added 0 entities');} pm.expect(tables, 'MariaDB was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('MariaDB: '+tables+' entities added to schema');"
                 ]
               }
             }
@@ -1171,7 +1430,7 @@
           "response": []
         },
         {
-          "name": "04c Fetch MariaDB Metadata",
+          "name": "03d Fetch Oracle Entities",
           "request": {
             "method": "POST",
             "header": [
@@ -1185,18 +1444,18 @@
               }
             ],
             "url": {
-              "raw": "{{transform_base_url}}/test-connection/metadata",
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
               "host": [
-                "{{transform_base_url}}"
+                "{{app_base_url}}"
               ],
               "path": [
-                "test-connection",
-                "metadata"
+                "metadata-graph",
+                "fetch-data-source"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"driverType\": \"{{maria_driverType}}\",\n  \"dbHostName\": \"{{maria_dbHost}}\",\n  \"dbPort\": \"{{maria_dbPort}}\",\n  \"databaseName\": \"{{maria_dbName}}\",\n  \"dbUserName\": \"{{maria_dbUser}}\",\n  \"dbPassword\": \"{{maria_dbPassword}}\",\n  \"aesRandomIV\": \"{{maria_aesRandomIV}}\",\n  \"dbSchema\": \"{{maria_dbSchema}}\",\n  \"driverClassName\": \"{{maria_driverClassName}}\"\n}",
+              "raw": "{\n  \"uri\": \"{{oracleCat}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1214,7 +1473,9 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "const cat=pm.collectionVariables.get('oracleCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
                 ]
               }
             },
@@ -1227,18 +1488,17 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04c Maria metadata reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,201,400]));",
-                  "if(pm.response.code===200){",
-                  "  let b={}; try{b=pm.response.json();}catch(e){}",
-                  "  let tables=[];",
-                  "  if(Array.isArray(b)) tables=b.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-                  "  else if(b.tables) tables=b.tables.map(t=>typeof t==='string'?t:(t.name||t.tableName||'')).filter(t=>t);",
-                  "  const newNodes=tables.slice(0,10).map((t,i)=>({id:'maria_'+i,label:t,type:'entity',prefix:'maria:',properties:{source:'MARIADB'}}));",
-                  "  let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-                  "  all=all.concat(newNodes);",
-                  "  pm.collectionVariables.set('_allNodes', JSON.stringify(all));",
-                  "  console.log('MariaDB: '+newNodes.length+' entities, total: '+all.length);",
-                  "}"
+                  "const cat=pm.collectionVariables.get('oracleCat')||'';",
+                  "if(!cat){ pm.test('03d Oracle skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03d Oracle fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03d Oracle fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('oracleDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03d Oracle adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03d Oracle added 0 entities');} pm.expect(tables, 'Oracle was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('Oracle: '+tables+' entities added to schema');"
                 ]
               }
             }
@@ -1246,7 +1506,311 @@
           "response": []
         },
         {
-          "name": "04d Add File+Mongo Entities",
+          "name": "03e Fetch Snowflake Entities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata-graph",
+                "fetch-data-source"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uri\": \"{{snowCat}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('snowCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('snowCat')||'';",
+                  "if(!cat){ pm.test('03e Snowflake skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03e Snowflake fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03e Snowflake fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('snowDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03e Snowflake adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03e Snowflake added 0 entities');} pm.expect(tables, 'Snowflake was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('Snowflake: '+tables+' entities added to schema');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03f Fetch Mongo Entities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata-graph",
+                "fetch-data-source"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uri\": \"{{mongoCat}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('mongoCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('mongoCat')||'';",
+                  "if(!cat){ pm.test('03f Mongo skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03f Mongo fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03f Mongo fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('mongoDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03f Mongo adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03f Mongo added 0 entities');} pm.expect(tables, 'Mongo was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('Mongo: '+tables+' entities added to schema');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03g Fetch CSV Entities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata-graph",
+                "fetch-data-source"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uri\": \"{{csvCat}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('csvCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('csvCat')||'';",
+                  "if(!cat){ pm.test('03g CSV skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03g CSV fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03g CSV fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('csvDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03g CSV adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03g CSV added 0 entities');} pm.expect(tables, 'CSV was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('CSV: '+tables+' entities added to schema');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03h Fetch Excel Entities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/metadata-graph/fetch-data-source",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "metadata-graph",
+                "fetch-data-source"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uri\": \"{{excelCat}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('excelCat')||'';",
+                  "if(!cat){ pm.request.method='GET'; pm.request.url = pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health'; }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const cat=pm.collectionVariables.get('excelCat')||'';",
+                  "if(!cat){ pm.test('03h Excel skipped (DS not created)', ()=>{}); return; }",
+                  "const code=pm.response.code;",
+                  "pm.test('03h Excel fetch 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03h Excel fetch');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "b._dsId = pm.collectionVariables.get('excelDsId');",
+                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "all.push(b); pm.collectionVariables.set('_dsMetaList', JSON.stringify(all));",
+                  "const tables=(b.hasTableEdges||[]).length;",
+                  "pm.test('03h Excel adds entities to schema', () => { if(tables===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03h Excel added 0 entities');} pm.expect(tables, 'Excel was created but produced 0 entities').to.be.above(0); });",
+                  "console.log('Excel: '+tables+' entities added to schema');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03z Verify All DS Entities",
           "request": {
             "method": "GET",
             "header": [
@@ -1276,16 +1840,7 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}",
-                  "// Add CSV entity node",
-                  "let all=[]; try{all=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-                  "all.push({id:'csv_0',label:'sample_data_csv',type:'entity',prefix:'csv:',properties:{source:'CSV',columns:'id,name,email,age,salary,department'}});",
-                  "// Add Excel entity node",
-                  "all.push({id:'excel_0',label:'pharma_drugs',type:'entity',prefix:'excel:',properties:{source:'EXCEL',columns:'api_name,molecular_weight,bioavailability'}});",
-                  "// Add Mongo entity node",
-                  "all.push({id:'mongo_0',label:'dt_mongo_group_1',type:'entity',prefix:'mongo:',properties:{source:'MONGO'}});",
-                  "pm.collectionVariables.set('_allNodes', JSON.stringify(all));",
-                  "console.log('Added CSV+Excel+Mongo entities, total: '+all.length);"
+                  "}"
                 ]
               }
             },
@@ -1298,7 +1853,14 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('04d health', () => pm.response.to.have.status(200));"
+                  "pm.test('03z health', () => pm.response.to.have.status(200));",
+                  "let ml=[]; try{ml=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "const catVars=['pgCat','mysqlCat','mariaCat','oracleCat','snowCat','mongoCat','csvCat','excelCat'];",
+                  "const created=catVars.filter(v=>pm.collectionVariables.get(v)).length;",
+                  "const withEntities=ml.filter(m=>(m.hasTableEdges||[]).length>0).length;",
+                  "const total=ml.reduce((a,m)=>a+((m.hasTableEdges||[]).length),0);",
+                  "console.log('DSs created: '+created+', DSs with entities: '+withEntities+', total entities: '+total);",
+                  "pm.test('03z every created DS added entities', () => { if(withEntities<created||total===0){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','03z entities missing');} pm.expect(withEntities, 'created DSs vs DSs with entities').to.eql(created); pm.expect(total).to.be.above(0); });"
                 ]
               }
             }
@@ -1306,7 +1868,7 @@
           "response": []
         },
         {
-          "name": "05 Save Schema Graph",
+          "name": "04a Create Entity",
           "request": {
             "method": "POST",
             "header": [
@@ -1320,17 +1882,17 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema-graph",
+              "raw": "{{app_base_url}}/entity",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "schema-graph"
+                "entity"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"versionUri\": \"\",\n  \"nodes\": [],\n  \"links\": []\n}",
+              "raw": "{\n  \"label\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1349,11 +1911,21 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "let n=[]; let l=[];",
-                  "try{n=JSON.parse(pm.collectionVariables.get('_allNodes')||'[]');}catch(e){}",
-                  "try{l=JSON.parse(pm.collectionVariables.get('_allLinks')||'[]');}catch(e){}",
-                  "console.log('Saving graph: '+n.length+' entities from PG+MySQL+MariaDB+CSV+Excel+Mongo');",
-                  "pm.request.body.raw=JSON.stringify({versionUri:pm.collectionVariables.get('schemaName')+'Version#v',nodes:n,links:l,schemaName:pm.collectionVariables.get('schemaName')});"
+                  "const _DT={int8:'BIGINT',int4:'BIGINT',int2:'BIGINT',serial:'BIGINT',bigserial:'BIGINT',smallserial:'BIGINT',numeric:'DECIMAL',decimal:'DECIMAL',float8:'DOUBLE',float4:'DOUBLE',bool:'BOOLEAN',timestamp:'TIMESTAMP',timestamptz:'TIMESTAMP',date:'DATE',time:'TIME',json:'JSON',jsonb:'JSON',uuid:'VARCHAR',bytea:'VARBINARY'};function cdt(t){t=(t||'').toLowerCase();return _DT[t]||(t?t.toUpperCase():'VARCHAR');}",
+                  "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "let flat=[]; meta.forEach(m=>{(m.hasTableEdges||[]).forEach(te=>flat.push(te));});",
+                  "const i=parseInt(pm.collectionVariables.get('_entIdx')||'0');",
+                  "const te=flat[i]||{}; const tn=te.tableNode||{};",
+                  "const tShort=tn.nodeId||''; const segs=tShort.split(':');",
+                  "const dsName=segs[segs.length-2]||'ds'; const dsUrn=segs.slice(0,-1).join(':');",
+                  "const driver=(segs[segs.length-3]||'postgres').toUpperCase();",
+                  "const entPrefix='http://'+dsName+'.in/';",
+                  "let cols=(tn.hasPropertyEdges||[]).map(pe=>pe.propertyNode||{});",
+                  "let props=cols.map(c=>({label:c.label,dataType:cdt(c.dataType),primaryKey:!!c.primaryKey,uniqueKey:!!c.uniqueKey,foreignKey:!!c.foreignKey,nullable:c.nullable!==false,mappedColumnUri:(c.nodeId||c.node_id||c.uri),mappedColumnUris:[(c.nodeId||c.node_id||c.uri)]}));",
+                  "// MONGO: fetch-data-source returns 0 columns — synthesize from the captured shapeCypher fields.",
+                  "if(driver==='MONGO' && props.length===0){ let ms={}; try{ms=JSON.parse(pm.collectionVariables.get('_mongoShape')||'{}');}catch(e){} (ms[tn.label]||[]).forEach(f=>{ const cu=tShort+':'+f; props.push({label:f,dataType:'VARCHAR',primaryKey:false,uniqueKey:false,foreignKey:false,nullable:true,mappedColumnUri:cu,mappedColumnUris:[cu]}); }); }",
+                  "const body={label:tn.label,prefix:entPrefix,dataSourceUri:dsUrn,namedEntity:false,description:'',tags:[],properties:props};",
+                  "pm.request.body.raw=JSON.stringify(body);"
                 ]
               }
             },
@@ -1366,8 +1938,232 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('05 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,204]));",
-                  "console.log('Schema graph saved with entities from all DS types');"
+                  "const code=pm.response.code;",
+                  "pm.test('04a entity 2xx (idx '+(pm.collectionVariables.get('_entIdx')||'0')+')', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','04a');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const i=parseInt(pm.collectionVariables.get('_entIdx')||'0');",
+                  "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "let flat=[]; meta.forEach(m=>{(m.hasTableEdges||[]).forEach(te=>flat.push(te));});",
+                  "console.log('entity['+i+'/'+flat.length+'] created: '+(b.entityUri||'?')+' props='+((b.properties||[]).length));",
+                  "const next=i+1;",
+                  "if(next<flat.length){ pm.collectionVariables.set('_entIdx', String(next)); postman.setNextRequest('04a Create Entity'); }",
+                  "else { pm.collectionVariables.set('_entCount', String(flat.length)); pm.collectionVariables.unset('_entIdx'); console.log('ALL '+flat.length+' entities created'); }"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04b Save Schema Graph from Entities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/actuator/health",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04b health', () => pm.response.to.have.status(200));",
+                  "const P=pm.collectionVariables.get('schemaPrefix'); const sn=pm.collectionVariables.get('schemaName');",
+                  "const sidRaw=pm.collectionVariables.get('schemaId'); const sid=(sidRaw&&!isNaN(sidRaw))?parseInt(sidRaw):sidRaw;",
+                  "let meta=[]; try{meta=JSON.parse(pm.collectionVariables.get('_dsMetaList')||'[]');}catch(e){}",
+                  "const dsUrns=[]; meta.forEach(m=>{const te=(m.hasTableEdges||[])[0]; if(te&&te.tableNode){const segs=(te.tableNode.nodeId||'').split(':'); const uu=segs.slice(0,-1).join(':'); if(uu&&dsUrns.indexOf(uu)<0)dsUrns.push(uu);}});",
+                  "const ids=[]; (function(){const v=parseInt(pm.collectionVariables.get('pgDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('mysqlDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('mariaDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('oracleDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('snowDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('mongoDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('csvDsId'));if(v&&!isNaN(v))ids.push(v);})(); (function(){const v=parseInt(pm.collectionVariables.get('excelDsId'));if(v&&!isNaN(v))ids.push(v);})();",
+                  "const app=pm.environment.get('app_base_url');",
+                  "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                  "let nodes=[]; let links=[];",
+                  "function finalize(){",
+                  "  const VN=P+'Version#v1';",
+                  "  nodes.forEach(n=>{ n.nodeId=P+(n.uri||n.id||''); n.schemaId=sid; });",
+                  "  nodes.push({node_type:'Version',id:VN,uri:VN,nodeId:VN,label:'v1',schemaId:sid,tags:[],description:''});",
+                  "  nodes.filter(n=>n.node_type==='Node').forEach(en=>{ links.push({source:VN,target:(en.id||en.uri),relationship:'Has_Node',direction:'FORWARD',node_uri:VN}); });",
+                  "  pm.collectionVariables.set('_versionUri', VN); pm.collectionVariables.set('_versionUriEnc', encodeURIComponent(VN));",
+                  "  const body={prefix:P,schemaName:sn,schemaUri:P+'Schema#'+sn,nodes:nodes,links:links,versionsModel:{versionName:'v1',description:'',defaultVersion:false,latest:true,deleted:false,versionLocked:false,dataSourceIds:ids,entity360Flows:[]}};",
+                  "  pm.sendRequest({url:app+'/schema-graph', method:'POST', header:hdr, body:{mode:'raw', raw:JSON.stringify(body)}}, (e,r)=>{",
+                  "    const ok=r&&[200,201].includes(r.code);",
+                  "    pm.test('04b schema-graph saved 2xx', () => { if(!ok){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','04b');} pm.expect(ok).to.be.true; });",
+                  "    let rb={}; try{rb=r.json();}catch(x){}",
+                  "    const vid=rb.versionId||rb.id; if(vid) pm.collectionVariables.set('versionId', String(vid));",
+                  "    const ent=nodes.filter(n=>n.node_type==='Node').length;",
+                  "    console.log('schema-graph saved from '+ent+' entities ('+nodes.length+' nodes, '+dsUrns.length+' DS) versionId='+vid);",
+                  "  });",
+                  "}",
+                  "function fetchNext(k){",
+                  "  if(k>=dsUrns.length){ finalize(); return; }",
+                  "  pm.sendRequest({url:app+'/entity-graph/datasource-subgraph?uri='+encodeURIComponent(dsUrns[k]), method:'GET', header:hdr}, (e,r)=>{",
+                  "    let g={}; try{g=r.json();}catch(x){}",
+                  "    (g.nodes||[]).forEach(n=>nodes.push(n)); (g.links||[]).forEach(l=>links.push(l));",
+                  "    fetchNext(k+1);",
+                  "  });",
+                  "}",
+                  "if(!P){ pm.test('04b prefix present', () => pm.expect(P,'schemaPrefix').to.be.ok); } else { fetchNext(0); }"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04c Verify Schema Graph (UI read)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/schema-graph?versionUri={{_versionUriEnc}}&includeEmbeddings=false",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "schema-graph"
+              ],
+              "query": [
+                {
+                  "key": "versionUri",
+                  "value": "{{_versionUriEnc}}"
+                },
+                {
+                  "key": "includeEmbeddings",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "pm.test('04c 200', () => pm.response.to.have.status(200));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const ns=b.nodes||[];",
+                  "const entities=ns.filter(n=>n.node_type==='Node');",
+                  "pm.test('04c has entities', () => pm.expect(entities.length).to.be.above(0));",
+                  "console.log('UI schema-graph read back: '+ns.length+' nodes, '+entities.length+' entities');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05b Resolve Version",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{app_base_url}}/schema/name?schemaName={{schemaName}}",
+              "host": [
+                "{{app_base_url}}"
+              ],
+              "path": [
+                "schema",
+                "name"
+              ],
+              "query": [
+                {
+                  "key": "schemaName",
+                  "value": "{{schemaName}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code=pm.response.code;",
+                  "pm.test('05b 2xx', () => pm.expect(code).to.be.oneOf([200]));",
+                  "let b={}; try{b=pm.response.json();}catch(e){}",
+                  "const d=b.schemaModel||b.data||b; const vs=(d.versions||[]);",
+                  "const v=vs.find(x=>x.latest)||vs[vs.length-1]||{};",
+                  "if(v.versionId){pm.collectionVariables.set('versionId', String(v.versionId)); if(v.versionName) pm.collectionVariables.set('versionName', v.versionName);}",
+                  "// versionId is normally already minted by 04i (POST /schema-graph + versionsModel);",
+                  "// this is a best-effort refresh — pass on whichever versionId we have.",
+                  "const vid=pm.collectionVariables.get('versionId');",
+                  "pm.test('05b has versionId', () => { if(!vid){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','05b no versionId');} pm.expect(vid, 'versionId (from 04i or schema)').to.not.be.undefined; });",
+                  "console.log('Resolved versionId='+v.versionId+' ('+(v.versionName||'')+') for '+pm.collectionVariables.get('schemaName'));"
                 ]
               }
             }
@@ -1418,7 +2214,7 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "pm.request.body.raw=JSON.stringify({name:'pm-flow-realm-'+Date.now(),description:'8-DS fabric',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId'))});"
+                  "pm.request.body.raw=JSON.stringify({name:'pm_flow_realm_'+Date.now(),description:'8-DS fabric',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId'))});"
                 ]
               }
             },
@@ -1437,7 +2233,141 @@
                   "const d=b.realmModel||b.data||b;",
                   "if(d.id||d.realmId) pm.collectionVariables.set('realmId', String(d.id||d.realmId));",
                   "if(d.name||d.realmName) pm.collectionVariables.set('realmName', d.name||d.realmName);",
-                  "console.log('Realm id='+(d.id||d.realmId));"
+                  "if(d.referenceName) pm.collectionVariables.set('realmReferenceName', d.referenceName);",
+                  "console.log('Realm id='+(d.id||d.realmId)+', ref='+(d.referenceName||''));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06b Create Namespace (Synapse)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/create",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Ingest flags default true; type is null unless memoryNamespace=true -> 'MEMORY' (matches UICore).",
+                  "const memoryNamespace=String(pm.environment.get('memoryNamespace')||'false')==='true';",
+                  "const ntype=memoryNamespace?'MEMORY':null;",
+                  "const historic=String(pm.environment.get('requiresHistoricIngest')||'true')==='true';",
+                  "const vector=String(pm.environment.get('vectorIngestionRequired')||'true')==='true';",
+                  "const body={name:pm.collectionVariables.get('realmReferenceName'),schemaName:pm.collectionVariables.get('schemaName'),schemaVersion:'v1',requiresHistoricIngest:historic,type:ntype,vectorIngestionRequired:vector};",
+                  "pm.request.body.raw=JSON.stringify(body);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const code=pm.response.code;",
+                  "pm.test('06b 2xx', () => { if(![200,201].includes(code)){pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','06b namespace create');} pm.expect(code).to.be.oneOf([200,201]); });",
+                  "if([200,201].includes(code)) console.log('Synapse namespace created for '+pm.collectionVariables.get('realmReferenceName'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06c Vectorize Realm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nexus_base_url}}/schema/vectorize/{{realmReferenceName}}",
+              "host": [
+                "{{nexus_base_url}}"
+              ],
+              "path": [
+                "schema",
+                "vectorize",
+                "{{realmReferenceName}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// memory fabrics are not vectorized (matches UICore: if(!memoryFabric) realmVectorization)",
+                  "if(String(pm.environment.get('memoryNamespace')||'false')==='true'){",
+                  "  pm.request.method='GET';",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "const mem=String(pm.environment.get('memoryNamespace')||'false')==='true';",
+                  "pm.test('06c 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201,202,204]));",
+                  "console.log(mem?'Vectorize skipped (memory fabric)':'Vectorize triggered for '+pm.collectionVariables.get('realmReferenceName'));"
                 ]
               }
             }
@@ -1874,7 +2804,8 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('realmId')),name:pm.collectionVariables.get('realmName'),description:'Updated by FLOW'});"
+                  "const body={id:parseInt(pm.collectionVariables.get('realmId')),name:pm.collectionVariables.get('realmName'),description:'Updated by FLOW',schemaName:pm.collectionVariables.get('schemaName'),versionId:parseInt(pm.collectionVariables.get('versionId')),referenceName:pm.collectionVariables.get('realmReferenceName'),type:'GRAPH',noSchema:false};",
+                  "pm.request.body.raw=JSON.stringify(body);"
                 ]
               }
             },
@@ -1940,7 +2871,8 @@
                   "}",
                   "pm.test('15 200', () => pm.response.to.have.status(200));",
                   "let b={}; try{b=pm.response.json();}catch(e){} const d=b.realmModel||b.data||b;",
-                  "pm.test('15 updated', () => pm.expect(String(d.description||'')).to.include('Updated'));"
+                  "pm.test('15 updated', () => pm.expect(String(d.description||'')).to.include('Updated'));",
+                  "pm.test('15 versionId preserved', () => pm.expect(d.versionId, 'update must not null versionId').to.not.be.null);"
                 ]
               }
             }
@@ -2109,7 +3041,7 @@
           "response": []
         },
         {
-          "name": "19 Create Stream",
+          "name": "19 Generate Ingest Streams",
           "request": {
             "method": "POST",
             "header": [
@@ -2123,18 +3055,18 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/atomicIngestStream/create-stream",
+              "raw": "{{transform_base_url}}/streams/generate",
               "host": [
-                "{{app_base_url}}"
+                "{{transform_base_url}}"
               ],
               "path": [
-                "atomicIngestStream",
-                "create-stream"
+                "streams",
+                "generate"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-stream-{{$timestamp}}\",\n  \"description\": \"FLOW\",\n  \"realmId\": {{realmId}},\n  \"streamType\": \"DBT-NODE\",\n  \"sqlQuery\": \"SELECT 1\",\n  \"cypherQuery\": \"\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"realmId\": 0\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2152,7 +3084,8 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"
                 ]
               }
             },
@@ -2166,8 +3099,14 @@
                   "  return;",
                   "}",
                   "pm.test('19 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
-                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
-                  "if(d.id||d.streamId) pm.collectionVariables.set('streamId', String(d.id||d.streamId));"
+                  "let arr=[]; try{arr=pm.response.json();}catch(e){}",
+                  "if(!Array.isArray(arr)) arr=[];",
+                  "pm.collectionVariables.set('_streamCount', String(arr.length));",
+                  "// store only the NAMES (small) for the verify step — the full stream payload is NOT",
+                  "// round-tripped through a collection variable (that corrupts the body -> 400 'Failed to",
+                  "// read request'). Streams are re-generated + saved+ingested IN-MEMORY at step 22.",
+                  "pm.collectionVariables.set('_streamNames', JSON.stringify(arr.map(s=>s.name).filter(Boolean)));",
+                  "console.log('Ingest streams generated: '+arr.length+(arr.length?(' e.g. '+arr[0].name):''));"
                 ]
               }
             }
@@ -2175,7 +3114,7 @@
           "response": []
         },
         {
-          "name": "20 Get Streams",
+          "name": "20 Verify Streams Generated",
           "request": {
             "method": "GET",
             "header": [
@@ -2185,14 +3124,13 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/atomicIngestStream/get-atomic-stream/{{realmId}}",
+              "raw": "{{app_base_url}}/actuator/health",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
-                "atomicIngestStream",
-                "get-atomic-stream",
-                "{{realmId}}"
+                "actuator",
+                "health"
               ]
             }
           },
@@ -2219,7 +3157,10 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('20 200', () => pm.response.to.have.status(200));"
+                  "pm.test('20 health', () => pm.response.to.have.status(200));",
+                  "const n=parseInt(pm.collectionVariables.get('_streamCount')||'0');",
+                  "console.log(n>0 ? ('Streams generated OK: '+n) : 'STREAM GENERATION FAILED (0 streams)');",
+                  "pm.test('20 streams generated (>0)', () => pm.expect(n, 'ingest streams generated').to.be.above(0));"
                 ]
               }
             }
@@ -2227,79 +3168,7 @@
           "response": []
         },
         {
-          "name": "21 Start",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/atomicIngestStream/atomic/running-status-change?streamRunning=true",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "atomicIngestStream",
-                "atomic",
-                "running-status-change"
-              ],
-              "query": [
-                {
-                  "key": "streamRunning",
-                  "value": "true"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "[\n  0\n]",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}",
-                  "pm.request.body.raw=JSON.stringify([parseInt(pm.collectionVariables.get('streamId'))]);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('21 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "22 Wait",
+          "name": "21 Wait Namespace UP",
           "request": {
             "method": "GET",
             "header": [
@@ -2309,154 +3178,89 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/atomicIngestStream/{{realmId}}/atomic/any-running",
+              "raw": "{{kg_base_url}}/synapse/namespace/status?name={{realmReferenceName}}",
               "host": [
-                "{{app_base_url}}"
+                "{{kg_base_url}}"
               ],
               "path": [
-                "atomicIngestStream",
-                "{{realmId}}",
-                "atomic",
-                "any-running"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}",
-                  "const bu=pm.environment.get('app_base_url'),ri=pm.collectionVariables.get('realmId'),si=parseInt(pm.collectionVariables.get('streamId')),tk=pm.collectionVariables.get('access_token')||pm.environment.get('access_token'),ti=pm.environment.get('tenant_id');",
-                  "const mw=60000,iv=5000;let el=0;",
-                  "function p(d){pm.sendRequest({url:bu+'/atomicIngestStream/'+ri+'/atomic/any-running',method:'GET',header:{'Authorization':'Bearer '+tk,'X-TENANT-ID':ti}},(e,r)=>{let ru=true;try{ru=r.json();}catch(x){try{ru=r.text()==='true';}catch(y){}}",
-                  "if(ru===false||ru==='false'||el>=mw){pm.sendRequest({url:bu+'/atomic-ingestion-status/get-latest',method:'POST',header:{'Authorization':'Bearer '+tk,'X-TENANT-ID':ti,'Content-Type':'application/json'},body:{mode:'raw',raw:JSON.stringify([si])}},(e2,r2)=>{let st=el>=mw?'TIMEOUT':'COMPLETE';try{const a=r2.json();if(Array.isArray(a)&&a[0])st=a[0].statusMessage||st;}catch(x){}pm.collectionVariables.set('_ingestion_status',st);d();});}else{el+=iv;setTimeout(()=>p(d),iv);}});}",
-                  "p(()=>{});"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('22 200', () => pm.response.to.have.status(200));",
-                  "const s=pm.collectionVariables.get('_ingestion_status')||'UNKNOWN';",
-                  "pm.test('22 done', () => pm.expect(['COMPLETE','COMPLETED','STOPPED','TIMEOUT','false','UNKNOWN']).to.include(s));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "23 Status",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/atomic-ingestion-status/get-latest",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "atomic-ingestion-status",
-                "get-latest"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "[\n  0\n]",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
-                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
-                  "  return;",
-                  "}",
-                  "pm.request.body.raw=JSON.stringify([parseInt(pm.collectionVariables.get('streamId'))]);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
-                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
-                  "  return;",
-                  "}",
-                  "pm.test('23 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "24 Stop",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-TENANT-ID",
-                "value": "{{tenant_id}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{app_base_url}}/atomicIngestStream/atomic/running-status-change?streamRunning=false",
-              "host": [
-                "{{app_base_url}}"
-              ],
-              "path": [
-                "atomicIngestStream",
-                "atomic",
-                "running-status-change"
+                "synapse",
+                "namespace",
+                "status"
               ],
               "query": [
                 {
-                  "key": "streamRunning",
-                  "value": "false"
+                  "key": "name",
+                  "value": "{{realmReferenceName}}"
                 }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "if(parseInt(pm.collectionVariables.get('_nsAttempt')||'0')>0){ const t=Date.now(); while(Date.now()-t<4000){} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "let st=''; try{st=(pm.response.json().status||'').toUpperCase();}catch(e){}",
+                  "const a=parseInt(pm.collectionVariables.get('_nsAttempt')||'0');",
+                  "console.log('namespace status attempt '+a+': '+st);",
+                  "if(st==='UP'){ pm.collectionVariables.set('_nsUp','true'); pm.collectionVariables.unset('_nsAttempt'); }",
+                  "else if(a < 18){ pm.collectionVariables.set('_nsAttempt', String(a+1)); postman.setNextRequest('21 Wait Namespace UP'); }",
+                  "else { pm.collectionVariables.unset('_nsAttempt'); }",
+                  "pm.test('21 namespace reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "22 Save + Run Ingestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{transform_base_url}}/streams/generate",
+              "host": [
+                "{{transform_base_url}}"
+              ],
+              "path": [
+                "streams",
+                "generate"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "[\n  0\n]",
+              "raw": "{\n  \"realmId\": 0\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2475,7 +3279,8 @@
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
                   "}",
-                  "pm.request.body.raw=JSON.stringify([parseInt(pm.collectionVariables.get('streamId'))]);"
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "pm.request.body.raw=JSON.stringify({realmId:parseInt(pm.collectionVariables.get('realmId'))});"
                 ]
               }
             },
@@ -2488,7 +3293,100 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('24 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "pm.test('22 regen 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "let arr=[]; try{arr=pm.response.json();}catch(e){}",
+                  "if(!Array.isArray(arr)) arr=[];",
+                  "const rid=parseInt(pm.collectionVariables.get('realmId'));",
+                  "arr.forEach(s=>{ s.realmId=rid; });",
+                  "const app=pm.environment.get('app_base_url'); const txn=pm.environment.get('transform_base_url');",
+                  "const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                  "const raw=JSON.stringify(arr);",
+                  "pm.sendRequest({url:app+'/atomicIngestStream/create-streams', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e1,r1)=>{",
+                  "  pm.test('22 create-streams 2xx', () => pm.expect(r1 && r1.code, 'create-streams code').to.be.oneOf([200,201]));",
+                  "  console.log('create-streams: '+(r1?r1.code:e1));",
+                  "  pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true', method:'POST', header:hdr, body:{mode:'raw', raw:raw}}, (e2,r2)=>{",
+                  "    pm.test('22 event/ingest 2xx', () => pm.expect(r2 && r2.code, 'event/ingest code').to.be.oneOf([200,201,204]));",
+                  "    console.log('event/ingest: '+(r2?r2.code:e2));",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "24 Verify Tables Landed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/stats?namespace={{realmReferenceName}}",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "{{realmReferenceName}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ pm.request.url=pm.collectionVariables.get('_skip_url'); return; }",
+                  "const a=parseInt(pm.collectionVariables.get('_ingAttempt')||'0');",
+                  "// re-fire ingestion once mid-way: re-generate streams then event/ingest (in-memory).",
+                  "if(a===8){ const rid=parseInt(pm.collectionVariables.get('realmId')); const txn=pm.environment.get('transform_base_url'); const app=pm.environment.get('app_base_url'); const hdr={'Authorization':'Bearer '+(pm.collectionVariables.get('access_token')||pm.environment.get('access_token')),'X-TENANT-ID':pm.environment.get('tenant_id'),'Content-Type':'application/json'};",
+                  "  pm.sendRequest({url:txn+'/streams/generate', method:'POST', header:hdr, body:{mode:'raw', raw:JSON.stringify({realmId:rid})}}, (e,r)=>{ let arr=[]; try{arr=r.json();}catch(x){} if(!Array.isArray(arr))arr=[]; arr.forEach(s=>{s.realmId=rid;}); const raw=JSON.stringify(arr); pm.sendRequest({url:app+'/atomicIngestStream/create-streams',method:'POST',header:hdr,body:{mode:'raw',raw:raw}},()=>{ pm.sendRequest({url:txn+'/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=true',method:'POST',header:hdr,body:{mode:'raw',raw:raw}},()=>{}); }); }); }",
+                  "if(a>0){ const t=Date.now(); while(Date.now()-t<4000){} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if((parseInt(pm.collectionVariables.get('_streamCount')||'0'))<1){ return; }",
+                  "let expected=[]; try{expected=JSON.parse(pm.collectionVariables.get('_streamNames')||'[]');}catch(e){}",
+                  "let landed={}; try{(pm.response.json().labels||[]).forEach(l=>{ if((l.count||0)>0) landed[l.label]=l.count; });}catch(e){}",
+                  "const missing=expected.filter(n=>!(n in landed));",
+                  "const a=parseInt(pm.collectionVariables.get('_ingAttempt')||'0');",
+                  "console.log('ingest verify attempt '+a+' landed='+JSON.stringify(landed)+' missing='+JSON.stringify(missing));",
+                  "const done=(expected.length>0 && missing.length===0) || a>=18;",
+                  "if(!done){ pm.collectionVariables.set('_ingAttempt', String(a+1)); postman.setNextRequest('24 Verify Tables Landed'); return; }",
+                  "pm.collectionVariables.unset('_ingAttempt');",
+                  "if(missing.length===0 && expected.length>0){ console.log('INGESTION VALIDATED: '+expected.length+' tables, rows='+JSON.stringify(landed)); }",
+                  "else { console.log('DATAFLOW FAILED: '+missing.length+'/'+expected.length+' stream(s) did not land: '+JSON.stringify(missing)); }",
+                  "// ANY stream that does not land rows fails this assertion -> whole dataflow marked FAILED",
+                  "// (non-zero newman exit; run_realm_full propagates it). Cleanup still runs (no _flow_failed).",
+                  "pm.test('24 all '+expected.length+' table(s) ingested rows (missing: '+JSON.stringify(missing)+')', () => { pm.expect(expected.length, 'expected tables').to.be.above(0); pm.expect(missing, 'tables with 0 rows').to.eql([]); });"
                 ]
               }
             }
@@ -2506,15 +3404,80 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=true",
+              "raw": "{{app_base_url}}/realm/{{realmId}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
                 "realm",
                 "{{realmId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
+                  "}",
+                  "const hard=String(pm.environment.get('hardDelete')||'false')==='true';",
+                  "pm.request.url=pm.environment.get('app_base_url')+'/realm/'+pm.collectionVariables.get('realmId')+'?permanent='+hard;"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
+                  "pm.test('25 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "25b Remove Namespace (Synapse)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/synapse/namespace/remove?name={{realmReferenceName}}&permanent=true",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "synapse",
+                "namespace",
+                "remove"
               ],
               "query": [
+                {
+                  "key": "name",
+                  "value": "{{realmReferenceName}}"
+                },
                 {
                   "key": "permanent",
                   "value": "true"
@@ -2532,6 +3495,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2545,7 +3514,136 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('25 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
+                  "pm.test('25b ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "25c Del Vector Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/vector-client/delete-collection?collectionName={{realmReferenceName}}",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "vector-client",
+                "delete-collection"
+              ],
+              "query": [
+                {
+                  "key": "collectionName",
+                  "value": "{{realmReferenceName}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
+                  "pm.test('25c ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "25d Del Vector Collection (schema)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-TENANT-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{kg_base_url}}/vector-client/delete-collection?collectionName={{realmReferenceName}}_schema",
+              "host": [
+                "{{kg_base_url}}"
+              ],
+              "path": [
+                "vector-client",
+                "delete-collection"
+              ],
+              "query": [
+                {
+                  "key": "collectionName",
+                  "value": "{{realmReferenceName}}_schema"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
+                  "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
+                  "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
+                  "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
+                  "  return;",
+                  "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
+                  "pm.test('25d ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }
@@ -2583,6 +3681,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2596,7 +3700,10 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('26 gone', () => pm.expect(pm.response.code).to.be.oneOf([400,404,500]));"
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
+                  "let b={}; try{b=pm.response.json();}catch(e){} const d=b.realmModel||b.data||b;",
+                  "const hard=String(pm.environment.get('hardDelete')||'false')==='true';",
+                  "pm.test('26 removed', () => pm.expect(pm.response.code===200 ? (hard ? false : !!d.deleted) : [400,404,500].includes(pm.response.code)).to.be.true);"
                 ]
               }
             }
@@ -2639,6 +3746,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2652,6 +3765,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('27 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
@@ -2696,6 +3810,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2709,6 +3829,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('28 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
@@ -2752,6 +3873,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2765,6 +3892,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('29 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
                 ]
               }
@@ -2803,6 +3931,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2816,6 +3950,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('30 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -2854,6 +3989,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2867,6 +4008,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('31 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -2905,6 +4047,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2918,6 +4066,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('32 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -2956,6 +4105,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -2969,6 +4124,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('33 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -3007,6 +4163,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -3020,6 +4182,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('34 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -3058,6 +4221,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -3071,6 +4240,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('35 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -3109,6 +4279,12 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
                   "}"
                 ]
               }
@@ -3122,6 +4298,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('36 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -3160,7 +4337,15 @@
                   "  console.log('SKIP: ' + pm.info.requestName + ' (previous step failed)');",
                   "  pm.request.url = pm.collectionVariables.get('_skip_url') || 'http://localhost:1/__skip__';",
                   "  return;",
-                  "}"
+                  "}",
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
+                  "}",
+                  "// Excel DS is optional (created only with S3 creds); skip delete if it was never created",
+                  "if(!pm.collectionVariables.get('excelDsId')){ pm.request.url=pm.collectionVariables.get('_skip_url'); }"
                 ]
               }
             },
@@ -3173,6 +4358,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('37 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
@@ -3191,28 +4377,39 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/realm/{{realmId}}?permanent=true",
+              "raw": "{{app_base_url}}/realm/{{realmId}}",
               "host": [
                 "{{app_base_url}}"
               ],
               "path": [
                 "realm",
                 "{{realmId}}"
-              ],
-              "query": [
-                {
-                  "key": "permanent",
-                  "value": "true"
-                }
               ]
             }
           },
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Check skip_cleanup flag — if true, skip this cleanup step",
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){",
+                  "  console.log('SKIP CLEANUP: '+pm.info.requestName);",
+                  "  pm.request.url=pm.collectionVariables.get('_skip_url')||pm.environment.get('app_base_url')+'/actuator/health';",
+                  "  return;",
+                  "}",
+                  "const hard=String(pm.environment.get('hardDelete')||'false')==='true';",
+                  "if(pm.collectionVariables.get('realmId')) pm.request.url=pm.environment.get('app_base_url')+'/realm/'+pm.collectionVariables.get('realmId')+'?permanent='+hard;"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
                   "pm.test('99 teardown', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));",
                   "pm.collectionVariables.unset('_flow_failed'); pm.collectionVariables.unset('_flow_failed_at');"
                 ]

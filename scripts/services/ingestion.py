@@ -18,7 +18,7 @@ def generate():
              "if(id) pm.collectionVariables.set('streamId', String(id));",
              "console.log('Stream created: id='+id);"],
             base=base,
-            body={"realmId": "{{realmId}}", "streamName": "pm-flow-stream-{{$timestamp}}"}),
+            body={"realmId": "{{realmId}}", "streamName": "pm_flow_stream_{{$timestamp}}"}),
 
         req("02 Get Streams by Realm", "GET", "/atomicIngestStream/get-atomic-stream/{{realmId}}",
             ["pm.test('02 Get streams 200', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));",

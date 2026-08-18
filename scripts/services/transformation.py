@@ -60,7 +60,7 @@ def generate():
              "pm.test('04 has data', () => pm.expect(JSON.stringify(b).length).to.be.above(2));"],
             base=base,
             body={"dataSourceModel": conn_body,
-                  "tableName": "{{firstTableName}}", "name": "pm-flow-sample"}),
+                  "tableName": "{{firstTableName}}", "name": "pm_flow_sample"}),
 
         req("05 Upload Sample", "POST", "/test-connection/upload-sample",
             ["pm.test('05 Upload sample 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
@@ -90,7 +90,7 @@ def generate():
 
         # ═══ S3 Upload (7 endpoints) — need custom content type ═══
 
-        req("08 Get Excel Header", "POST", "/s3-upload/getExcelHeader?datasourceName=pm-flow-test",
+        req("08 Get Excel Header", "POST", "/s3-upload/getExcelHeader?datasourceName=pm_flow_test",
             ["pm.test('08 Excel header 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
             body={"bucket": "{{s3_bucket}}", "key": "{{s3_excel_key}}",
@@ -98,19 +98,19 @@ def generate():
                   "secret": "{{s3_secret_key}}"},
             extra_headers=[{"key": "Content-Type", "value": "application/vnd.quipu.file-upload+json;version=1.0.0"}]),
 
-        req("09 Excel from URL", "POST", "/s3-upload/getExcelHeaderFromUrl?datasourceName=pm-flow-test",
+        req("09 Excel from URL", "POST", "/s3-upload/getExcelHeaderFromUrl?datasourceName=pm_flow_test",
             ["pm.test('09 Excel URL 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
             body={"url": "{{s3_excel_url}}"},
             extra_headers=[{"key": "Content-Type", "value": "application/vnd.quipu.file-upload+json;version=1.0.0"}]),
 
-        req("10 CSV Headers from URL", "POST", "/s3-upload/getCsvHeadersFromUrl?datasourceName=pm-flow-test",
+        req("10 CSV Headers from URL", "POST", "/s3-upload/getCsvHeadersFromUrl?datasourceName=pm_flow_test",
             ["pm.test('10 CSV URL 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
             body={"url": "{{s3_csv_url}}"},
             extra_headers=[{"key": "Content-Type", "value": "application/vnd.quipu.file-upload+json;version=1.0.0"}]),
 
-        req("11 Get CSV Header", "POST", "/s3-upload/getCsvHeader?datasourceName=pm-flow-test",
+        req("11 Get CSV Header", "POST", "/s3-upload/getCsvHeader?datasourceName=pm_flow_test",
             ["pm.test('11 CSV header 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
             body={"bucket": "{{s3_bucket}}", "key": "{{s3_csv_key}}",
@@ -118,7 +118,7 @@ def generate():
                   "secret": "{{s3_secret_key}}"},
             extra_headers=[{"key": "Content-Type", "value": "application/vnd.quipu.file-upload+json;version=1.0.0"}]),
 
-        req("12 Get PDF", "POST", "/s3-upload/getPdf?datasourceName=pm-flow-test",
+        req("12 Get PDF", "POST", "/s3-upload/getPdf?datasourceName=pm_flow_test",
             ["pm.test('12 Get PDF 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
             body={"bucket": "{{s3_bucket}}", "key": "{{s3_pdf_key}}",
@@ -126,7 +126,7 @@ def generate():
                   "secret": "{{s3_secret_key}}"},
             extra_headers=[{"key": "Content-Type", "value": "application/vnd.quipu.file-upload+json;version=1.0.0"}]),
 
-        req("13 PDF from URL", "POST", "/s3-upload/getPdfFromUrl?datasourceName=pm-flow-test",
+        req("13 PDF from URL", "POST", "/s3-upload/getPdfFromUrl?datasourceName=pm_flow_test",
             ["pm.test('13 PDF URL 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
             body={"url": "{{s3_pdf_url}}"},
@@ -165,7 +165,7 @@ def generate():
         req("19 Event Ingest", "POST", "/event/ingest?truncate=false&seedSequenceFromJournal=false&forceIngest=false",
             ["pm.test('19 Ingest 200|204|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
             base=base,
-            body=[{"name": "pm-flow-stream", "realmId": "{{realmId}}",
+            body=[{"name": "pm_flow_stream", "realmId": "{{realmId}}",
                    "streamType": "DBT-NODE", "sqlQuery": "SELECT 1"}]),
 
         req("20 Document Extract", "POST", "/document/extract",

@@ -181,7 +181,7 @@
                   "",
                   "// Set default updateDescription if not provided",
                   "if (!pm.collectionVariables.get('updateDescription')) {",
-                  "  pm.collectionVariables.set('updateDescription', 'pm-flow-updated-' + Date.now());",
+                  "  pm.collectionVariables.set('updateDescription', 'pm_flow_updated_' + Date.now());",
                   "}",
                   "",
                   "console.log('Setup: state cleared for env=' + pm.environment.get('env_name'));",
@@ -251,7 +251,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-ds-{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "raw": "{\n  \"name\": \"pm_flow_ds_{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -320,7 +320,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-ds-{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
+              "raw": "{\n  \"name\": \"pm_flow_ds_{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"deleted\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -778,7 +778,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-ds-{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
+              "raw": "{\n  \"name\": \"pm_flow_ds_{{$timestamp}}\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -848,7 +848,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"pm-flow-sample\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"tableName\": \"{{firstTableName}}\"\n}",
+              "raw": "{\n  \"name\": \"pm_flow_sample\",\n  \"driverType\": \"{{driverType}}\",\n  \"dbHostName\": \"{{dbHost}}\",\n  \"dbPort\": {{dbPort}},\n  \"databaseName\": \"{{dbName}}\",\n  \"dbUserName\": \"{{dbUser}}\",\n  \"dbPassword\": \"{{dbPassword}}\",\n  \"aesRandomIV\": \"{{aesRandomIV}}\",\n  \"dbSchema\": \"{{dbSchema}}\",\n  \"driverClassName\": \"{{driverClassName}}\",\n  \"tableName\": \"{{firstTableName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1067,7 +1067,7 @@
                   "}",
                   "pm.test('08 Update returns 200', () => pm.response.to.have.status(200));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
-                  "const desc = pm.collectionVariables.get('updateDescription') || 'pm-flow-updated';",
+                  "const desc = pm.collectionVariables.get('updateDescription') || 'pm_flow_updated';",
                   "pm.test('08 update reflected', () => pm.expect(JSON.stringify(b)).to.include(desc));"
                 ]
               }
@@ -1129,7 +1129,7 @@
                   "pm.test('09 Get(verify update) 200', () => pm.response.to.have.status(200));",
                   "let b={}; try{b=pm.response.json();}catch(e){}",
                   "const d=b.dataSourceModel||b.data||b;",
-                  "const desc = pm.collectionVariables.get('updateDescription') || 'pm-flow-updated';",
+                  "const desc = pm.collectionVariables.get('updateDescription') || 'pm_flow_updated';",
                   "pm.test('09 description updated', () => pm.expect(String(d.description||'')).to.eql(desc));"
                 ]
               }
