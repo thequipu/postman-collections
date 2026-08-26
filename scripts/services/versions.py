@@ -43,22 +43,11 @@ def generate():
         req("04 Get Version LB", "GET", "/versions/lb?versionId={{versionId}}",
             ["pm.test('04 200', () => pm.response.to.have.status(200));"], base=base),
 
-        req("05 Update Version", "PUT", "/versions/update",
-            ["pm.test('05 200', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"],
-            base=base, body={"id": 0},
-            prerequest=[
-                "const vid=parseInt(pm.collectionVariables.get('versionId'));",
-                "const dsId=parseInt(pm.collectionVariables.get('dsId'));",
-                "pm.request.body.raw=JSON.stringify({id:vid,versionId:vid,description:'Updated by FLOW',dataSourceIds:dsId?[dsId]:[],defaultVersion:true,latest:true,versionLocked:false,deleted:false});",
-            ]),
+        # NOTE: PUT /versions/update was removed from the applicationService API (develop) — the
+        # version is now updated only via the schema-graph versionsModel, so there is no standalone
+        # "update version" endpoint to test here. (Former steps 05 Update / 06 Verify Update dropped.)
 
-        req("06 Verify Update", "GET", "/versions?versionId={{versionId}}",
-            ["pm.test('06 200', () => pm.response.to.have.status(200));",
-             "let b={}; try{b=pm.response.json();}catch(e){} const d=b.data||b;",
-             "pm.test('06 has desc', () => pm.expect(String(d.description||'').length).to.be.above(0));"],
-            base=base),
-
-        req("07 Unlock Version", "PUT", "/versions/veriosn-unlock",
+        req("07 Unlock Version", "PUT", "/versions/veriosn-unlock?versionId={{versionId}}",
             ["pm.test('07 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400]));"],
             base=base, body={"id": 0},
             prerequest=["pm.request.body.raw=JSON.stringify({id:parseInt(pm.collectionVariables.get('versionId'))});"]),
@@ -67,7 +56,7 @@ def generate():
             ["pm.test('08 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
 
         # Cleanup
-        req("09 Del Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
+        req("09 Del Graph", "DELETE", "/schema-graph?schemaId={{schemaId}}",
             ["pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
         req("10 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
             ["pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),

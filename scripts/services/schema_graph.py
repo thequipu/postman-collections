@@ -70,7 +70,7 @@ def generate():
                 "pm.request.body.raw=JSON.stringify({sourceVersionUri:p+'Version#v1',targetVersionName:'v2-copy-'+Date.now()});",
             ]),
 
-        req("07 Delete Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
+        req("07 Delete Graph", "DELETE", "/schema-graph?schemaId={{schemaId}}",
             ["pm.test('07 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
 
         # Cleanup
