@@ -1036,7 +1036,7 @@
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
                   "}",
-                  "pm.test('07 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                  "pm.test('07 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }

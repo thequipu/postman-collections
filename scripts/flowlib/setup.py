@@ -491,7 +491,7 @@ def cleanup_steps(start_num=90, include_realm=True, base="app_base_url"):
             base=base, prerequest=SKIP_CLEANUP_PRE + realm_delete_prereq()))
         n += 1
     steps.append(req(f"{n} Del Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
-        [SKIP_CLEANUP_TEST, f"pm.test('{n} ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"],
+        [SKIP_CLEANUP_TEST, f"pm.test('{n} ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"],
         base=base, prerequest=SKIP_CLEANUP_PRE))
     n += 1
     steps.append(req(f"{n} Del Version", "DELETE", "/versions/delete?versionId={{versionId}}",

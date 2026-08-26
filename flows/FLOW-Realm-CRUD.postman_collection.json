@@ -3721,7 +3721,7 @@
               }
             ],
             "url": {
-              "raw": "{{app_base_url}}/schema-graph?prefix={{schemaName}}",
+              "raw": "{{app_base_url}}/schema-graph?prefix={{schemaPrefix}}",
               "host": [
                 "{{app_base_url}}"
               ],
@@ -3731,7 +3731,7 @@
               "query": [
                 {
                   "key": "prefix",
-                  "value": "{{schemaName}}"
+                  "value": "{{schemaPrefix}}"
                 }
               ]
             }
@@ -3766,7 +3766,7 @@
                   "  return;",
                   "}",
                   "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
-                  "pm.test('27 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('27 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }

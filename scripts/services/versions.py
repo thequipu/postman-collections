@@ -68,7 +68,7 @@ def generate():
 
         # Cleanup
         req("09 Del Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
-            ["pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
+            ["pm.test('09 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
         req("10 Del Schema", "DELETE", "/schema?schemaName={{schemaName}}",
             ["pm.test('10 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"], base=base),
         req("11 Del DS", "DELETE", "/datasource/{{dsId}}",

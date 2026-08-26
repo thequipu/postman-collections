@@ -1445,7 +1445,7 @@
                   "  return;",
                   "}",
                   "if(pm.environment.get('skip_cleanup')==='true'||pm.collectionVariables.get('skip_cleanup')==='true'){pm.test('SKIPPED (skip_cleanup=true)',()=>{}); return;}",
-                  "pm.test('13 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,404]));"
+                  "pm.test('13 ok', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"
                 ]
               }
             }

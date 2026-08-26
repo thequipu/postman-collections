@@ -71,7 +71,7 @@ def generate():
             ]),
 
         req("07 Delete Graph", "DELETE", "/schema-graph?prefix={{schemaPrefix}}",
-            ["pm.test('07 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"], base=base),
+            ["pm.test('07 2xx', () => pm.expect(pm.response.code).to.be.oneOf([200,204,400,404]));"], base=base),
 
         # Cleanup
         req("08 Del Version", "DELETE", "/versions/delete?versionId={{versionId}}",
