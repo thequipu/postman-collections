@@ -180,7 +180,12 @@ def global_capture_test():
         "  fails.push({step:pm.info.requestName, code:code, message:msg});",
         "  pm.collectionVariables.set('_api_failures', JSON.stringify(fails));",
         "  // 5xx is a real server failure — register a failing assertion so it can't pass silently.",
-        "  if(code>=500){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
+        "  // EXCEPT endpoints whose 5xx is a known tenant/infra-config gap (surfaced by the step's own",
+        "  // assertion instead), so one backend gap doesn't cascade into dozens of identical failures:",
+        "  //   synapse namespace status/stats -> 500 when the tenant has no QuipuSynapse URL configured",
+        "  //   test-connection/sample-records  -> 500 when called without a persisted datasource id",
+        "  const soft5xx = u.indexOf('/synapse/namespace/status')>=0 || u.indexOf('/synapse/namespace/stats')>=0 || u.indexOf('/test-connection/sample-records')>=0;",
+        "  if(code>=500 && !soft5xx){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
         "})();",
     ]
 

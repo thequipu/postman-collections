@@ -14,6 +14,34 @@ Auth (Keycloak) is read from env vars CLIENT_SECRET / TEST_USERNAME / TEST_PASSW
 import argparse, json, os, shutil, ssl, subprocess, sys, tempfile, time
 import urllib.request, urllib.parse, urllib.error
 
+
+def wait_for_health(env_file, max_seconds=300, interval=10):
+    """Poll applicationService /actuator/health until it returns 200, up to max_seconds.
+    The backend can flap (service-discovery components drop -> aggregate health 500), which
+    otherwise aborts the whole run at 00 Setup. Returns True once healthy, False on timeout."""
+    ssl._create_default_https_context = ssl._create_unverified_context
+    app = env_values(env_file).get("app_base_url")
+    if not app:
+        return True
+    url = app + "/actuator/health"
+    start = time.time()
+    last = None
+    while time.time() - start < max_seconds:
+        try:
+            code = urllib.request.urlopen(url, timeout=5).status
+        except urllib.error.HTTPError as e:
+            code = e.code
+        except Exception:
+            code = "unreachable"
+        if code == 200:
+            print(f"[health] applicationService UP (waited {int(time.time()-start)}s)")
+            return True
+        if code != last:
+            print(f"[health] applicationService {code} — waiting up to {max_seconds}s...")
+            last = code
+        time.sleep(interval)
+    return False
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CFG = os.path.join(ROOT, "config", "db-configs")
 
@@ -101,7 +129,14 @@ def main():
                     help="permanent realm delete (needs memory_space migration V42-V44 applied)")
     ap.add_argument("--skip-preflight", action="store_true",
                     help="skip the save-schema-version health check and run anyway")
+    ap.add_argument("--health-wait", type=int, default=300,
+                    help="seconds to wait for applicationService health before running (default 300 = 5 min; 0 to skip)")
     args = ap.parse_args()
+
+    # Wait for the (flaky) applicationService to be healthy before starting — otherwise the run
+    # aborts at 00 Setup when the backend is momentarily 500.
+    if args.health_wait > 0 and not wait_for_health(args.env, args.health_wait):
+        sys.exit(f"[health] applicationService not healthy after {args.health_wait}s — aborting.")
 
     # DB creds -> globals (resolved by {{prefix_dbHost}} templates)
     gvals = []
