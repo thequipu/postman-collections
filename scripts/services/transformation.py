@@ -113,7 +113,7 @@ def generate():
         req("11 Get CSV Header", "POST", "/s3-upload/getCsvHeader?datasourceName=pm_flow_test",
             ["pm.test('11 CSV header 200|400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"],
             base=base,
-            body={"bucket": "{{s3_bucket}}", "key": "{{s3_csv_key}}",
+            body={"bucket": "{{s3_bucket}}", "key": "{{s3_csv_file}}",
                   "region": "{{s3_region}}", "accessKey": "{{s3_access_key}}",
                   "secret": "{{s3_secret_key}}"},
             extra_headers=[{"key": "Content-Type", "value": "application/vnd.quipu.file-upload+json;version=1.0.0"}]),

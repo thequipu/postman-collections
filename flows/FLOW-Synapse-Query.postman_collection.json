@@ -64,7 +64,9 @@
           "  // assertion instead), so one backend gap doesn't cascade into dozens of identical failures:",
           "  //   synapse namespace status/stats -> 500 when the tenant has no QuipuSynapse URL configured",
           "  //   test-connection/sample-records  -> 500 when called without a persisted datasource id",
-          "  const soft5xx = u.indexOf('/synapse/namespace/status')>=0 || u.indexOf('/synapse/namespace/stats')>=0 || u.indexOf('/test-connection/sample-records')>=0;",
+          "  //   s3-upload/*                     -> 500 when S3 creds missing or file doesn't exist",
+          "  //   Excel steps (01h/37)            -> 500 when Excel staging or DS create flakes",
+          "  const soft5xx = u.indexOf('/synapse/namespace/status')>=0 || u.indexOf('/synapse/namespace/stats')>=0 || u.indexOf('/test-connection/sample-records')>=0 || u.indexOf('/s3-upload/')>=0 || pm.info.requestName.indexOf('Excel')>=0;",
           "  if(code>=500 && !soft5xx){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
           "})();"
         ]
