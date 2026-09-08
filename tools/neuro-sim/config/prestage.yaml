@@ -1,0 +1,73 @@
+# Neuro Sim — Prestage environment
+environment: prestage
+
+api:
+  base_url: https://api-prestage-1-prestage.thequipu.in
+  neuro_path: /quipuNeuro
+  app_service_path: /applicationService
+
+auth:
+  token_url: https://ui-login-prestage-1-prestage.thequipu.in/realms/quipuprestage/protocol/openid-connect/token
+  client_id: quipuprestage-client
+  client_secret: USI8qfn6pkbVlRqqBppelTjd0Dlljxss
+  admin_username: karthik
+  admin_password: karthik12
+  sim_user_password: "SimTest@123"
+
+tenant: quipuprestage
+fabric: memoryquipuprestage
+
+# User simulation settings
+simulation:
+  # Space name prefix — each user gets {prefix}-{user_index}
+  space_prefix: neurosim
+  # Data items per user (from the data pool)
+  data_items_per_user: 20
+  # Token refresh buffer (seconds before expiry to refresh)
+  token_refresh_buffer: 20
+  # Token lifetime assumed (seconds) — Keycloak default is 300
+  token_lifetime: 300
+
+# Data pool settings
+data_pool:
+  cache_dir: ./cache
+  # Sources to enable (disable any to skip)
+  huggingface: true
+  wikipedia: true
+  rss: true
+  # Items to pull per source
+  huggingface_items: 500
+  wikipedia_items: 200
+  rss_items: 200
+
+# Wave spawn shape (users arriving in waves)
+# Each entry: [users_to_add, duration_seconds]
+waves:
+  - [5, 30]      # 5 users over 30 seconds
+  - [10, 30]     # then 10 more over 30 seconds
+  - [15, 30]     # then 15 more over 30 seconds
+  - [20, 60]     # then 20 more over 60 seconds
+
+# Operation weights (must match @task weights in neuro_sim.py)
+# These are informational — actual weights are in code
+weights:
+  ingest: 30
+  recall: 25
+  assert_fact: 10
+  list_facts: 5
+  list_entities: 5
+  pin_fact: 3
+  invalidate_fact: 3
+  unpin_fact: 2
+  delete_fact: 2
+  attach_namespace: 2
+  detach_namespace: 1
+
+# Notifications (optional)
+notifications:
+  # Slack webhook URL for failure alerts
+  slack_webhook: ""
+  # Console alerts on failure
+  console_alerts: true
+  # Failure threshold before alerting (percentage)
+  failure_threshold_pct: 5

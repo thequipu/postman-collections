@@ -1,0 +1,72 @@
+# Neuro Sim — 5-user test on prestage
+# Each user gets a REAL Keycloak account + 4 permissions.
+# Admin creates space/users/permissions, users do all ops with own tokens.
+#
+# Usage:
+#   NEURO_SIM_CONFIG=config/test-5users.yaml locust -f neuro_sim.py --headless --html reports/test5.html
+environment: prestage
+
+api:
+  base_url: https://api-prestage-1-prestage.thequipu.in
+  neuro_path: /quipuNeuro
+  app_service_path: /applicationService
+
+auth:
+  token_url: https://ui-login-prestage-1-prestage.thequipu.in/realms/quipuprestage/protocol/openid-connect/token
+  client_id: quipuprestage-client
+  client_secret: USI8qfn6pkbVlRqqBppelTjd0Dlljxss
+  # Admin credentials (creates users + grants permissions)
+  # App admin (creates space, grants permissions via applicationService)
+  admin_username: karthik
+  admin_password: karthik12
+  # Keycloak admin (creates/deletes users — master realm, admin-cli)
+  kc_admin_user: admin
+  kc_admin_password: "tCyWDkvP+lnvr2S3SLCY6==I"
+  # Password for all simulated users
+  sim_user_password: "SimTest@123"
+
+tenant: quipuprestage
+fabric: memoryquipuprestage
+
+# 4 permissions granted per user (prestage entity IDs)
+permissions:
+  granted_by: quipuprestage
+  grants:
+    - { entityId: 59,  entityType: "MEMORY_SPACE",    permission_id: 3 }  # MANAGE
+    - { entityId: 102, entityType: "DATA_FABRIC",     permission_id: 1 }  # VIEW
+    - { entityId: 172, entityType: "NAMESPACE",        permission_id: 3 }  # MANAGE
+    - { entityId: 102, entityType: "KNOWLEDGE_GRAPH",  permission_id: 3 }  # MANAGE
+
+simulation:
+  user_prefix: nsim-karthik
+  space_prefix: neurosim-test
+  data_items_per_user: 0
+  token_refresh_buffer: 20
+  token_lifetime: 300
+  hold_after_waves: 180
+  cleanup_users: false
+  max_deletes: 1
+  existing_space: neurosim-test-nsim-karthik-001
+  existing_namespace: neurosim-test-nsim-karthik-001-self
+  # All operations enabled (empty list = all)
+  enabled_ops: []
+
+data_pool:
+  cache_dir: ./cache
+  # ALL sources enabled — LMEB, MemoryAgentBench, AG News, SQuAD, SciQ + Wikipedia + RSS
+  huggingface: true
+  wikipedia: true
+  rss: true
+  huggingface_items: 0
+  wikipedia_items: 200
+  rss_items: 200
+  min_items_per_user: 100
+  max_items_per_user: 500
+
+waves:
+  - [5, 5]
+
+notifications:
+  slack_webhook: ""
+  console_alerts: true
+  failure_threshold_pct: 10

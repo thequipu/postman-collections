@@ -1,0 +1,712 @@
+"""
+Neuro Memory — Multi-User Simulation Tool
+==========================================
+Locustfile that simulates N users (5 → 10,000) performing weighted random
+operations against Quipu Neuro Memory APIs with real data from the internet.
+
+Usage:
+  # 5 users, headless, 2 minutes
+  locust -f neuro_sim.py --headless -u 5 -r 2 -t 2m --html reports/sim.html
+
+  # Web UI (browse http://localhost:8089)
+  locust -f neuro_sim.py
+
+  # With custom config
+  NEURO_SIM_CONFIG=config/onprem.yaml locust -f neuro_sim.py --headless -u 10 -r 2 -t 5m
+
+  # Use wave spawn shape
+  locust -f neuro_sim.py --headless -t 5m
+
+Environment variables:
+  NEURO_SIM_CONFIG  — path to YAML config (default: config/prestage.yaml)
+"""
+
+import logging
+import os
+import random
+import sys
+import threading
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+import yaml
+from locust import HttpUser, between, events, task
+
+# Ensure project root is on sys.path so lib/ and data_sources/ resolve
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from lib.app_service_client import AppServiceClient
+from lib.audit import UserAudit
+from lib.data_pool import DataPool
+from lib.keycloak import KeycloakClient
+from lib.neuro_client import NeuroClient
+from lib.user_state import UserState
+from wave_shape import WaveShape  # noqa: F401 — Locust discovers it automatically
+
+# ---- Logging ----
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+)
+logger = logging.getLogger("neuro_sim")
+
+# Suppress noisy urllib3 warnings for self-signed certs
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+# ============================================================================
+# Configuration
+# ============================================================================
+
+def load_config() -> dict:
+    config_path = os.environ.get("NEURO_SIM_CONFIG", "config/prestage.yaml")
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+
+CONFIG = load_config()
+REPORT_DIR = f"reports/sim-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+Path(REPORT_DIR).mkdir(parents=True, exist_ok=True)
+
+# Which operations are enabled (empty list = all enabled)
+_enabled_ops_raw = CONFIG.get("simulation", {}).get("enabled_ops", [])
+ENABLED_OPS = set(_enabled_ops_raw) if _enabled_ops_raw else set()
+
+
+# ============================================================================
+# Shared resources (class-level, initialized once)
+# ============================================================================
+
+_data_pool: DataPool | None = None
+_keycloak: KeycloakClient | None = None
+_neuro_tpl: dict | None = None  # Template config for NeuroClient
+_app_svc_tpl: dict | None = None
+_user_counter = 0
+_notification_state = {"total_failures": 0, "total_requests": 0, "alerted": False}
+_delete_count = 0  # Global delete counter — controlled by simulation.max_deletes
+_delete_lock = threading.Lock()
+
+
+def _get_data_pool() -> DataPool:
+    global _data_pool
+    if _data_pool is None:
+        dp_cfg = CONFIG.get("data_pool", {})
+        _data_pool = DataPool(
+            cache_dir=dp_cfg.get("cache_dir", "./cache"),
+            enable_huggingface=dp_cfg.get("huggingface", True),
+            enable_wikipedia=dp_cfg.get("wikipedia", True),
+            enable_rss=dp_cfg.get("rss", True),
+            hf_items=dp_cfg.get("huggingface_items", 0),
+            wiki_items=dp_cfg.get("wikipedia_items", 200),
+            rss_items=dp_cfg.get("rss_items", 200),
+            min_items_per_user=dp_cfg.get("min_items_per_user", 100),
+            max_items_per_user=dp_cfg.get("max_items_per_user", 500),
+        )
+        logger.info("Downloading data pool (first run may take a few minutes)...")
+        _data_pool.setup()
+        logger.info("Data pool ready: %d items", len(_data_pool))
+    return _data_pool
+
+
+def _get_keycloak() -> KeycloakClient:
+    global _keycloak
+    if _keycloak is None:
+        auth = CONFIG["auth"]
+        sim = CONFIG.get("simulation", {})
+        _keycloak = KeycloakClient(
+            token_url=auth["token_url"],
+            client_id=auth["client_id"],
+            client_secret=auth["client_secret"],
+            admin_username=auth["admin_username"],
+            admin_password=auth["admin_password"],
+            kc_admin_user=auth.get("kc_admin_user", ""),
+            kc_admin_password=auth.get("kc_admin_password", ""),
+            token_lifetime=sim.get("token_lifetime", 300),
+            refresh_buffer=sim.get("token_refresh_buffer", 20),
+        )
+    return _keycloak
+
+
+# ============================================================================
+# Notifications
+# ============================================================================
+
+def _notify_failure(user_id: str, operation: str, status: int, detail: str):
+    """Send failure notification if threshold exceeded."""
+    state = _notification_state
+    state["total_failures"] += 1
+    state["total_requests"] += 1
+
+    notif = CONFIG.get("notifications", {})
+    threshold = notif.get("failure_threshold_pct", 5)
+    if state["total_requests"] < 20:
+        return  # Wait for enough samples
+
+    pct = (state["total_failures"] / state["total_requests"]) * 100
+    if pct > threshold and not state["alerted"]:
+        msg = (f"NEURO-SIM ALERT: failure rate {pct:.1f}% > {threshold}% "
+               f"({state['total_failures']}/{state['total_requests']})")
+        logger.error(msg)
+
+        if notif.get("console_alerts", True):
+            print(f"\033[1;31m  !! {msg}\033[0m", file=sys.stderr)
+
+        webhook = notif.get("slack_webhook", "")
+        if webhook:
+            try:
+                requests.post(webhook, json={"text": msg}, timeout=5)
+            except Exception:
+                pass
+
+        state["alerted"] = True
+
+
+def _count_success():
+    _notification_state["total_requests"] += 1
+
+
+# ============================================================================
+# Locust User — MemoryUser
+# ============================================================================
+
+class MemoryUser(HttpUser):
+    """Each Locust user simulates an independent Neuro memory user.
+
+    Operations are weighted by @task(weight) — Locust picks randomly
+    according to these weights each iteration.
+    """
+
+    # Random 0.5-2s pause between operations
+    wait_time = between(0.5, 2.0)
+
+    # Override host from config (Locust requires it)
+    host = CONFIG["api"]["base_url"]
+
+    def _op_enabled(self, name: str) -> bool:
+        """Check if an operation is enabled. Empty ENABLED_OPS = all enabled."""
+        return not ENABLED_OPS or name in ENABLED_OPS
+
+    def on_start(self):
+        """Create KC user, grant permissions, get per-user token, start operations."""
+        global _user_counter
+        _user_counter += 1
+        my_index = _user_counter
+
+        sim = CONFIG.get("simulation", {})
+        auth = CONFIG["auth"]
+        prefix = sim.get("user_prefix", "simuser")
+        self._sim_password = auth.get("sim_user_password", "SimTest@123")
+
+        self.state = UserState(
+            user_id=f"{prefix}-{my_index:03d}",
+            user_index=my_index,
+            space_prefix=sim.get("space_prefix", "neurosim"),
+            existing_space=sim.get("existing_space", ""),
+            existing_namespace=sim.get("existing_namespace", ""),
+        )
+
+        # Assign unique data slice (0 = random size per user)
+        pool = _get_data_pool()
+        self.state.data_items = pool.get_items_for_user(
+            my_index, sim.get("data_items_per_user", 0)
+        )
+        self.pool = pool
+
+        # Shared admin clients
+        self.kc = _get_keycloak()
+        api = CONFIG["api"]
+        self.neuro = NeuroClient(
+            api["base_url"], api["neuro_path"],
+            CONFIG["tenant"], CONFIG["fabric"],
+            extra_headers=CONFIG.get("extra_headers"),
+        )
+        self.app_svc = AppServiceClient(api["base_url"], api["app_service_path"])
+
+        # ---- Step 1: Create Keycloak user (admin) ----
+        self._kc_user_id = self.kc.create_user(self.state.user_id, self._sim_password)
+        logger.info("KC user created: %s (id=%s)", self.state.user_id, self._kc_user_id)
+
+        # ---- Step 2: Grant 4 permissions (admin) ----
+        perm_cfg = CONFIG.get("permissions", {})
+        grants = perm_cfg.get("grants", [])
+        granted_by = perm_cfg.get("granted_by", CONFIG["tenant"])
+        if grants:
+            app_token = self.kc.get_app_admin_token()
+            status, body, lat = self.app_svc.grant_user_permissions(
+                app_token, self.state.user_id, grants, granted_by,
+            )
+            if isinstance(body, list):
+                self._perm_ids = [item.get("id") for item in body if isinstance(item, dict) and "id" in item]
+            else:
+                self._perm_ids = []
+            if status == 200:
+                logger.info("Granted %d permissions to %s (perm_ids=%s)",
+                            len(grants), self.state.user_id, self._perm_ids)
+            elif status == 500:
+                # Likely duplicate — permissions already exist from a previous run
+                logger.info("Permissions already exist for %s (HTTP 500 = duplicate, continuing)", self.state.user_id)
+            else:
+                logger.warning("Permission grant for %s: HTTP %d", self.state.user_id, status)
+        else:
+            self._perm_ids = []
+
+        # ---- Step 3: Get per-user token ----
+        self._token, self._token_expires = self.kc.get_user_token(
+            self.state.user_id, self._sim_password,
+        )
+
+        # Audit trail
+        self.audit = UserAudit(self.state.user_id, REPORT_DIR)
+
+        # First ingest creates the space (using user's own token)
+        self._ensure_space()
+        logger.info("User %s started (data: %d items, perms: %s)",
+                    self.state.user_id, len(self.state.data_items), self._perm_ids)
+
+    def _ensure_token(self):
+        if time.time() > self._token_expires:
+            self._token, self._token_expires = self.kc.get_user_token(
+                self.state.user_id, self._sim_password,
+            )
+
+    def _handle_401(self, status: int, op: str):
+        """If 401, refresh per-user token and return True to retry."""
+        if status == 401:
+            logger.debug("401 on %s for %s — refreshing user token", op, self.state.user_id)
+            self._token, self._token_expires = self.kc.get_user_token(
+                self.state.user_id, self._sim_password,
+            )
+            return True
+        return False
+
+    def _ensure_space(self):
+        """First ingest creates the space implicitly. Skipped when using existing space."""
+        if self.state.space_created or self.state.using_existing:
+            self.state.space_created = True
+            return
+        msg = self.state.next_message()
+        if not msg:
+            return
+        self._ensure_token()
+        status, body, lat = self.neuro.ingest_space(
+            self.state.space, self._token,
+            content=msg["content"], thread_id=msg["thread_id"],
+            speaker=msg["speaker"],
+        )
+        if self._handle_401(status, "create_space"):
+            status, body, lat = self.neuro.ingest_space(
+                self.state.space, self._token,
+                content=msg["content"], thread_id=msg["thread_id"],
+                speaker=msg["speaker"],
+            )
+        self.state.space_created = True
+        self.audit.log("create_space", {"space": self.state.space}, status, lat)
+        if status == 202:
+            _count_success()
+            if isinstance(body, dict) and body.get("unitId"):
+                self.state.ingested_ids.append(body["unitId"])
+
+    # ---- Helper: single API call with 401 retry ----
+
+    def _call(self, op: str, method, *args, **kwargs):
+        """Call a neuro/app_svc method with 401 auto-retry. Returns (status, body, latency)."""
+        self._ensure_token()
+        status, body, lat = method(*args, **kwargs)
+        if self._handle_401(status, op):
+            status, body, lat = method(*args, **kwargs)
+        return status, body, lat
+
+    def _call_admin(self, op: str, method, *args, **kwargs):
+        """Call with app admin token (for graph mutations like PATCH/DELETE edge)."""
+        admin_token = self.kc.get_app_admin_token()
+        # Replace the token arg (2nd positional) with admin token
+        status, body, lat = method(*args, **kwargs)
+        return status, body, lat
+
+    def _get_admin_token(self):
+        """Get app admin token for operations that require admin access."""
+        return self.kc.get_app_admin_token()
+
+    # ---- Operations (weighted random via @task) ----
+    # Weights tuned so users: ingest first, build fact pool via list_facts,
+    # then pin/recall/verify, invalidate, and occasionally delete.
+
+    @task(25)
+    def do_ingest(self):
+        """Ingest content into user's namespace."""
+        msg = self.state.next_message()
+        if not msg:
+            return
+        status, body, lat = self._call(
+            "ingest", self.neuro.ingest_namespace,
+            self.state.ns, self._token,
+            text=msg["content"], thread_id=msg["thread_id"],
+            owner_user_id=self.state.user_id,
+        )
+        unit_id = body.get("unitId", "") if isinstance(body, dict) else ""
+        self.audit.log("ingest", {"unit_id": unit_id, "thread": msg["thread_id"]}, status, lat)
+        if status == 202 and unit_id:
+            self.state.ingested_ids.append(unit_id)
+            _count_success()
+        elif status != 202:
+            _notify_failure(self.state.user_id, "ingest", status, str(body)[:200])
+
+    @task(20)
+    def do_recall(self):
+        """Recall from user's namespace and harvest fact URIs."""
+        query = self.pool.get_random_query(self.state.data_items)
+        status, body, lat = self._call(
+            "recall", self.neuro.recall_namespace,
+            self.state.ns, self._token,
+            query=query, user_id=self.state.user_id,
+        )
+        items = body.get("items", []) if isinstance(body, dict) else []
+        self.audit.log("recall", {"query": query[:80], "items": len(items)}, status, lat)
+        if status == 200:
+            _count_success()
+            for item in items:
+                for uri in item.get("provenance", []):
+                    if "Fact/" in uri and uri not in self.state.fact_uris:
+                        self.state.fact_uris.append(uri)
+        else:
+            _notify_failure(self.state.user_id, "recall", status, str(body)[:200])
+
+    @task(10)
+    def do_list_facts(self):
+        """List edges — builds the fact URI pool needed for pin/invalidate/delete."""
+        if not self._op_enabled("list_facts"):
+            return
+        status, body, lat = self._call(
+            "list_facts", self.neuro.list_edges,
+            self.state.space, self.state.ns, self._token,
+        )
+        items = body.get("items", []) if isinstance(body, dict) else []
+        self.audit.log("list_facts", {"count": len(items)}, status, lat)
+        if status == 200:
+            _count_success()
+            for item in items:
+                uri = item.get("uri", "")
+                if uri and uri not in self.state.fact_uris:
+                    self.state.fact_uris.append(uri)
+        else:
+            _notify_failure(self.state.user_id, "list_facts", status, str(body)[:200])
+
+    @task(8)
+    def do_assert(self):
+        """Assert a fact triple derived from user's data."""
+        if not self._op_enabled("assert"):
+            return
+        item = random.choice(self.state.data_items)
+        words = item["content"].split()
+        if len(words) < 5:
+            return
+        entity = " ".join(words[:2])
+        value = " ".join(words[3:6])
+        status, body, lat = self._call(
+            "assert", self.neuro.assert_fact,
+            self.state.space, self._token,
+            entity=entity, label="Entity", prop="relates_to", value=value,
+        )
+        self.audit.log("assert", {"entity": entity, "value": value}, status, lat)
+        if status in (200, 202):
+            _count_success()
+        else:
+            _notify_failure(self.state.user_id, "assert", status, str(body)[:200])
+
+    @task(8)
+    def do_pin_and_verify(self):
+        """Pin a fact, then recall with AS_OF in far past to verify pinned fact bypasses temporal filter."""
+        if not self._op_enabled("pin"):
+            return
+        if not self.state.has_facts():
+            return
+        uri = self.state.random_fact()
+
+        # Step 1: Pin the fact
+        status, body, lat = self._call(
+            "pin", self.neuro.pin_fact,
+            self.state.space, self.state.ns, self._token, uri,
+        )
+        self.audit.log("pin", {"uri": uri}, status, lat)
+        if status not in (200, 202):
+            _notify_failure(self.state.user_id, "pin", status, str(body)[:200])
+            return
+        _count_success()
+        if uri not in self.state.pinned_uris:
+            self.state.pinned_uris.append(uri)
+
+        # Step 2: Recall with AS_OF 1990 — pinned fact should still appear (bypasses temporal filter)
+        status2, body2, lat2 = self._call(
+            "recall_pinned", self.neuro.recall_space,
+            self.state.space, self._token,
+            query="pinned fact verification",
+            user_id=self.state.user_id,
+            mode="AS_OF", as_of="1990-01-01T00:00:00Z",
+        )
+        items2 = body2.get("items", []) if isinstance(body2, dict) else []
+        # Check if pinned URI appears in results
+        found_pinned = any(
+            uri in item.get("provenance", [])
+            for item in items2
+        )
+        self.audit.log("pin_verify", {
+            "uri": uri,
+            "recall_status": status2,
+            "recall_items": len(items2),
+            "pinned_found": found_pinned,
+            "PASS": found_pinned or len(items2) > 0,
+        }, status2, lat2)
+        if status2 == 200:
+            _count_success()
+        if found_pinned:
+            logger.info("PIN VERIFY PASS: %s found in AS_OF recall for %s", uri, self.state.user_id)
+
+    @task(4)
+    def do_unpin_and_verify(self):
+        """Unpin a previously pinned fact, then recall to verify it no longer bypasses temporal filter."""
+        if not self._op_enabled("unpin"):
+            return
+        if not self.state.pinned_uris:
+            return
+        uri = self.state.pinned_uris.pop(random.randrange(len(self.state.pinned_uris)))
+
+        # Step 1: Unpin
+        status, body, lat = self._call(
+            "unpin", self.neuro.unpin_fact,
+            self.state.space, self.state.ns, self._token, uri,
+        )
+        self.audit.log("unpin", {"uri": uri}, status, lat)
+        if status in (200, 202, 204):
+            _count_success()
+
+        # Step 2: Recall AS_OF far past — unpinned fact should NOT appear
+        status2, body2, lat2 = self._call(
+            "recall_unpinned", self.neuro.recall_space,
+            self.state.space, self._token,
+            query="unpinned fact verification",
+            user_id=self.state.user_id,
+            mode="AS_OF", as_of="1990-01-01T00:00:00Z",
+        )
+        items2 = body2.get("items", []) if isinstance(body2, dict) else []
+        still_found = any(
+            uri in item.get("provenance", [])
+            for item in items2
+        )
+        self.audit.log("unpin_verify", {
+            "uri": uri,
+            "recall_status": status2,
+            "recall_items": len(items2),
+            "still_found": still_found,
+            "PASS": not still_found,
+        }, status2, lat2)
+        if status2 == 200:
+            _count_success()
+
+    @task(5)
+    def do_invalidate(self):
+        """Invalidate a fact, then recall LIVE+includeInvalidated=false to verify exclusion."""
+        if not self._op_enabled("invalidate"):
+            return
+        if not self.state.has_facts():
+            return
+        uri = self.state.random_fact()
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Step 1: Invalidate (requires admin token — user token gets 500)
+        admin_token = self._get_admin_token()
+        status, body, lat = self.neuro.patch_edge(
+            self.state.space, self.state.ns, admin_token, uri,
+            {"invalidAt": now},
+        )
+        self.audit.log("invalidate", {"uri": uri, "invalidAt": now}, status, lat)
+        if status not in (200, 202):
+            _notify_failure(self.state.user_id, "invalidate", status, str(body)[:200])
+            return
+        _count_success()
+        self.state.invalidated_uris.append(uri)
+        if uri in self.state.fact_uris:
+            self.state.fact_uris.remove(uri)
+
+        # Step 2: Recall LIVE + includeInvalidated=false — invalidated fact should be excluded
+        status2, body2, lat2 = self._call(
+            "recall_after_invalidate", self.neuro.recall_namespace,
+            self.state.ns, self._token,
+            query="invalidation verification",
+            user_id=self.state.user_id,
+            mode="LIVE", include_invalidated=False,
+        )
+        items2 = body2.get("items", []) if isinstance(body2, dict) else []
+        still_found = any(
+            uri in item.get("provenance", [])
+            for item in items2
+        )
+        self.audit.log("invalidate_verify", {
+            "uri": uri,
+            "recall_status": status2,
+            "recall_items": len(items2),
+            "still_found": still_found,
+            "PASS": not still_found,
+        }, status2, lat2)
+        if status2 == 200:
+            _count_success()
+
+    @task(3)
+    def do_list_entities(self):
+        """List nodes (entities) in user's namespace."""
+        if not self._op_enabled("list_entities"):
+            return
+        status, body, lat = self._call(
+            "list_entities", self.neuro.list_nodes,
+            self.state.space, self.state.ns, self._token,
+        )
+        count = len(body.get("items", [])) if isinstance(body, dict) else 0
+        self.audit.log("list_entities", {"count": count}, status, lat)
+        if status == 200:
+            _count_success()
+
+    @task(2)
+    def do_delete(self):
+        """Delete a random fact. Respects simulation.max_deletes (0=unlimited)."""
+        if not self._op_enabled("delete"):
+            return
+        global _delete_count
+        max_del = CONFIG.get("simulation", {}).get("max_deletes", 0)
+        if max_del > 0:
+            with _delete_lock:
+                if _delete_count >= max_del:
+                    return  # Global limit reached
+                _delete_count += 1  # Reserve the slot under lock
+        if not self.state.has_facts():
+            if max_del > 0:
+                with _delete_lock:
+                    _delete_count -= 1  # Release slot — no fact to delete
+            return
+        uri = self.state.fact_uris.pop(random.randrange(len(self.state.fact_uris)))
+        # Delete requires admin token
+        admin_token = self._get_admin_token()
+        status, body, lat = self.neuro.delete_edge(
+            self.state.space, self.state.ns, admin_token, uri,
+        )
+        self.audit.log("delete_fact", {"uri": uri}, status, lat)
+        if status in (200, 202, 204):
+            _count_success()
+            self.state.deleted_uris.append(uri)
+            logger.info("DELETE #%d by %s: %s → HTTP %d", _delete_count, self.state.user_id, uri, status)
+        else:
+            _notify_failure(self.state.user_id, "delete", status, str(body)[:200])
+
+    @task(2)
+    def do_attach_namespace(self):
+        """Create and attach a graph namespace, then ingest into it."""
+        if not self._op_enabled("attach_namespace"):
+            return
+        if not self.state.can_attach_namespace():
+            return
+        graph_id = f"kb-{len(self.state.graph_namespaces) + 1}-{random.randint(100, 999)}"
+        self._ensure_token()
+        status, body, lat = self.app_svc.create_graph(
+            self.state.space, self._token, graph_id, f"KB {graph_id}",
+        )
+        self.audit.log("create_graph", {"graph_id": graph_id}, status, lat)
+        if status not in (200, 201, 202):
+            return
+
+        self.state.graph_namespaces.append(graph_id)
+        # Ingest into the new namespace
+        msg = self.state.next_message()
+        if msg:
+            graph_ns = f"{self.state.space}-{graph_id}"
+            status2, body2, lat2 = self.neuro.ingest_namespace(
+                graph_ns, self._token,
+                text=msg["content"], thread_id=msg["thread_id"],
+            )
+            self.audit.log("ingest_graph_ns", {"graph_id": graph_id}, status2, lat2)
+            if status2 == 202:
+                _count_success()
+
+    @task(1)
+    def do_detach_namespace(self):
+        """Detach (remove) a graph namespace."""
+        if not self._op_enabled("detach_namespace"):
+            return
+        if not self.state.can_detach_namespace():
+            return
+        graph_id = self.state.graph_namespaces.pop()
+        self._ensure_token()
+        status, body, lat = self.app_svc.delete_graph(
+            self.state.space, self._token, graph_id,
+        )
+        self.audit.log("detach_ns", {"graph_id": graph_id}, status, lat)
+        if status in (200, 202, 204):
+            _count_success()
+
+    # ---- Lifecycle ----
+
+    def on_stop(self):
+        """Log session summary, cleanup KC user + permissions."""
+        summary = self.state.summary()
+        self.audit.log("session_end", summary)
+        self.audit.close()
+        logger.info("User %s finished: %s", self.state.user_id, summary)
+
+        # Cleanup if configured
+        sim = CONFIG.get("simulation", {})
+        if sim.get("cleanup_users", False):
+            try:
+                # Delete permissions (app admin token — tenant realm)
+                if self._perm_ids:
+                    app_token = self.kc.get_app_admin_token()
+                    self.app_svc.delete_user_permissions(app_token, self._perm_ids)
+                    logger.info("Deleted permissions for %s: %s", self.state.user_id, self._perm_ids)
+                # Delete KC user (KC admin token — master realm)
+                if self._kc_user_id:
+                    self.kc.delete_user(self._kc_user_id)
+            except Exception as e:
+                logger.warning("Cleanup failed for %s: %s", self.state.user_id, e)
+
+
+# ============================================================================
+# Locust event hooks
+# ============================================================================
+
+@events.init.add_listener
+def on_init(environment, **kwargs):
+    """Pre-load data pool, verify admin token before any users spawn."""
+    logger.info("=== Neuro Sim initializing ===")
+    logger.info("Config: %s", os.environ.get("NEURO_SIM_CONFIG", "config/prestage.yaml"))
+    logger.info("Report dir: %s", REPORT_DIR)
+    _get_data_pool()
+    kc = _get_keycloak()
+    # Verify tokens work
+    try:
+        token = kc.get_admin_token()
+        logger.info("KC admin token OK (master realm)")
+    except Exception as e:
+        logger.error("KC admin token FAILED: %s", e)
+        logger.error("Set correct kc_admin_user/kc_admin_password in config")
+        raise
+    try:
+        token = kc.get_app_admin_token()
+        logger.info("App admin token OK (realm=%s)", kc._realm)
+    except Exception as e:
+        logger.error("App admin token FAILED: %s", e)
+        raise
+    logger.info("=== Ready to spawn users ===")
+
+
+@events.quitting.add_listener
+def on_quit(environment, **kwargs):
+    state = _notification_state
+    total = state["total_requests"]
+    fails = state["total_failures"]
+    pct = (fails / total * 100) if total else 0
+    logger.info(
+        "=== Sim complete: %d requests, %d failures (%.1f%%) ===",
+        total, fails, pct,
+    )
+    logger.info("Reports: %s", REPORT_DIR)

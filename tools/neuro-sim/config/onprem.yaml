@@ -1,0 +1,47 @@
+# Neuro Sim — Onprem environment
+environment: onprem
+
+api:
+  base_url: https://api-onprem.thequipu.in
+  neuro_path: /quipuNeuro
+  app_service_path: /applicationService
+
+auth:
+  token_url: https://ui-login-onprem.thequipu.in/realms/onpremquipu/protocol/openid-connect/token
+  client_id: onpremquipu-client
+  client_secret: 7twCqTl1Ur49tOwtLAbEy6kEXOVEIRwm
+  username: quipuadmin
+  password: karthik
+
+tenant: onpremquipu
+fabric: memoryonpremquipu
+
+# Onprem requires X-Fabric header on all calls
+extra_headers:
+  X-Fabric: memoryonpremquipu
+
+simulation:
+  space_prefix: neurosim
+  data_items_per_user: 20
+  token_refresh_buffer: 20
+  token_lifetime: 300
+
+data_pool:
+  cache_dir: ./cache
+  huggingface: true
+  wikipedia: true
+  rss: true
+  huggingface_items: 500
+  wikipedia_items: 200
+  rss_items: 200
+
+waves:
+  - [5, 30]
+  - [10, 30]
+  - [15, 30]
+  - [20, 60]
+
+notifications:
+  slack_webhook: ""
+  console_alerts: true
+  failure_threshold_pct: 5
