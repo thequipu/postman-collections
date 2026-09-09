@@ -187,7 +187,9 @@ def global_capture_test():
         "  //   s3-upload/*                     -> 500 when S3 creds missing or file doesn't exist",
         "  //   Excel steps (01h/37)            -> 500 when Excel staging or DS create flakes",
         "  const soft5xx = u.indexOf('/synapse/namespace/status')>=0 || u.indexOf('/synapse/namespace/stats')>=0 || u.indexOf('/test-connection/sample-records')>=0 || u.indexOf('/s3-upload/')>=0 || pm.info.requestName.indexOf('Excel')>=0;",
-        "  if(code>=500 && !soft5xx){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
+        "  const stepSoft = pm.collectionVariables.get('_soft_5xx')==='true';",
+        "  if(stepSoft) pm.collectionVariables.unset('_soft_5xx');",
+        "  if(code>=500 && !soft5xx && !stepSoft){ pm.test('[api] server '+code+' @ '+pm.info.requestName+' :: '+msg, () => { throw new Error(code+' '+msg); }); }",
         "})();",
     ]
 
