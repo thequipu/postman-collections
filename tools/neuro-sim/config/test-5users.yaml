@@ -67,8 +67,7 @@ data_pool:
   dashboard_interval: 10
 
 waves:
-  - [5, 5]
-  - [5, 10]
+  - [3, 5]
 
 notifications:
   slack_webhook: ""

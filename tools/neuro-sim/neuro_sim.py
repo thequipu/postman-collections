@@ -797,6 +797,121 @@ class MemoryUser(HttpUser):
                 self.state.ingested_ids.append(unit_id)
             _count_success()
 
+    # ---- Profile / Instructions / Model verification ----
+
+    @task(2)
+    def do_profile_crud(self):
+        """PUT extraction profile, GET it back, verify fields."""
+        if not self._op_enabled("profile"):
+            return
+        profile = {
+            "role": f"Memory for sim user {self.state.user_id}. Tracks people, teams, locations.",
+            "salienceNote": "Remember who works where, team structures, locations.",
+            "entityKinds": [
+                {"name": "Person", "description": "A person", "examples": ["Alice", "Bob"]},
+                {"name": "Organization", "description": "A company", "examples": ["Acme"]},
+                {"name": "Location", "description": "A place", "examples": ["Berlin"]},
+            ],
+            "extractionTargets": ["who works at which organization", "where a person is located"],
+            "exclusions": ["greetings and small talk"],
+            "positiveExamples": [{"input": "Alice joined Acme in Berlin.", "expected": "Alice -works_at-> Acme; Alice -located_in-> Berlin"}],
+            "negativeExamples": ["Let me check that for you"],
+        }
+        # PUT profile (admin token — applicationService)
+        admin_token = self._get_admin_token()
+        status, body, lat = self.app_svc.put_extraction_profile(
+            self.state.space, admin_token, profile,
+        )
+        _dashboard.record("put_profile", status, lat)
+        self.audit.log("put_profile", {"status": status}, status, lat)
+        if status not in (200, 201):
+            return
+
+        # GET profile and verify
+        status2, body2, lat2 = self.app_svc.get_extraction_profile(
+            self.state.space, admin_token,
+        )
+        _dashboard.record("get_profile", status2, lat2)
+        # Verify key fields
+        profile_data = body2[0] if isinstance(body2, list) else body2 if isinstance(body2, dict) else {}
+        has_role = "role" in profile_data and self.state.user_id in profile_data.get("role", "")
+        has_kinds = len(profile_data.get("entityKinds", [])) == 3
+        has_targets = len(profile_data.get("extractionTargets", [])) == 2
+        all_pass = has_role and has_kinds and has_targets
+        self.audit.log("verify_profile", {
+            "has_role": has_role, "has_kinds": has_kinds, "has_targets": has_targets,
+            "PASS": all_pass,
+        }, status2, lat2)
+        if status2 == 200:
+            _count_success()
+        if all_pass:
+            logger.info("PROFILE VERIFY PASS for %s", self.state.user_id)
+
+    @task(2)
+    def do_instructions_crud(self):
+        """PUT instructions, GET them back, verify count and content."""
+        if not self._op_enabled("instructions"):
+            return
+        instructions = [
+            {"family": "EXTRACTION", "name": "expand-acronyms", "text": "Always expand VP as Vice President."},
+            {"family": "EXTRACTION", "name": "preserve-ids", "text": "Copy team names exactly as stated."},
+            {"family": "SUMMARY", "name": "summary-style", "text": "One sentence. State current status only."},
+        ]
+        admin_token = self._get_admin_token()
+        status, body, lat = self.app_svc.put_instructions(
+            self.state.space, admin_token, instructions,
+        )
+        _dashboard.record("put_instructions", status, lat)
+        self.audit.log("put_instructions", {"status": status}, status, lat)
+        if status not in (200, 201):
+            return
+
+        # GET and verify
+        status2, body2, lat2 = self.app_svc.get_instructions(
+            self.state.space, admin_token,
+        )
+        _dashboard.record("get_instructions", status2, lat2)
+        instr_list = body2 if isinstance(body2, list) else []
+        count_ok = len(instr_list) == 3
+        names = {i.get("name") for i in instr_list}
+        has_all = {"expand-acronyms", "preserve-ids", "summary-style"}.issubset(names)
+        all_pass = count_ok and has_all
+        self.audit.log("verify_instructions", {
+            "count": len(instr_list), "count_ok": count_ok, "has_all": has_all,
+            "PASS": all_pass,
+        }, status2, lat2)
+        if status2 == 200:
+            _count_success()
+        if all_pass:
+            logger.info("INSTRUCTIONS VERIFY PASS for %s (3 instructions)", self.state.user_id)
+
+    @task(1)
+    def do_extraction_status(self):
+        """GET extraction/status and verify profileConfigured + availableModels."""
+        if not self._op_enabled("extraction_status"):
+            return
+        status, body, lat = self._call(
+            "extraction_status", self.neuro.get_extraction_status,
+            self.state.space, self._token,
+        )
+        if status != 200 or not isinstance(body, dict):
+            self.audit.log("extraction_status", {"status": status}, status, lat)
+            return
+        _count_success()
+        has_prompt = "promptVersion" in body
+        has_models = len(body.get("availableModels", [])) > 0
+        profile_configured = body.get("profileConfigured", False)
+        self.audit.log("extraction_status", {
+            "promptVersion": body.get("promptVersion"),
+            "profileConfigured": profile_configured,
+            "profileInert": body.get("profileInert"),
+            "availableModels": len(body.get("availableModels", [])),
+            "extractionModel": body.get("extractionModel"),
+            "has_prompt": has_prompt,
+            "has_models": has_models,
+            "PASS": has_prompt,
+        }, status, lat)
+
     # ---- Lifecycle ----
 
     def on_stop(self):
