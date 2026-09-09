@@ -63,8 +63,12 @@ data_pool:
   min_items_per_user: 100
   max_items_per_user: 500
 
+# Dashboard stats printed every N seconds
+  dashboard_interval: 10
+
 waves:
   - [5, 5]
+  - [5, 10]
 
 notifications:
   slack_webhook: ""

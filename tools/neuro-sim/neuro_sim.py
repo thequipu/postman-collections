@@ -41,6 +41,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from lib.app_service_client import AppServiceClient
 from lib.audit import UserAudit
+from lib.dashboard import Dashboard
 from lib.data_pool import DataPool
 from lib.keycloak import KeycloakClient
 from lib.neuro_client import NeuroClient
@@ -90,6 +91,7 @@ _user_counter = 0
 _notification_state = {"total_failures": 0, "total_requests": 0, "alerted": False}
 _delete_count = 0  # Global delete counter — controlled by simulation.max_deletes
 _delete_lock = threading.Lock()
+_dashboard = Dashboard(interval=CONFIG.get("simulation", {}).get("dashboard_interval", 10))
 
 
 def _get_data_pool() -> DataPool:
@@ -314,18 +316,12 @@ class MemoryUser(HttpUser):
     # ---- Helper: single API call with 401 retry ----
 
     def _call(self, op: str, method, *args, **kwargs):
-        """Call a neuro/app_svc method with 401 auto-retry. Returns (status, body, latency)."""
+        """Call a neuro/app_svc method with 401 auto-retry. Records to dashboard."""
         self._ensure_token()
         status, body, lat = method(*args, **kwargs)
         if self._handle_401(status, op):
             status, body, lat = method(*args, **kwargs)
-        return status, body, lat
-
-    def _call_admin(self, op: str, method, *args, **kwargs):
-        """Call with app admin token (for graph mutations like PATCH/DELETE edge)."""
-        admin_token = self.kc.get_app_admin_token()
-        # Replace the token arg (2nd positional) with admin token
-        status, body, lat = method(*args, **kwargs)
+        _dashboard.record(op, status, lat)
         return status, body, lat
 
     def _get_admin_token(self):
@@ -523,6 +519,7 @@ class MemoryUser(HttpUser):
             self.state.space, self.state.ns, admin_token, uri,
             {"invalidAt": now},
         )
+        _dashboard.record("invalidate", status, lat)
         self.audit.log("invalidate", {"uri": uri, "invalidAt": now}, status, lat)
         if status not in (200, 202):
             _notify_failure(self.state.user_id, "invalidate", status, str(body)[:200])
@@ -592,6 +589,7 @@ class MemoryUser(HttpUser):
         status, body, lat = self.neuro.delete_edge(
             self.state.space, self.state.ns, admin_token, uri,
         )
+        _dashboard.record("delete", status, lat)
         self.audit.log("delete_fact", {"uri": uri}, status, lat)
         if status in (200, 202, 204):
             _count_success()
@@ -608,20 +606,22 @@ class MemoryUser(HttpUser):
         if not self.state.can_attach_namespace():
             return
         graph_id = f"kb-{len(self.state.graph_namespaces) + 1}-{random.randint(100, 999)}"
-        self._ensure_token()
+        # Graph creation needs admin token
+        admin_token = self._get_admin_token()
         status, body, lat = self.app_svc.create_graph(
-            self.state.space, self._token, graph_id, f"KB {graph_id}",
+            self.state.space, admin_token, graph_id, f"KB {graph_id}",
         )
         self.audit.log("create_graph", {"graph_id": graph_id}, status, lat)
         if status not in (200, 201, 202):
             return
 
         self.state.graph_namespaces.append(graph_id)
-        # Ingest into the new namespace
+        # Ingest into new namespace (user token)
         msg = self.state.next_message()
         if msg:
             graph_ns = f"{self.state.space}-{graph_id}"
-            status2, body2, lat2 = self.neuro.ingest_namespace(
+            status2, body2, lat2 = self._call(
+                "ingest_graph_ns", self.neuro.ingest_namespace,
                 graph_ns, self._token,
                 text=msg["content"], thread_id=msg["thread_id"],
             )
@@ -637,12 +637,164 @@ class MemoryUser(HttpUser):
         if not self.state.can_detach_namespace():
             return
         graph_id = self.state.graph_namespaces.pop()
-        self._ensure_token()
+        admin_token = self._get_admin_token()
         status, body, lat = self.app_svc.delete_graph(
-            self.state.space, self._token, graph_id,
+            self.state.space, admin_token, graph_id,
         )
         self.audit.log("detach_ns", {"graph_id": graph_id}, status, lat)
         if status in (200, 202, 204):
+            _count_success()
+
+    # ---- Additional verification tasks ----
+
+    @task(3)
+    def do_recall_episodic(self):
+        """Recall in EPISODIC mode — no temporal filtering, returns everything."""
+        if not self._op_enabled("recall_episodic"):
+            return
+        query = self.pool.get_random_query(self.state.data_items)
+        status, body, lat = self._call(
+            "recall_episodic", self.neuro.recall_namespace,
+            self.state.ns, self._token,
+            query=query, user_id=self.state.user_id,
+            mode="EPISODIC",
+        )
+        items = body.get("items", []) if isinstance(body, dict) else []
+        self.audit.log("recall_episodic", {"query": query[:80], "items": len(items), "mode": "EPISODIC"}, status, lat)
+        if status == 200:
+            _count_success()
+
+    @task(2)
+    def do_recall_invalidated_true(self):
+        """Recall LIVE + includeInvalidated=true — invalidated facts should return with superseded."""
+        if not self._op_enabled("recall_invalidated"):
+            return
+        if not self.state.invalidated_uris:
+            return
+        query = self.pool.get_random_query(self.state.data_items)
+        status, body, lat = self._call(
+            "recall_invalidated_true", self.neuro.recall_namespace,
+            self.state.ns, self._token,
+            query=query, user_id=self.state.user_id,
+            mode="LIVE", include_invalidated=True,
+        )
+        items = body.get("items", []) if isinstance(body, dict) else []
+        # Check if any invalidated URI appears with superseded marker
+        found_superseded = False
+        for item in items:
+            for uri in self.state.invalidated_uris:
+                if uri in item.get("provenance", []):
+                    found_superseded = item.get("superseded", False) or "[SUPERSEDED]" in item.get("content", "")
+                    break
+        self.audit.log("recall_invalidated_true", {
+            "query": query[:80], "items": len(items),
+            "found_superseded": found_superseded,
+            "invalidated_count": len(self.state.invalidated_uris),
+        }, status, lat)
+        if status == 200:
+            _count_success()
+
+    @task(2)
+    def do_recall_with_thread(self):
+        """Recall filtered by threadId — should only return items from that thread."""
+        if not self._op_enabled("recall_thread"):
+            return
+        if not self.state.threads:
+            return
+        thread = random.choice(list(self.state.threads))
+        query = self.pool.get_random_query(self.state.data_items)
+        status, body, lat = self._call(
+            "recall_thread", self.neuro.recall_namespace,
+            self.state.ns, self._token,
+            query=query, user_id=self.state.user_id,
+        )
+        items = body.get("items", []) if isinstance(body, dict) else []
+        self.audit.log("recall_thread", {
+            "query": query[:80], "threadId": thread, "items": len(items),
+        }, status, lat)
+        if status == 200:
+            _count_success()
+
+    @task(2)
+    def do_idempotency_check(self):
+        """Re-ingest same content — should return same unitId (idempotent)."""
+        if not self._op_enabled("idempotency"):
+            return
+        if self.state.message_cursor < 2:
+            return  # Need at least one prior ingest
+        # Re-send the first message
+        item = self.state.data_items[0]
+        thread = f"thread-{self.state.user_id}-idempotency"
+        status, body, lat = self._call(
+            "idempotency", self.neuro.ingest_namespace,
+            self.state.ns, self._token,
+            text=item["content"], thread_id=thread,
+            owner_user_id=self.state.user_id,
+        )
+        unit_id = body.get("unitId", "") if isinstance(body, dict) else ""
+        # Check if unitId matches the first ingest (content-derived SHA-256)
+        is_same = unit_id in self.state.ingested_ids if unit_id else False
+        self.audit.log("idempotency", {
+            "unit_id": unit_id,
+            "is_duplicate": is_same,
+            "PASS": status == 202,
+        }, status, lat)
+        if status == 202:
+            _count_success()
+
+    @task(2)
+    def do_validate_fact_fields(self):
+        """List edges and validate all 12 expected fields on each fact."""
+        if not self._op_enabled("validate_fields"):
+            return
+        status, body, lat = self._call(
+            "validate_fields", self.neuro.list_edges,
+            self.state.space, self.state.ns, self._token,
+        )
+        items = body.get("items", []) if isinstance(body, dict) else []
+        if status != 200 or not items:
+            self.audit.log("validate_fields", {"count": 0, "PASS": False}, status, lat)
+            return
+
+        _count_success()
+        expected_fields = [
+            "uri", "fact", "sourceNodeName", "sourceNodeUri",
+            "targetNodeName", "targetNodeUri", "label",
+            "namespaceId", "validAt", "invalidAt", "pinned", "superseded",
+        ]
+        sample = items[0]
+        present = [f for f in expected_fields if f in sample]
+        missing = [f for f in expected_fields if f not in sample]
+        all_pass = len(missing) == 0
+        self.audit.log("validate_fields", {
+            "count": len(items),
+            "sample_uri": sample.get("uri", ""),
+            "present": present,
+            "missing": missing,
+            "PASS": all_pass,
+        }, status, lat)
+        if not all_pass:
+            logger.warning("FIELD VALIDATION: missing %s on %s", missing, self.state.user_id)
+
+    @task(2)
+    def do_space_ingest(self):
+        """Ingest via space endpoint (content field, not text)."""
+        if not self._op_enabled("space_ingest"):
+            return
+        msg = self.state.next_message()
+        if not msg:
+            return
+        status, body, lat = self._call(
+            "space_ingest", self.neuro.ingest_space,
+            self.state.space, self._token,
+            content=msg["content"], thread_id=msg["thread_id"],
+            speaker=msg["speaker"],
+        )
+        unit_id = body.get("unitId", "") if isinstance(body, dict) else ""
+        self.audit.log("space_ingest", {"unit_id": unit_id, "thread": msg["thread_id"]}, status, lat)
+        if status == 202:
+            if unit_id:
+                self.state.ingested_ids.append(unit_id)
             _count_success()
 
     # ---- Lifecycle ----
@@ -696,11 +848,13 @@ def on_init(environment, **kwargs):
     except Exception as e:
         logger.error("App admin token FAILED: %s", e)
         raise
+    _dashboard.start()
     logger.info("=== Ready to spawn users ===")
 
 
 @events.quitting.add_listener
 def on_quit(environment, **kwargs):
+    _dashboard.stop()
     state = _notification_state
     total = state["total_requests"]
     fails = state["total_failures"]
