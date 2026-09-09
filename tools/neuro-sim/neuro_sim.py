@@ -267,6 +267,12 @@ class MemoryUser(HttpUser):
 
         # First ingest creates the space (using user's own token)
         self._ensure_space()
+
+        # ---- Step 4: Set up steering config (profile → instructions → verify extraction status) ----
+        self._setup_profile()
+        self._setup_instructions()
+        self._verify_extraction_status()
+
         logger.info("User %s started (data: %d items, perms: %s)",
                     self.state.user_id, len(self.state.data_items), self._perm_ids)
 
@@ -797,13 +803,10 @@ class MemoryUser(HttpUser):
                 self.state.ingested_ids.append(unit_id)
             _count_success()
 
-    # ---- Profile / Instructions / Model verification ----
+    # ---- Startup steps 1-3: Profile → Instructions → Extraction Status ----
 
-    @task(2)
-    def do_profile_crud(self):
-        """PUT extraction profile, GET it back, verify fields."""
-        if not self._op_enabled("profile"):
-            return
+    def _setup_profile(self):
+        """Step 1: PUT extraction profile, GET it back, verify fields."""
         profile = {
             "role": f"Memory for sim user {self.state.user_id}. Tracks people, teams, locations.",
             "salienceNote": "Remember who works where, team structures, locations.",
@@ -817,7 +820,6 @@ class MemoryUser(HttpUser):
             "positiveExamples": [{"input": "Alice joined Acme in Berlin.", "expected": "Alice -works_at-> Acme; Alice -located_in-> Berlin"}],
             "negativeExamples": ["Let me check that for you"],
         }
-        # PUT profile (admin token — applicationService)
         admin_token = self._get_admin_token()
         status, body, lat = self.app_svc.put_extraction_profile(
             self.state.space, admin_token, profile,
@@ -825,14 +827,14 @@ class MemoryUser(HttpUser):
         _dashboard.record("put_profile", status, lat)
         self.audit.log("put_profile", {"status": status}, status, lat)
         if status not in (200, 201):
+            logger.warning("PUT profile failed for %s: HTTP %d", self.state.user_id, status)
             return
 
-        # GET profile and verify
+        # GET and verify
         status2, body2, lat2 = self.app_svc.get_extraction_profile(
             self.state.space, admin_token,
         )
         _dashboard.record("get_profile", status2, lat2)
-        # Verify key fields
         profile_data = body2[0] if isinstance(body2, list) else body2 if isinstance(body2, dict) else {}
         has_role = "role" in profile_data and self.state.user_id in profile_data.get("role", "")
         has_kinds = len(profile_data.get("entityKinds", [])) == 3
@@ -842,16 +844,12 @@ class MemoryUser(HttpUser):
             "has_role": has_role, "has_kinds": has_kinds, "has_targets": has_targets,
             "PASS": all_pass,
         }, status2, lat2)
-        if status2 == 200:
-            _count_success()
         if all_pass:
-            logger.info("PROFILE VERIFY PASS for %s", self.state.user_id)
+            logger.info("STEP 1 PROFILE VERIFY PASS for %s", self.state.user_id)
+            _count_success()
 
-    @task(2)
-    def do_instructions_crud(self):
-        """PUT instructions, GET them back, verify count and content."""
-        if not self._op_enabled("instructions"):
-            return
+    def _setup_instructions(self):
+        """Step 2: PUT instructions, GET them back, verify count and content."""
         instructions = [
             {"family": "EXTRACTION", "name": "expand-acronyms", "text": "Always expand VP as Vice President."},
             {"family": "EXTRACTION", "name": "preserve-ids", "text": "Copy team names exactly as stated."},
@@ -864,6 +862,7 @@ class MemoryUser(HttpUser):
         _dashboard.record("put_instructions", status, lat)
         self.audit.log("put_instructions", {"status": status}, status, lat)
         if status not in (200, 201):
+            logger.warning("PUT instructions failed for %s: HTTP %d", self.state.user_id, status)
             return
 
         # GET and verify
@@ -880,24 +879,22 @@ class MemoryUser(HttpUser):
             "count": len(instr_list), "count_ok": count_ok, "has_all": has_all,
             "PASS": all_pass,
         }, status2, lat2)
-        if status2 == 200:
-            _count_success()
         if all_pass:
-            logger.info("INSTRUCTIONS VERIFY PASS for %s (3 instructions)", self.state.user_id)
+            logger.info("STEP 2 INSTRUCTIONS VERIFY PASS for %s (3 instructions)", self.state.user_id)
+            _count_success()
 
-    @task(1)
-    def do_extraction_status(self):
-        """GET extraction/status and verify profileConfigured + availableModels."""
-        if not self._op_enabled("extraction_status"):
-            return
-        status, body, lat = self._call(
-            "extraction_status", self.neuro.get_extraction_status,
+    def _verify_extraction_status(self):
+        """Step 3: GET extraction/status — verify profileConfigured + availableModels."""
+        self._ensure_token()
+        status, body, lat = self.neuro.get_extraction_status(
             self.state.space, self._token,
         )
+        _dashboard.record("extraction_status", status, lat)
         if status != 200 or not isinstance(body, dict):
-            self.audit.log("extraction_status", {"status": status}, status, lat)
+            self.audit.log("extraction_status", {"status": status, "PASS": False}, status, lat)
+            logger.warning("STEP 3 extraction status failed for %s: HTTP %d", self.state.user_id, status)
             return
-        _count_success()
+
         has_prompt = "promptVersion" in body
         has_models = len(body.get("availableModels", [])) > 0
         profile_configured = body.get("profileConfigured", False)
@@ -911,6 +908,10 @@ class MemoryUser(HttpUser):
             "has_models": has_models,
             "PASS": has_prompt,
         }, status, lat)
+        if has_prompt:
+            logger.info("STEP 3 EXTRACTION STATUS PASS for %s (prompt=%s, models=%d)",
+                        self.state.user_id, body.get("promptVersion"), len(body.get("availableModels", [])))
+            _count_success()
 
     # ---- Lifecycle ----
 
