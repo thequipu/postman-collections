@@ -268,9 +268,10 @@ class MemoryUser(HttpUser):
         # First ingest creates the space (using user's own token)
         self._ensure_space()
 
-        # ---- Step 4: Set up steering config (profile → instructions → verify extraction status) ----
-        self._setup_profile()
-        self._setup_instructions()
+        # ---- Steps 1-3: Set up steering config (first user only, since all share same space) ----
+        if my_index == 1:
+            self._setup_profile()
+            self._setup_instructions()
         self._verify_extraction_status()
 
         logger.info("User %s started (data: %d items, perms: %s)",
@@ -806,28 +807,64 @@ class MemoryUser(HttpUser):
     # ---- Startup steps 1-3: Profile → Instructions → Extraction Status ----
 
     def _setup_profile(self):
-        """Step 1: PUT extraction profile, GET it back, verify fields."""
+        """Step 1: PUT extraction profile tailored to our datasets, GET it back, verify fields."""
         profile = {
-            "role": f"Memory for sim user {self.state.user_id}. Tracks people, teams, locations.",
-            "salienceNote": "Remember who works where, team structures, locations.",
+            "role": (
+                "Multi-domain knowledge memory. Processes news articles (business, technology, sports, world events), "
+                "scientific research (biology, chemistry, physics, medicine), Wikipedia factual content, "
+                "multi-turn dialogue transcripts, and episodic event logs. "
+                "Extracts entities, relationships, temporal facts, and causal chains."
+            ),
+            "salienceNote": (
+                "Prioritize: who/what/where/when facts, company financials and market events, "
+                "scientific findings and experimental results, geopolitical events, "
+                "dialogue preferences and user-stated facts, temporal sequences of events. "
+                "Ignore: boilerplate disclaimers, navigation text, repetitive headers."
+            ),
             "entityKinds": [
-                {"name": "Person", "description": "A person", "examples": ["Alice", "Bob"]},
-                {"name": "Organization", "description": "A company", "examples": ["Acme"]},
-                {"name": "Location", "description": "A place", "examples": ["Berlin"]},
+                {"name": "Person", "description": "A named individual — scientist, executive, politician, athlete", "examples": ["Marie Curie", "Elon Musk"]},
+                {"name": "Organization", "description": "A company, institution, team, or government body", "examples": ["Reuters", "WHO"]},
+                {"name": "Location", "description": "A city, country, region, or facility", "examples": ["Berlin", "CERN"]},
+                {"name": "Event", "description": "A named event, incident, match, or discovery", "examples": ["COVID-19 pandemic", "World Cup Final"]},
+                {"name": "Concept", "description": "A scientific concept, theory, technology, or domain term", "examples": ["photosynthesis", "GDP"]},
+                {"name": "Product", "description": "A product, drug, software, or system", "examples": ["iPhone", "GPT-4"]},
             ],
-            "extractionTargets": ["who works at which organization", "where a person is located"],
-            "exclusions": ["greetings and small talk"],
-            "positiveExamples": [{"input": "Alice joined Acme in Berlin.", "expected": "Alice -works_at-> Acme; Alice -located_in-> Berlin"}],
-            "negativeExamples": ["Let me check that for you"],
+            "extractionTargets": [
+                "who works at or leads which organization",
+                "what event happened where and when",
+                "scientific findings — what was discovered or proven",
+                "financial facts — revenue, stock price, market changes",
+                "causal relationships — X caused Y, X led to Y",
+                "user preferences and stated personal facts from dialogues",
+            ],
+            "exclusions": [
+                "boilerplate legal disclaimers and copyright notices",
+                "navigation menus and website chrome",
+                "greetings, sign-offs, and scheduling small talk",
+                "speculative opinions without factual basis",
+            ],
+            "positiveExamples": [
+                {"input": "Reuters reported that Apple's Q3 revenue rose 8% to $81.8B, driven by iPhone sales in India.", "expected": "Apple (Organization) -revenue-> $81.8B; Apple -market-> India (Location); iPhone (Product) -drives-> revenue growth"},
+                {"input": "A team at MIT discovered that CRISPR can target RNA in living cells, published in Nature 2024.", "expected": "MIT (Organization) -discovered-> CRISPR targets RNA (Concept); published_in Nature; year 2024"},
+                {"input": "The 2023 earthquake in Turkey killed over 50,000 people and displaced millions.", "expected": "2023 Turkey earthquake (Event) -location-> Turkey; casualties 50000+; displaced millions"},
+            ],
+            "negativeExamples": [
+                "Click here to subscribe to our newsletter",
+                "All rights reserved. Copyright 2024.",
+                "Let me check that for you — I'll get back to you shortly",
+            ],
         }
-        admin_token = self._get_admin_token()
+        admin_token = self.kc.get_app_admin_token()
+        logger.info("Profile setup using admin token (len=%d) for space=%s", len(admin_token), self.state.space)
+        # DELETE existing profile first (avoids duplicate key error on re-run)
+        self.app_svc.delete_extraction_profile(self.state.space, admin_token)
         status, body, lat = self.app_svc.put_extraction_profile(
             self.state.space, admin_token, profile,
         )
         _dashboard.record("put_profile", status, lat)
         self.audit.log("put_profile", {"status": status}, status, lat)
         if status not in (200, 201):
-            logger.warning("PUT profile failed for %s: HTTP %d", self.state.user_id, status)
+            logger.warning("PUT profile failed for %s: HTTP %d body=%s", self.state.user_id, status, str(body)[:300])
             return
 
         # GET and verify
@@ -836,9 +873,9 @@ class MemoryUser(HttpUser):
         )
         _dashboard.record("get_profile", status2, lat2)
         profile_data = body2[0] if isinstance(body2, list) else body2 if isinstance(body2, dict) else {}
-        has_role = "role" in profile_data and self.state.user_id in profile_data.get("role", "")
-        has_kinds = len(profile_data.get("entityKinds", [])) == 3
-        has_targets = len(profile_data.get("extractionTargets", [])) == 2
+        has_role = "role" in profile_data and "Multi-domain" in profile_data.get("role", "")
+        has_kinds = len(profile_data.get("entityKinds", [])) == 6
+        has_targets = len(profile_data.get("extractionTargets", [])) == 6
         all_pass = has_role and has_kinds and has_targets
         self.audit.log("verify_profile", {
             "has_role": has_role, "has_kinds": has_kinds, "has_targets": has_targets,
@@ -851,18 +888,25 @@ class MemoryUser(HttpUser):
     def _setup_instructions(self):
         """Step 2: PUT instructions, GET them back, verify count and content."""
         instructions = [
-            {"family": "EXTRACTION", "name": "expand-acronyms", "text": "Always expand VP as Vice President."},
-            {"family": "EXTRACTION", "name": "preserve-ids", "text": "Copy team names exactly as stated."},
-            {"family": "SUMMARY", "name": "summary-style", "text": "One sentence. State current status only."},
+            {"family": "EXTRACTION", "name": "expand-acronyms",
+             "text": "Always expand acronyms: VP=Vice President, CEO=Chief Executive Officer, WHO=World Health Organization, GDP=Gross Domestic Product. Never leave abbreviated forms in extracted facts."},
+            {"family": "EXTRACTION", "name": "preserve-numbers",
+             "text": "Preserve exact numbers, percentages, and currency amounts from source text. '8% revenue growth to $81.8B' must be stored as-is, not rounded or paraphrased."},
+            {"family": "EXTRACTION", "name": "temporal-precision",
+             "text": "Extract dates at the finest granularity available. 'Q3 2024' is more precise than '2024'. Always include the year."},
+            {"family": "EXTRACTION", "name": "causal-and-scientific",
+             "text": "Extract cause-effect as linked facts. For scientific content, preserve methodology and confidence (e.g. p<0.05). Do not conflate correlation with causation."},
+            {"family": "SUMMARY", "name": "summary-style",
+             "text": "One sentence, current status only. No speculation. Latest version if superseded."},
         ]
-        admin_token = self._get_admin_token()
+        admin_token = self.kc.get_app_admin_token()
         status, body, lat = self.app_svc.put_instructions(
             self.state.space, admin_token, instructions,
         )
         _dashboard.record("put_instructions", status, lat)
         self.audit.log("put_instructions", {"status": status}, status, lat)
         if status not in (200, 201):
-            logger.warning("PUT instructions failed for %s: HTTP %d", self.state.user_id, status)
+            logger.warning("PUT instructions failed for %s: HTTP %d body=%s", self.state.user_id, status, str(body)[:300])
             return
 
         # GET and verify
@@ -871,16 +915,17 @@ class MemoryUser(HttpUser):
         )
         _dashboard.record("get_instructions", status2, lat2)
         instr_list = body2 if isinstance(body2, list) else []
-        count_ok = len(instr_list) == 3
+        count_ok = len(instr_list) == 5
         names = {i.get("name") for i in instr_list}
-        has_all = {"expand-acronyms", "preserve-ids", "summary-style"}.issubset(names)
+        has_all = {"expand-acronyms", "preserve-numbers", "temporal-precision",
+                   "causal-and-scientific", "summary-style"}.issubset(names)
         all_pass = count_ok and has_all
         self.audit.log("verify_instructions", {
             "count": len(instr_list), "count_ok": count_ok, "has_all": has_all,
             "PASS": all_pass,
         }, status2, lat2)
         if all_pass:
-            logger.info("STEP 2 INSTRUCTIONS VERIFY PASS for %s (3 instructions)", self.state.user_id)
+            logger.info("STEP 2 INSTRUCTIONS VERIFY PASS for %s (5 rules)", self.state.user_id)
             _count_success()
 
     def _verify_extraction_status(self):

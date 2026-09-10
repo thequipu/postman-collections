@@ -57,6 +57,9 @@ class AppServiceClient:
 
     # ---- Extraction Profile / Instructions / Model ----
 
+    def delete_extraction_profile(self, space: str, token: str) -> tuple[int, dict | str, float]:
+        return self._request("DELETE", f"/space/by-name/{space}/extraction-profile", token, accept=self._SPACE_ACCEPT)
+
     def put_extraction_profile(self, space: str, token: str,
                                profile: dict) -> tuple[int, dict | str, float]:
         return self._request("PUT", f"/space/by-name/{space}/extraction-profile", token, profile, self._SPACE_ACCEPT)
