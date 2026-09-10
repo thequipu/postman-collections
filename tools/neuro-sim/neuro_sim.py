@@ -71,8 +71,12 @@ def load_config() -> dict:
 
 
 CONFIG = load_config()
-REPORT_DIR = f"reports/sim-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+_run_ts = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+REPORT_DIR = f"reports/sim-{_run_ts}"
 Path(REPORT_DIR).mkdir(parents=True, exist_ok=True)
+
+# One space per run — all users share it, each gets own namespace inside
+_run_space = f"{CONFIG.get('simulation', {}).get('space_prefix', 'neurosim')}-{_run_ts}"
 
 # Which operations are enabled (empty list = all enabled)
 _enabled_ops_raw = CONFIG.get("simulation", {}).get("enabled_ops", [])
@@ -207,9 +211,7 @@ class MemoryUser(HttpUser):
         self.state = UserState(
             user_id=f"{prefix}-{my_index:03d}",
             user_index=my_index,
-            space_prefix=sim.get("space_prefix", "neurosim"),
-            existing_space=sim.get("existing_space", ""),
-            existing_namespace=sim.get("existing_namespace", ""),
+            run_space=_run_space,
         )
 
         # Assign unique data slice (0 = random size per user)
@@ -294,14 +296,15 @@ class MemoryUser(HttpUser):
         return False
 
     def _ensure_space(self):
-        """First ingest creates the space implicitly. Skipped when using existing space."""
-        if self.state.space_created or self.state.using_existing:
-            self.state.space_created = True
+        """First ingest creates space + {space}-self namespace automatically."""
+        if self.state.space_created:
             return
         msg = self.state.next_message()
         if not msg:
             return
         self._ensure_token()
+
+        # Space ingest creates both the space and the -self namespace
         status, body, lat = self.neuro.ingest_space(
             self.state.space, self._token,
             content=msg["content"], thread_id=msg["thread_id"],
@@ -313,12 +316,15 @@ class MemoryUser(HttpUser):
                 content=msg["content"], thread_id=msg["thread_id"],
                 speaker=msg["speaker"],
             )
-        self.state.space_created = True
-        self.audit.log("create_space", {"space": self.state.space}, status, lat)
+        self.audit.log("create_space", {"space": self.state.space, "namespace": self.state.ns}, status, lat)
+        _dashboard.record("create_space", status, lat)
         if status == 202:
             _count_success()
             if isinstance(body, dict) and body.get("unitId"):
                 self.state.ingested_ids.append(body["unitId"])
+
+        self.state.space_created = True
+        logger.info("Space=%s Namespace=%s for %s (HTTP %d)", self.state.space, self.state.ns, self.state.user_id, status)
 
     # ---- Helper: single API call with 401 retry ----
 
@@ -1010,6 +1016,7 @@ def on_init(environment, **kwargs):
         logger.error("App admin token FAILED: %s", e)
         raise
     _dashboard.start()
+    logger.info("Run space: %s", _run_space)
     logger.info("=== Ready to spawn users ===")
 
 

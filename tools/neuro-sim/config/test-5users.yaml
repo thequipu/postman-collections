@@ -46,8 +46,8 @@ simulation:
   hold_after_waves: 180
   cleanup_users: false
   max_deletes: 1
-  existing_space: neurosim-test-nsim-karthik-001
-  existing_namespace: neurosim-test-nsim-karthik-001-self
+  # Fresh space created each run: {space_prefix}-{timestamp}
+  # Each user gets own namespace: {space}-{username}
   # All operations enabled (empty list = all)
   enabled_ops: []
 

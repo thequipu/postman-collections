@@ -7,13 +7,12 @@ class UserState:
     """Tracks everything a simulated user owns: space, namespaces, facts, pins."""
 
     def __init__(self, user_id: str, user_index: int, space_prefix: str = "neurosim",
-                 existing_space: str = "", existing_namespace: str = ""):
+                 run_space: str = ""):
         self.user_id = user_id
         self.user_index = user_index
-        # Use existing space/namespace if provided, else generate new ones
-        self.space = existing_space or f"{space_prefix}-{user_id}"
-        self.ns = existing_namespace or f"{self.space}-self"
-        self.using_existing = bool(existing_space)
+        # All users share one space per run; namespace = {space}-self (auto-created on first ingest)
+        self.space = run_space or f"{space_prefix}-{user_id}"
+        self.ns = f"{self.space}-self"
 
         # Owned resources
         self.graph_namespaces: list[str] = []
