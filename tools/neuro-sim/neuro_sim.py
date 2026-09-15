@@ -516,6 +516,73 @@ class MemoryUser(HttpUser):
         if status2 == 200:
             _count_success()
 
+    @task(3)
+    def do_pin_then_invalidate(self):
+        """Pin a fact, then invalidate it. Recall LIVE should NOT return it — invalidation overrides pin."""
+        if not self._op_enabled("pin_invalidate"):
+            return
+        if not self.state.has_facts():
+            return
+        uri = self.state.random_fact()
+
+        # Step 1: Pin the fact
+        status1, body1, lat1 = self._call(
+            "pin_inv_pin", self.neuro.pin_fact,
+            self.state.space, self.state.ns, self._token, uri,
+        )
+        self.audit.log("pin_inv_pin", {"uri": uri}, status1, lat1)
+        if status1 not in (200, 202):
+            return
+        _count_success()
+        if uri not in self.state.pinned_uris:
+            self.state.pinned_uris.append(uri)
+
+        # Step 2: Invalidate the same fact (admin token)
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        admin_token = self._get_admin_token()
+        status2, body2, lat2 = self.neuro.patch_edge(
+            self.state.space, self.state.ns, admin_token, uri,
+            {"invalidAt": now},
+        )
+        _dashboard.record("pin_inv_invalidate", status2, lat2)
+        self.audit.log("pin_inv_invalidate", {"uri": uri, "invalidAt": now}, status2, lat2)
+        if status2 not in (200, 202):
+            return
+        _count_success()
+        self.state.invalidated_uris.append(uri)
+        if uri in self.state.fact_uris:
+            self.state.fact_uris.remove(uri)
+        if uri in self.state.pinned_uris:
+            self.state.pinned_uris.remove(uri)
+
+        # Step 3: Recall LIVE + includeInvalidated=false — fact was pinned BUT invalidated
+        # Invalidation MUST override pin — fact should NOT appear
+        status3, body3, lat3 = self._call(
+            "pin_inv_recall", self.neuro.recall_namespace,
+            self.state.ns, self._token,
+            query="pin invalidate verification",
+            user_id=self.state.user_id,
+            mode="LIVE", include_invalidated=False,
+        )
+        items3 = body3.get("items", []) if isinstance(body3, dict) else []
+        still_found = any(
+            uri in item.get("provenance", [])
+            for item in items3
+        )
+        passed = not still_found
+        self.audit.log("pin_inv_verify", {
+            "uri": uri,
+            "recall_items": len(items3),
+            "still_found": still_found,
+            "PASS": passed,
+        }, status3, lat3)
+        if status3 == 200:
+            _count_success()
+        if passed:
+            logger.info("PIN→INVALIDATE VERIFY PASS: %s excluded from recall for %s", uri, self.state.user_id)
+        else:
+            logger.warning("PIN→INVALIDATE VERIFY FAIL: %s still in recall for %s (propagation delay?)", uri, self.state.user_id)
+
     @task(5)
     def do_invalidate(self):
         """Invalidate a fact, then recall LIVE+includeInvalidated=false to verify exclusion."""
