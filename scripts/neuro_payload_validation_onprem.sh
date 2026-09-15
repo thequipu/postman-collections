@@ -15,13 +15,13 @@ set -uo pipefail   # no -e: run every call, print whatever comes back
 # =============================================================================
 
 # ---- Config (ONPREM) -------------------------------------------------------
-TOKEN_URL="https://ui-login-onprem.thequipu.in/realms/onpremquipu/protocol/openid-connect/token"
+TOKEN_URL="https://ui-login.thequipu.in/realms/onpremquipu/protocol/openid-connect/token"
 NEURO="https://api-onprem.thequipu.in/quipuNeuro"
 APP_SVC="https://api-onprem.thequipu.in/applicationService"
 SPACE="${SPACE:-payloadtest-$(date -u +%Y%m%d%H%M)}"
 TENANT="${TENANT:-onpremquipu}"
 NS="${NS:-${SPACE}-self}"
-FABRIC="${FABRIC:-memoryonpremquipu}"
+FABRIC="${FABRIC:-karthikdemotestonpremquipu}"
 
 USERNAME="quipuadmin"; PASSWORD="karthik"
 CLIENT_ID="onpremquipu-client"; CLIENT_SECRET="7twCqTl1Ur49tOwtLAbEy6kEXOVEIRwm"
