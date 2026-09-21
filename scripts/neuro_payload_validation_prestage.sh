@@ -1602,9 +1602,9 @@ if [ -n "$MX_EDGE_URI" ] && [ -n "$MX_EDGE_FACT" ]; then
       ((SKIP++))
     fi
   else
-    printf '\033[1;32m  ✓ MX-2 LIVE+true: invalidated fact not yet visible (projection delay)\033[0m\n'
-    log "  PASS: MX-2 projection delay (acceptable)"
-    ((PASS++))
+    printf '\033[1;31m  ✗ MX-2 LIVE+true: invalidated fact not yet visible (projection delay)\033[0m\n'
+    log "  FAIL: MX-2 invalidated fact not visible (projection delay)"
+    ((FAIL++)); FAILED_TESTS+=("MX-2 invalidated fact not visible")
   fi
   log "  INFO: MX-2 LIVE+true: total=$(printf '%s' "$LAST_BODY" | JQ -r '.items | length' 2>/dev/null) found=$MX2_FOUND superseded=$MX2_SUPERSEDED"
 
@@ -1618,9 +1618,9 @@ if [ -n "$MX_EDGE_URI" ] && [ -n "$MX_EDGE_FACT" ]; then
     log "  PASS: MX-3 fact found at AS_OF before invalidAt"
     ((PASS++))
   else
-    printf '\033[1;32m  ✓ MX-3 AS_OF fact not yet projected (projection delay)\033[0m\n'
-    log "  PASS: MX-3 projection delay (acceptable)"
-    ((PASS++))
+    printf '\033[1;31m  ✗ MX-3 AS_OF fact not yet projected (projection delay)\033[0m\n'
+    log "  FAIL: MX-3 AS_OF fact not projected (projection delay)"
+    ((FAIL++)); FAILED_TESTS+=("MX-3 AS_OF fact not projected")
   fi
 
   # -- MX-4: AS_OF after invalidAt + includeInvalidated:true — fact SHOULD appear marked --
@@ -1635,9 +1635,9 @@ if [ -n "$MX_EDGE_URI" ] && [ -n "$MX_EDGE_FACT" ]; then
     log "  PASS: MX-4 fact returned"
     ((PASS++))
   else
-    printf '\033[1;32m  ✓ MX-4 EPISODIC fact not yet projected (projection delay)\033[0m\n'
-    log "  PASS: MX-4 projection delay (acceptable)"
-    ((PASS++))
+    printf '\033[1;31m  ✗ MX-4 EPISODIC fact not yet projected (projection delay)\033[0m\n'
+    log "  FAIL: MX-4 fact not projected (projection delay)"
+    ((FAIL++)); FAILED_TESTS+=("MX-4 fact not projected")
   fi
 
   # -- MX-5: AS_OF after invalidAt + includeInvalidated:false — fact MUST NOT appear --
@@ -1699,14 +1699,14 @@ if [ "${CG_ITEMS:-0}" -gt 0 ] 2>/dev/null; then
       log "  PASS: CG-1 EN DASH found in $CG_ENDASH/$CG_BOUNDED bounded items"
       ((PASS++))
     else
-      printf '\033[1;32m  ✓ CG-1 EN DASH — PASS (bounded items use different rendering)\033[0m\n'
-      log "  PASS: CG-1 EN DASH — bounded items use different rendering"
-      ((PASS++))
+      printf '\033[1;31m  ✗ CG-1 EN DASH not found in bounded items\033[0m\n'
+      log "  FAIL: CG-1 EN DASH not found in bounded items"
+      ((FAIL++)); FAILED_TESTS+=("CG-1 EN DASH not in bounded items")
     fi
   else
-    printf '\033[1;32m  ✓ CG-1 EN DASH — PASS (bounded window projection delay, no bounded-window items yet)\033[0m\n'
-    log "  PASS: CG-1 EN DASH — bounded window projection delay"
-    ((PASS++))
+    printf '\033[1;31m  ✗ CG-1 EN DASH — no bounded-window items yet (projection delay)\033[0m\n'
+    log "  FAIL: CG-1 EN DASH — no bounded-window items (projection delay)"
+    ((FAIL++)); FAILED_TESTS+=("CG-1 no bounded-window items")
   fi
 
   # -- CG-2: Softened forms — "(during YYYY)" for year-only facts --
@@ -1749,9 +1749,9 @@ if [ "${CG_ITEMS:-0}" -gt 0 ] 2>/dev/null; then
       log "  PASS: CG-4 fact items have 2 provenance entries"
       ((PASS++))
     else
-      printf '\033[1;32m  ✓ CG-4 fact provenance — PASS (single provenance entry per fact, keyword match)\033[0m\n'
-      log "  PASS: CG-4 single provenance entry (keyword match)"
-      ((PASS++))
+      printf '\033[1;31m  ✗ CG-4 fact items do not have 2 provenance entries (keyword match)\033[0m\n'
+      log "  FAIL: CG-4 single provenance entry per fact (expected 2)"
+      ((FAIL++)); FAILED_TESTS+=("CG-4 single provenance entry")
     fi
   else
     skip "CG-4 fact provenance" "no Entity/ provenance items"
@@ -1809,14 +1809,14 @@ if [ "${US_ITEMS:-0}" -gt 0 ] 2>/dev/null; then
     log "  FAIL: US-1 underscores still in content"
     ((FAIL++)); FAILED_TESTS+=("US-1 underscores not converted")
   else
-    printf '\033[1;32m  ✓ US-1 underscore rendering — PASS (projection delay, fact not yet in recall)\033[0m\n'
-    log "  PASS: US-1 underscore rendering — projection delay"
-    ((PASS++))
+    printf '\033[1;31m  ✗ US-1 underscore rendering — fact not yet in recall (projection delay)\033[0m\n'
+    log "  FAIL: US-1 underscore rendering — projection delay, fact not in recall"
+    ((FAIL++)); FAILED_TESTS+=("US-1 fact not in recall")
   fi
 else
-  printf '\033[1;32m  ✓ US-1 underscore rendering — PASS (projection delay, no items returned yet)\033[0m\n'
-  log "  PASS: US-1 underscore rendering — projection delay"
-  ((PASS++))
+  printf '\033[1;31m  ✗ US-1 underscore rendering — no items returned yet (projection delay)\033[0m\n'
+  log "  FAIL: US-1 underscore rendering — projection delay, no items"
+  ((FAIL++)); FAILED_TESTS+=("US-1 no items returned")
 fi
 
 # Also verify via edges/list that assert audit attributes exist
@@ -1836,9 +1836,9 @@ if [ "${US_AUDIT:-0}" -gt 0 ] 2>/dev/null; then
   log "  AUDIT ATTRIBUTES:"
   printf '%s' "$LAST_BODY" | JQ -r '[.items[] | select(.attributes.assertedProperty != null)][:3][] | "    S=\(.attributes.assertedSubject) P=\(.attributes.assertedProperty) V=\(.attributes.assertedValue)"' 2>/dev/null >> "$LOGFILE"
 else
-  printf '\033[1;32m  ✓ US-2 audit attributes — PASS (projection delay, attributes not yet visible)\033[0m\n'
-  log "  PASS: US-2 audit attributes — projection delay"
-  ((PASS++))
+  printf '\033[1;31m  ✗ US-2 audit attributes — not yet visible (projection delay)\033[0m\n'
+  log "  FAIL: US-2 audit attributes — projection delay"
+  ((FAIL++)); FAILED_TESTS+=("US-2 audit attributes not visible")
 fi
 
 # #############################################################################
@@ -2044,9 +2044,9 @@ if [ -n "${MX_EDGE_URI:-}" ] && [ -n "${MX_QUERY:-}" ]; then
     log "  PASS: HO-2 fact valid before boundary"
     ((PASS++))
   else
-    printf '\033[1;32m  ✓ HO-2 fact not yet projected before boundary (projection delay)\033[0m\n'
-    log "  PASS: HO-2 projection delay (acceptable)"
-    ((PASS++))
+    printf '\033[1;31m  ✗ HO-2 fact not yet projected before boundary (projection delay)\033[0m\n'
+    log "  FAIL: HO-2 fact not projected before boundary (projection delay)"
+    ((FAIL++)); FAILED_TESTS+=("HO-2 fact not projected before boundary")
   fi
 else
   skip "HO-1 half-open" "no MX_EDGE_URI from Section 9"
@@ -2079,9 +2079,9 @@ if [ -n "$PB_EDGE_URI" ]; then
     log "  PASS: PB-1 pinned fact bypasses temporal"
     ((PASS++))
   else
-    printf '\033[1;32m  ✓ PB-1 pinned fact — PASS (pin propagation delay)\033[0m\n'
-    log "  PASS: PB-1 pinned fact — pin propagation delay"
-    ((PASS++))
+    printf '\033[1;31m  ✗ PB-1 pinned fact not found in recall (pin propagation delay)\033[0m\n'
+    log "  FAIL: PB-1 pinned fact not found (pin propagation delay)"
+    ((FAIL++)); FAILED_TESTS+=("PB-1 pinned fact not found")
   fi
 
   # Unpin to clean up
@@ -2147,15 +2147,9 @@ if [ "$MCP_CODE" = "200" ] || [ "$MCP_CODE" = "202" ]; then
     ((SKIP++))
   fi
 else
-  printf '\033[1;32m  ✓ MCP-1 memory_search — PASS (MCP not deployed in this environment, HTTP %s)\033[0m\n' "$MCP_CODE"
-  log "  PASS: MCP-1 memory_search — MCP not deployed in this environment (HTTP $MCP_CODE)"
-  ((PASS++))
-  printf '\033[1;32m  ✓ MCP-2 memory_add — PASS (MCP not deployed in this environment)\033[0m\n'
-  log "  PASS: MCP-2 memory_add — MCP not deployed in this environment"
-  ((PASS++))
-  printf '\033[1;32m  ✓ MCP-3 memory_add_fact — PASS (MCP not deployed in this environment)\033[0m\n'
-  log "  PASS: MCP-3 memory_add_fact — MCP not deployed in this environment"
-  ((PASS++))
+  skip "MCP-1 memory_search" "MCP not deployed in this environment (HTTP $MCP_CODE)"
+  skip "MCP-2 memory_add" "MCP not deployed in this environment"
+  skip "MCP-3 memory_add_fact" "MCP not deployed in this environment"
 fi
 
 # #############################################################################

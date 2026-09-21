@@ -1041,10 +1041,9 @@ if [ "${JANE_BERLIN:-0}" -gt 0 ] 2>/dev/null; then
   log "  PASS: positiveExample followed: Jane → Berlin fact exists"
   ((PASS++))
 else
-  # Extraction model may not produce this exact fact — count as PASS with note
-  printf '\033[1;32m  ✓ positiveExample: Jane → Berlin not extracted (model-dependent, acceptable)\033[0m\n'
-  log "  PASS: positiveExample: Jane → Berlin not extracted (model-dependent, acceptable)"
-  ((PASS++))
+  printf '\033[1;31m  ✗ positiveExample: Jane → Berlin not extracted (model-dependent)\033[0m\n'
+  log "  FAIL: positiveExample: Jane → Berlin not extracted (model-dependent)"
+  ((FAIL++)); FAILED_TESTS+=("positiveExample: Jane → Berlin not extracted")
 fi
 
 # Verify exclusions — no facts from greetings/scheduling (ingest_4)
@@ -1059,21 +1058,16 @@ else
   ((FAIL++))
 fi
 
-# Verify instruction effect — VP expanded to Vice President
+# Verify instruction effect — VP MUST be expanded to Vice President
 VP_EXPANDED=$(printf '%s' "$LAST_BODY" | JQ -r '[.items[] | select(.fact | test("Vice President"; "i"))] | length' 2>/dev/null)
-VP_HAS_ROLE=$(printf '%s' "$LAST_BODY" | JQ -r '[.items[] | select(.fact | test("VP|Vice President"; "i"))] | length' 2>/dev/null)
 if [ "${VP_EXPANDED:-0}" -gt 0 ] 2>/dev/null; then
   printf '\033[1;32m  ✓ instruction followed: VP expanded to Vice President (%s facts)\033[0m\n' "$VP_EXPANDED"
   log "  PASS: instruction followed: VP expanded to Vice President ($VP_EXPANDED facts)"
   ((PASS++))
-elif [ "${VP_HAS_ROLE:-0}" -gt 0 ] 2>/dev/null; then
-  printf '\033[1;32m  ✓ VP role extracted (model kept abbreviated form — instruction stored correctly, expansion is model-dependent)\033[0m\n'
-  log "  PASS: VP role extracted (instruction stored+verified, expansion model-dependent)"
-  ((PASS++))
 else
-  printf '\033[1;32m  ✓ VP instruction stored and verified (no VP-related facts yet — extraction pending)\033[0m\n'
-  log "  PASS: VP instruction stored and verified (extraction pending)"
-  ((PASS++))
+  printf '\033[1;31m  ✗ instruction NOT followed: VP was NOT expanded to Vice President\033[0m\n'
+  log "  FAIL: instruction NOT followed: VP not expanded to Vice President"
+  ((FAIL++)); FAILED_TESTS+=("VP not expanded to Vice President")
 fi
 
 # C3. episodes/list
@@ -1346,10 +1340,9 @@ if [ -n "$CREATED_NODE_URI" ]; then
     assert_equals "created node summary" ".summary" "Test entity created by graph test"
     assert_equals "created node attribute" ".attributes.purpose" "test"
   else
-    # Async accepted but not yet projected — count as PASS with note, not SKIP
-    printf '\033[1;32m  ✓ graph_create_node accepted (async — not yet projected after retries)\033[0m\n'
-    log "  PASS: graph_create_node accepted (async — not yet projected after retries)"
-    ((PASS++))
+    printf '\033[1;31m  ✗ graph_create_node accepted but not projected after retries\033[0m\n'
+    log "  FAIL: graph_create_node accepted but not projected after retries"
+    ((FAIL++)); FAILED_TESTS+=("graph_create_node not projected after retries")
   fi
 else
   skip "verify_create" "no CREATED_NODE_URI"
@@ -1463,10 +1456,9 @@ if [ -n "$EDGE_URI" ]; then
       log "  PASS: $_short found in recall provenance"
       ((PASS++))
     else
-      # Pin propagation timing varies — count as PASS with note
-      printf '\033[1;32m  ✓ %s not yet in recall provenance (pin propagation delay, acceptable)\033[0m\n' "$_short"
-      log "  PASS: $_short not yet in recall provenance (pin propagation delay, acceptable)"
-      ((PASS++))
+      printf '\033[1;31m  ✗ %s not yet in recall provenance (pin propagation delay)\033[0m\n' "$_short"
+      log "  FAIL: $_short not yet in recall provenance (pin propagation delay)"
+      ((FAIL++)); FAILED_TESTS+=("$_short not in recall provenance")
     fi
   done
 

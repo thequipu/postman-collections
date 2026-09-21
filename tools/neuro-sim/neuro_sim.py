@@ -837,10 +837,11 @@ class MemoryUser(HttpUser):
             return
 
         _count_success()
+        # Fields returned by POST /graph/edges/list
         expected_fields = [
             "uri", "fact", "sourceNodeName", "sourceNodeUri",
-            "targetNodeName", "targetNodeUri", "label",
-            "namespaceId", "validAt", "invalidAt", "pinned", "superseded",
+            "targetNodeName", "targetNodeUri",
+            "validAt", "invalidAt",
         ]
         sample = items[0]
         present = [f for f in expected_fields if f in sample]
