@@ -1,0 +1,107 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!--
+  Jenkins job: qase-release-verification
+  A parameterized pipeline launched BY Qase (Test Runs -> Launch). Qase supplies the
+  five QASE_* parameters; the job runs a test script and publishes results back.
+
+  Create it either way:
+    UI    New Item -> Pipeline -> name it, then paste this under the job's config
+    CLI   curl -s -X POST "$JENKINS/createItem?name=qase-release-verification" \
+               -u "$USER:$JENKINS_API_TOKEN" \
+               -H "Content-Type: application/xml" \
+               [data-binary] @jenkins-job-qase-release-verification.xml   (use the data-binary flag)
+
+  Prerequisite: a Secret text credential with id `qase-api-token` holding the Qase API token.
+-->
+<flow-definition plugin="workflow-job">
+  <description>Release verification triggered from Qase. Runs a test script and publishes results to the Qase run that launched it.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <!-- ===== supplied by Qase at launch ===== -->
+        <hudson.model.StringParameterDefinition>
+          <name>QASE_PROJECT_CODE</name>
+          <description>Qase project code (QQA)</description>
+          <defaultValue>QQA</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>QASE_RUN_ID</name>
+          <description>Qase run id to report against — Qase fills this in</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>QASE_REPORT</name>
+          <description>Publish results back to Qase</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>QASE_RUN_COMPLETE</name>
+          <description>Complete the Qase run when the job finishes</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>QASE_API_BASE_URL</name>
+          <description>Qase API base URL</description>
+          <defaultValue>https://api.qase.io</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <!-- ===== ours ===== -->
+        <hudson.model.ChoiceParameterDefinition>
+          <name>ENVIRONMENT</name>
+          <description>Target environment</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>onprem</string>
+              <string>prestage</string>
+              <string>local</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SCRIPT</name>
+          <description>Test script to run, relative to the repo root. Must leave reports/results.json behind.</description>
+          <defaultValue>scripts/run_suite.sh</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>FAIL_ON_TEST_FAILURE</name>
+          <description>Fail the build when any case fails</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>git@github.com:thequipu/postman-collections.git</url>
+          <credentialsId>github-ssh</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/main</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <extensions/>
+    </scm>
+    <scriptPath>Jenkinsfile.qase</scriptPath>
+    <lightweight>false</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
