@@ -34,3 +34,4 @@ config/db-configs/csv-users.json
 # tracked are unaffected until removed from the index with `git rm --cached`.
 scripts/neuro_*.sh
 tools/neuro-sim/config/*.yaml
+docker/requirements.txt

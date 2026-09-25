@@ -107,9 +107,15 @@ pipeline {
         // run in this image rather than on the agent's interpreter.
         sh '''#!/usr/bin/env bash
           set -uo pipefail
-          docker image inspect "${UI_DOCKER_IMAGE}" >/dev/null 2>&1 || \
-            docker build -t "${UI_DOCKER_IMAGE}" -f docker/ui-tests.Dockerfile docker/ || \
+          # run_suite.py imports the UI repo's application package, so the image
+          # needs that repo's own dependencies, not just the pytest ones.
+          cp ui-repo/requirements.txt docker/requirements.txt
+          # Always build: docker caches the layers, and this is what picks up a
+          # change to requirements.txt. Skipping when the tag exists would pin
+          # the agent to whatever it built first.
+          docker build -t "${UI_DOCKER_IMAGE}" -f docker/ui-tests.Dockerfile docker/ || \
             echo "!! could not build ${UI_DOCKER_IMAGE} - preflight will fail on it"
+          rm -f docker/requirements.txt
         '''
       }
     }

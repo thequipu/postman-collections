@@ -41,10 +41,11 @@ def emit(key, status, ms=0, msg=""):
     print(f"{key} {status} {int(ms)}{(' ' + msg) if msg else ''}", flush=True)
 
 
-def run(cmd, cwd):
+def run(cmd, cwd, env=None):
     """Run a command, never raise. Returns (exit_code, combined_output)."""
     try:
-        p = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=TIMEOUT)
+        p = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=TIMEOUT,
+                           env={**os.environ, **(env or {})} if env else None)
         return p.returncode, (p.stdout or "") + (p.stderr or "")
     except subprocess.TimeoutExpired:
         return 124, f"runner exceeded {TIMEOUT}s"
@@ -270,14 +271,17 @@ def suite(cases):
             for var in ("APP_URL",):
                 if os.environ.get(var):
                     cmd += ["-e", f"{var}={os.environ[var]}"]
-            cmd += ["-v", f"{UI_REPO}:/work", "-w", "/work", UI_DOCKER_IMAGE, "python", *args]
+            # run_suite.py shows the browser by default; a build agent has no
+            # display, so its own QA_HEADED switch turns that off.
+            cmd += ["-e", "QA_HEADED=0",
+                    "-v", f"{UI_REPO}:/work", "-w", "/work", UI_DOCKER_IMAGE, "python", *args]
             cwd = ROOT
         else:
             python = UI_REPO / "venv" / "bin" / "python"
             cmd = [str(python) if python.exists() else sys.executable, *args]
             cwd = UI_REPO
         print(f">> run_suite {suite_name} {step}".rstrip(), file=sys.stderr)
-        code, out = run(cmd, cwd)
+        code, out = run(cmd, cwd, env={"QA_HEADED": "0"})
 
         reports = sorted(results_dir.glob(f"{suite_name}_*.json"),
                          key=lambda p: p.stat().st_mtime) if results_dir.exists() else []
