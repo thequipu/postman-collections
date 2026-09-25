@@ -64,8 +64,8 @@ pipeline {
           mkdir -p reports
           rm -f "${RESULTS}"        # never publish a previous build's results
           echo ">> environment: ${ENVIRONMENT}"
-          echo ">> script:      ${SCRIPT}   (mode=${MODE} seed=${SEED})"
-          MODE="${MODE}" SEED="${SEED}" bash "${SCRIPT}" \
+          echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
+          MODE="${MODE:-smoke}" SEED="${SEED:-1}" bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
           echo ">> $(python3 -c "import json;print(len(json.load(open('${RESULTS}'))))") results"
