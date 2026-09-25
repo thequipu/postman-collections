@@ -84,7 +84,22 @@ def main():
 
     before = recorded_cases()
     bulk = call("POST", f"/result/{CODE}/{RUN}/bulk", {"results": payload})
-    landed = recorded_cases() - before
+
+    # Qase's result listing lags its writes: a bulk result can be absent from the
+    # read immediately after a 200 and present a second later. Reading once and
+    # posting the "missing" straight away duplicates whatever was merely late, so
+    # settle the read first — stop as soon as two consecutive reads agree.
+    seen = recorded_cases()
+    for _ in range(4):
+        if len(seen) >= len(before) + len(by_case):
+            break
+        time.sleep(2)
+        again = recorded_cases()
+        if again == seen:
+            break
+        seen = again
+
+    landed = seen - before
     if landed:
         print(f"   bulk recorded {len(landed)}")
     elif bulk.get("status"):
@@ -93,7 +108,7 @@ def main():
     else:
         print(f"   bulk refused ({bulk.get('errorMessage')}) — posting individually")
 
-    missing = [c for c in by_case if c not in recorded_cases()]
+    missing = [c for c in by_case if c not in seen]
     for i, cid in enumerate(missing, 1):
         d = call("POST", f"/result/{CODE}/{RUN}", by_case[cid])
         if not d.get("status"):
