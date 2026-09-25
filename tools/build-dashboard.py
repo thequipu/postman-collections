@@ -7,7 +7,7 @@ Writes a self-contained HTML file: every run in the project, its suite-level
 breakdown, its failures, and pass rate per feature across builds. Publish it
 wherever you like -- it needs no network once written.
 """
-import argparse, json, os, sys, urllib.error, urllib.request
+import argparse, json, os, re, sys, urllib.error, urllib.request
 from datetime import date
 
 BASE = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/") + "/v1"
@@ -17,6 +17,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Qase stamps the build onto this run custom field; keep in sync with Jenkinsfile.qase.
 BUILD_FIELD_ID = int(os.environ.get("QASE_BUILD_FIELD_ID", "3"))
+
+# run_suite.sh embeds the Linear key as [QTC-123]; a bare bracket is not an id.
+LINEAR_ID = re.compile(r"\[([A-Z][A-Z0-9]+-\d+)\]")
 
 
 def get(path):
@@ -61,7 +64,7 @@ def main():
         desc = c.get("description") or ""
         cases[str(c["id"])] = {
             # run_suite.sh embeds the Linear id as [QTC-nnn] in the description
-            "linear": desc.split("[", 1)[1].split("]", 1)[0] if "[" in desc and "]" in desc else None,
+            "linear": (LINEAR_ID.search(desc) or [None, None])[1],
             "title": c["title"],
             "area": crumbs[0],
             "feature": crumbs[1] if len(crumbs) > 1 else "",

@@ -1,0 +1,566 @@
+<title>Qase Workspace Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --page:#fbfcfd; --panel:#ffffff; --sunk:#f1f5f8; --line:#dce5ea; --line-soft:#eaf0f4;
+  --ink:#101a21; --ink-2:#3d4f5a; --muted:#5f717d;
+  --accent:#0f6d87; --accent-soft:#e2f0f4;
+  --pass:#1d7a4d; --fail:#b3352b; --skip:#a8760f; --block:#6a4fa0; --untested:#93a2ac;
+  --pass-bg:#e6f3eb; --fail-bg:#fbe9e7; --skip-bg:#fbf1dd; --block-bg:#efeaf8; --untested-bg:#eef2f5;
+  --shadow:0 1px 2px rgba(16,26,33,.06), 0 8px 24px -16px rgba(16,26,33,.24);
+  --sans:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#0c1418; --panel:#121d23; --sunk:#16232a; --line:#23343d; --line-soft:#1b2a32;
+  --ink:#e8f0f4; --ink-2:#bacad3; --muted:#8ba0ac;
+  --accent:#4bb4d0; --accent-soft:#12303a;
+  --pass:#4cc183; --fail:#f2776a; --skip:#e0ab45; --block:#a98fe0; --untested:#7b8d98;
+  --pass-bg:#11301f; --fail-bg:#3a1712; --skip-bg:#33260c; --block-bg:#241b3b; --untested-bg:#1b2930;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0c1418; --panel:#121d23; --sunk:#16232a; --line:#23343d; --line-soft:#1b2a32;
+  --ink:#e8f0f4; --ink-2:#bacad3; --muted:#8ba0ac;
+  --accent:#4bb4d0; --accent-soft:#12303a;
+  --pass:#4cc183; --fail:#f2776a; --skip:#e0ab45; --block:#a98fe0; --untested:#7b8d98;
+  --pass-bg:#11301f; --fail-bg:#3a1712; --skip-bg:#33260c; --block-bg:#241b3b; --untested-bg:#1b2930;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+h1,h2{text-wrap:balance;margin:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;background:var(--page);
+       border-bottom:1px solid var(--line)}
+.head-in{max-width:1180px;margin:0 auto;padding:18px 20px 0;display:flex;flex-wrap:wrap;
+         align-items:baseline;gap:8px 14px}
+.brand{font-size:19px;font-weight:600;letter-spacing:-.015em}
+.brand span{color:var(--muted);font-weight:500}
+.plan{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;
+      background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.head-meta{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.tabs{max-width:1180px;margin:0 auto;padding:14px 20px 0;display:flex;gap:2px;overflow-x:auto}
+.tab{flex:0 0 auto;padding:8px 15px 10px;border:0;background:none;font:inherit;font-weight:500;
+     color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab .n{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:6px}
+.tab:focus-visible,.qchip:focus-visible,button:focus-visible,input:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+
+section{margin-top:26px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.sec-head h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.sec-head .hint{font-size:12px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);
+       overflow:hidden}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:1px;background:var(--line-soft)}
+.tile{background:var(--panel);padding:14px 16px 15px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:25px;font-weight:600;
+         line-height:1.15;margin-top:4px}
+.tile .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.v-pass{color:var(--pass)} .v-fail{color:var(--fail)} .v-skip{color:var(--skip)}
+.bar{display:flex;height:11px;border-radius:3px;overflow:hidden;background:var(--sunk)}
+.bar i{display:block;height:100%}
+.b-passed{background:var(--pass)} .b-failed{background:var(--fail)} .b-skipped{background:var(--skip)}
+.b-blocked{background:var(--block)} .b-untested{background:var(--untested)}
+
+/* quota */
+.quota{display:flex;flex-direction:column}
+.q-row{display:grid;grid-template-columns:minmax(150px,1.3fr) 108px minmax(0,1fr);gap:16px;align-items:center;
+       padding:11px 18px;border-top:1px solid var(--line-soft)}
+.q-row:first-child{border-top:0}
+.q-name{font-weight:500}
+.q-name small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+.q-val{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px;font-weight:600}
+.q-meter{height:7px;border-radius:3px;background:var(--sunk);overflow:hidden;position:relative}
+.q-meter i{display:block;height:100%;background:var(--accent)}
+.q-meter.warn i{background:var(--skip)} .q-meter.hot i{background:var(--fail)}
+.q-cap{font-size:11.5px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+.note{padding:13px 18px;background:var(--skip-bg);color:var(--ink-2);font-size:12.5px;
+      border-top:1px solid var(--line-soft)}
+.note b{color:var(--skip)}
+
+/* project cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);
+      padding:16px 18px 17px}
+.card h3{margin:0;font-size:15px;font-weight:600}
+.card .code{font-family:var(--mono);font-size:11px;color:var(--accent);
+            background:var(--accent-soft);padding:2px 7px;border-radius:4px;margin-left:8px}
+.card .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:13px 0 12px}
+.card .grid div{min-width:0}
+.card .grid .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+                font-weight:600}
+.card .grid .v{font-family:var(--mono);font-size:18px;font-weight:600;margin-top:1px}
+.card .foot{font-size:12px;color:var(--muted);margin-top:9px}
+
+/* query */
+.qbar{display:flex;gap:9px;padding:14px 16px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.qbar input{flex:1 1 320px;min-width:0;font-family:var(--mono);font-size:13px;padding:9px 12px;
+            border:1px solid var(--line);border-radius:7px;background:var(--sunk);color:var(--ink)}
+.qbar button{padding:9px 16px;border:1px solid var(--accent);border-radius:7px;background:var(--accent);
+             color:#fff;font:inherit;font-weight:600;cursor:pointer}
+:root[data-theme="dark"] .qbar button,
+:root:not([data-theme="light"]) .qbar button{color:#08171c}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .qbar button{color:#fff}}
+.qchips{display:flex;gap:7px;padding:12px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line-soft);
+        background:var(--sunk)}
+.qchip{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);
+       font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
+.qchip:hover{border-color:var(--accent);color:var(--accent)}
+.qchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);
+       font-weight:600}
+.qchip .n{font-family:var(--mono);font-size:11px;margin-left:6px;opacity:.75}
+.qerr{padding:11px 16px;background:var(--fail-bg);color:var(--fail);font-family:var(--mono);font-size:12.5px}
+.qmeta{padding:10px 16px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line-soft)}
+.qmeta b{color:var(--ink);font-family:var(--mono)}
+
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:660px}
+th,td{padding:8px 12px;text-align:left;border-top:1px solid var(--line-soft);font-size:13px;
+      vertical-align:top}
+thead th{border-top:0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+         font-weight:600;white-space:nowrap;padding-block:12px 9px;border-bottom:1px solid var(--line);
+         background:var(--panel)}
+td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lid{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.vd{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.vd-passed{color:var(--pass)} .vd-failed{color:var(--fail)} .vd-skipped{color:var(--skip)}
+.vd-blocked{color:var(--block)} .vd-untested{color:var(--untested)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border:1px solid var(--line);border-radius:4px;
+     color:var(--muted);white-space:nowrap}
+.flag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.04em;padding:1px 6px;
+      border-radius:3px;color:var(--skip);background:var(--skip-bg);margin-left:6px}
+.empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:13px}
+.more{padding:11px 16px;text-align:center;color:var(--muted);font-size:12.5px;
+      border-top:1px solid var(--line-soft)}
+dl.syn{margin:0;padding:14px 18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 16px;
+       font-size:12.5px;border-top:1px solid var(--line-soft)}
+dl.syn dt{font-family:var(--mono);color:var(--accent);white-space:nowrap}
+dl.syn dd{margin:0;color:var(--muted)}
+footer{margin-top:32px;padding-top:15px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);
+       display:flex;flex-wrap:wrap;gap:6px 18px}
+footer code{font-family:var(--mono)}
+[hidden]{display:none!important}
+@media (max-width:640px){
+  .wrap,.head-in,.tabs{padding-inline:14px}
+  .q-row{grid-template-columns:1fr;gap:6px}
+  .tiles{grid-template-columns:repeat(3,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="head-in">
+    <div class="brand">Qase Workspace <span>· Quipu QA</span></div>
+    <span class="plan" id="plan"></span>
+    <div class="head-meta" id="meta"></div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ OVERVIEW ============ -->
+  <div id="p-overview" role="tabpanel">
+    <section>
+      <div class="sec-head"><h2>Workspace</h2><span class="hint" id="ws-hint"></span></div>
+      <div class="panel">
+        <div class="tiles" id="ws-tiles"></div>
+        <div style="padding:16px 18px 18px;border-top:1px solid var(--line-soft)">
+          <div class="bar" id="ws-bar"></div>
+          <div style="margin-top:9px;font-size:12px;color:var(--muted)" id="ws-legend"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Plan and quotas</h2>
+        <span class="hint">Usage against the published limits for each tier.</span></div>
+      <div class="panel quota" id="quota"></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Projects</h2>
+        <span class="hint">Every project in the workspace.</span></div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Build history</h2>
+        <span class="hint">Every run that produced a verdict, oldest first.</span></div>
+      <div class="panel tscroll"><table id="builds"></table></div>
+    </section>
+  </div>
+
+  <!-- ============ QUERIES ============ -->
+  <div id="p-queries" role="tabpanel" hidden>
+    <section>
+      <div class="sec-head"><h2>Query</h2>
+        <span class="hint">Same syntax as Qase's own search box, run against this snapshot.</span></div>
+      <div class="panel">
+        <div class="qchips" id="qchips"></div>
+        <div class="qbar">
+          <input id="q" spellcheck="false" aria-label="Query">
+          <button id="qrun" type="button">Run</button>
+        </div>
+        <div class="qerr" id="qerr" hidden></div>
+        <div class="qmeta" id="qmeta"></div>
+        <div class="tscroll"><table id="qtable"></table></div>
+        <div class="more" id="qmore" hidden></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Syntax</h2>
+        <span class="hint">Fields available on this snapshot.</span></div>
+      <div class="panel"><dl class="syn" id="syn"></dl></div>
+    </section>
+  </div>
+
+  <!-- ============ RUNS ============ -->
+  <div id="p-runs" role="tabpanel" hidden>
+    <section>
+      <div class="sec-head"><h2>All runs</h2>
+        <span class="hint">Across every project in the workspace.</span></div>
+      <div class="panel tscroll"><table id="runs"></table></div>
+    </section>
+  </div>
+
+  <footer>
+    <span>Source: Qase API <code>api.qase.io/v1</code></span>
+    <span id="snap"></span>
+    <span>Snapshot, not live — rebuild with <code>tools/fetch-workspace.py</code></span>
+  </footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const VERDICTS = ["passed","failed","blocked"];
+const ORDER = ["passed","failed","blocked","skipped","untested"];
+const LBL = {passed:"Passed",failed:"Failed",blocked:"Blocked",skipped:"Skipped",untested:"Untested"};
+
+/* ---------- derive per-case history ---------- */
+const runs = DATA.runs.slice();
+const cases = DATA.cases;
+const hist = {};                       // case key -> [{run, build, status, project}]
+runs.forEach(r => (r.cases||[]).forEach(k => {
+  const st = (r.results[k]||{}).status || "untested";
+  (hist[k] = hist[k] || []).push({run:r.id, build:r.build, status:st, project:r.project});
+}));
+
+const rows = Object.entries(cases).map(([k,c]) => {
+  const h = hist[k] || [];
+  const verdicts = h.filter(x => VERDICTS.includes(x.status));
+  const last = verdicts.length ? verdicts[verdicts.length-1] : null;
+  const seen = new Set(verdicts.map(x => x.status));
+  return {
+    key:k, ...c,
+    entity:"case",
+    runs:h.length,
+    executions:verdicts.length,
+    verdict:last ? last.status : "untested",
+    lastbuild:last ? (last.build || "") : "",
+    unstable: seen.has("passed") && (seen.has("failed") || seen.has("blocked")),
+    executed: verdicts.length > 0,
+    linked: !!c.linear,
+    history:h,
+  };
+});
+// Cases that have actually run come first; the untouched sample project sinks to the bottom.
+rows.sort((a,b) =>
+  (b.runs - a.runs) || a.project.localeCompare(b.project) ||
+  a.area.localeCompare(b.area) || a.title.localeCompare(b.title));
+
+const runRows = runs.map(r => {
+  const t = tally(r, r.cases||[]);
+  return {entity:"run", key:r.project+":"+r.id, id:r.id, project:r.project, title:r.title,
+          build:r.build||"", status:r.status, cases:(r.cases||[]).length,
+          passed:t.passed, failed:t.failed, blocked:t.blocked, skipped:t.skipped,
+          verdicts:t.verdicts, rate:t.rate, start:r.start, end:r.end};
+});
+
+function tally(run, keys){
+  const t = {passed:0,failed:0,blocked:0,skipped:0,untested:0};
+  keys.forEach(k => { const s = (run.results[k]||{}).status || "untested"; t[s in t ? s : "untested"]++; });
+  t.total = keys.length;
+  t.verdicts = t.passed + t.failed + t.blocked;   // skipped was never attempted
+  t.rate = t.verdicts ? t.passed/t.verdicts : null;
+  return t;
+}
+const pct = v => v==null ? "—" : Math.round(v*100)+"%";
+
+/* ---------- workspace totals ---------- */
+const totals = {passed:0,failed:0,blocked:0,skipped:0,untested:0};
+runs.forEach(r => (r.cases||[]).forEach(k => {
+  const s = (r.results[k]||{}).status || "untested"; totals[s in totals ? s : "untested"]++;
+}));
+totals.results = Object.values(totals).reduce((a,b)=>a+b,0) - totals.untested;
+const wsVerdicts = totals.passed + totals.failed + totals.blocked;
+const wsRate = wsVerdicts ? totals.passed/wsVerdicts : null;
+
+function renderOverview(){
+  document.getElementById("ws-hint").textContent =
+    `${DATA.projects.length} projects · ${rows.length} cases · ${runs.length} runs`;
+  const t = [
+    ["Projects", DATA.projects.length, ""],
+    ["Test cases", rows.length, `${rows.filter(r=>r.executed).length} ever executed`],
+    ["Runs", runs.length, `${runRows.filter(r=>r.status==="in_progress").length} active`],
+    ["Verdicts", wsVerdicts, "passed + failed + blocked"],
+    ["Pass rate", pct(wsRate), `of ${wsVerdicts}`],
+    ["Defects", DATA.defects.length, ""],
+  ];
+  document.getElementById("ws-tiles").innerHTML = t.map(([k,v,s]) =>
+    `<div class="tile"><div class="k">${k}</div><div class="v num">${v}</div>
+      ${s?`<div class="s">${esc(s)}</div>`:""}</div>`).join("");
+
+  const denom = Object.values(totals).reduce((a,b)=>a+b,0) - totals.results;
+  const all = totals.passed+totals.failed+totals.blocked+totals.skipped+totals.untested;
+  document.getElementById("ws-bar").innerHTML = ORDER.filter(k=>totals[k]>0).map(k =>
+    `<i class="b-${k}" style="width:${(totals[k]/all*100).toFixed(2)}%" title="${LBL[k]}: ${totals[k]}"></i>`).join("");
+  document.getElementById("ws-legend").innerHTML = ORDER.filter(k=>totals[k]>0).map(k =>
+    `<span style="margin-right:18px">${LBL[k]} <b class="num">${totals[k]}</b></span>`).join("");
+
+  /* quotas */
+  const activeRuns = runRows.filter(r => r.status === "in_progress").length;
+  const q = [
+    ["Projects","2 on Free, unlimited on Teams", DATA.projects.length, 2],
+    ["Users","4 on Free, 5+ seats on Teams", DATA.users.length, 4],
+    ["Active runs","2 concurrent on Free, unlimited on Teams", activeRuns, 2],
+    ["Results published","5,000 per month on Free, unlimited on Teams", totals.results, 5000],
+  ];
+  document.getElementById("quota").innerHTML = q.map(([n,cap,used,limit]) => {
+    const f = Math.min(used/limit, 1);
+    const cls = f >= 1 ? "hot" : f >= .7 ? "warn" : "";
+    return `<div class="q-row">
+      <div class="q-name">${n}<small>${esc(cap)}</small></div>
+      <div class="q-val">${used}</div>
+      <div><div class="q-meter ${cls}"><i style="width:${(f*100).toFixed(1)}%"></i></div>
+        <div class="q-cap">${used} of ${limit.toLocaleString()} Free-tier allowance</div></div>
+    </div>`;
+  }).join("") + `<div class="note"><b>Plan is inferred, not reported.</b>
+    Qase has no plan endpoint. The rate-limit policy this token receives is
+    <code>${esc(DATA.ratelimit_policy||"unknown")}</code> — 600 requests/minute is the Teams
+    allowance; Free is capped at 150. Custom fields and the query language both work here, and
+    both are gated off Free, which agrees. If this is a Teams trial rather than a paid plan,
+    check Settings → Billing: when it lapses, the <code>linerid</code> and <code>Build</code>
+    custom fields the pipeline writes would stop being available.</div>`;
+
+  /* project cards */
+  document.getElementById("cards").innerHTML = DATA.projects.map(p => {
+    const pr = runRows.filter(r => r.project === p.code);
+    const done = pr.filter(r => r.verdicts > 0);
+    const last = done[done.length-1];
+    return `<div class="card">
+      <h3>${esc(p.title)}<span class="code">${esc(p.code)}</span></h3>
+      <div class="grid">
+        <div><div class="k">Cases</div><div class="v num">${p.cases}</div></div>
+        <div><div class="k">Suites</div><div class="v num">${p.suites}</div></div>
+        <div><div class="k">Runs</div><div class="v num">${p.runs}</div></div>
+      </div>
+      <div class="bar">${last ? ORDER.filter(k=>last[k]>0).map(k =>
+          `<i class="b-${k}" style="width:${(last[k]/last.cases*100).toFixed(2)}%"></i>`).join("")
+        : `<i class="b-untested" style="width:100%"></i>`}</div>
+      <div class="foot">${last
+        ? `Last verdict run: #${last.id} ${esc(last.build||"no build")} — ${pct(last.rate)} of ${last.verdicts}`
+        : "No run has produced a verdict."}</div>
+    </div>`;
+  }).join("");
+
+  /* build history */
+  const done = runRows.filter(r => r.verdicts > 0);
+  document.getElementById("builds").innerHTML =
+    `<thead><tr><th>Run</th><th>Project</th><th>Build</th><th>Scope</th><th>Pass</th><th>Fail</th>
+      <th>Block</th><th>Skip</th><th>Rate</th><th>Finished</th></tr></thead><tbody>` +
+    (done.length ? done.map(r => `<tr>
+      <td class="mono">#${r.id}</td><td class="mono">${esc(r.project)}</td>
+      <td class="mono">${esc(r.build||"—")}</td><td class="mono">${r.cases}</td>
+      <td class="mono vd-passed">${r.passed}</td><td class="mono vd-failed">${r.failed||""}</td>
+      <td class="mono vd-blocked">${r.blocked||""}</td><td class="mono vd-skipped">${r.skipped||""}</td>
+      <td class="mono"><b>${pct(r.rate)}</b></td><td class="mono">${esc(r.end||r.start||"—")}</td></tr>`).join("")
+     : `<tr><td colspan="10" class="empty">No run has produced a verdict yet.</td></tr>`) +
+    `</tbody>`;
+
+  document.getElementById("runs").innerHTML =
+    `<thead><tr><th>Run</th><th>Project</th><th>Title</th><th>Build</th><th>Status</th>
+      <th>Cases</th><th>Verdicts</th><th>Rate</th></tr></thead><tbody>` +
+    runRows.map(r => `<tr>
+      <td class="mono">#${r.id}</td><td class="mono">${esc(r.project)}</td>
+      <td>${esc(r.title)}</td><td class="mono">${esc(r.build||"—")}</td>
+      <td><span class="vd vd-${r.status==="passed"?"passed":r.status==="failed"?"failed":"skipped"}">${esc(r.status.replace("_"," "))}</span></td>
+      <td class="mono">${r.cases}</td><td class="mono">${r.verdicts}</td>
+      <td class="mono">${pct(r.rate)}</td></tr>`).join("") + `</tbody>`;
+}
+
+/* ---------- QQL-ish query engine ---------- */
+/* Supports: field op value, joined by and/or (and binds tighter). Strings quoted,
+   bare true/false/numbers. Operators = != ~ !~ > < >= <=                        */
+const FIELDS = {
+  case: {project:"project code", area:"top-level suite", feature:"second-level suite",
+         category:"leaf suite (Functional / UI Testing)", title:"case title",
+         suite:"full suite path", linear:"Linear id, or none", automation:"automated | manual",
+         verdict:"latest verdict: passed | failed | blocked | untested",
+         lastbuild:"build of the latest verdict", executions:"number of verdicts",
+         runs:"runs the case appeared in", unstable:"true when it both passed and failed",
+         executed:"true when it ever got a verdict", linked:"true when it has a Linear id"},
+  run: {project:"project code", id:"run number", title:"run title", build:"build stamped on the run",
+        status:"passed | failed | in_progress", cases:"cases in scope", verdicts:"verdicts recorded",
+        passed:"passed count", failed:"failed count", rate:"pass rate 0-1"},
+};
+const OPS = ["!~","~",">=","<=","!=","=",">","<"];
+
+function parseQuery(src){
+  const ors = src.split(/\s+or\s+/i);
+  return ors.map(part => part.split(/\s+and\s+/i).map(cl => {
+    const s = cl.trim();
+    if (!s) throw new Error("empty clause");
+    const op = OPS.find(o => s.includes(o));
+    if (!op) throw new Error(`no operator in: ${s}`);
+    const i = s.indexOf(op);
+    const field = s.slice(0,i).trim().toLowerCase();
+    let raw = s.slice(i+op.length).trim();
+    if (!field) throw new Error(`missing field in: ${s}`);
+    if (!raw) throw new Error(`missing value in: ${s}`);
+    const quoted = /^["'](.*)["']$/.exec(raw);
+    let val = quoted ? quoted[1] : raw;
+    if (!quoted){
+      if (/^(true|false)$/i.test(raw)) val = raw.toLowerCase()==="true";
+      else if (/^-?\d+(\.\d+)?$/.test(raw)) val = parseFloat(raw);
+    }
+    return {field, op, val};
+  }));
+}
+function testClause(row, {field, op, val}){
+  if (field === "entity") return cmp(row.entity, op, val);
+  let v = row[field];
+  if (v === undefined) throw new Error(`unknown field: ${field}`);
+  if (field === "linear" && v == null) v = "none";
+  return cmp(v, op, val);
+}
+function cmp(v, op, val){
+  const sv = String(v==null?"":v).toLowerCase();
+  const svl = String(val).toLowerCase();
+  switch(op){
+    case "~":  return sv.includes(svl);
+    case "!~": return !sv.includes(svl);
+    case "=":  return typeof val === "boolean" ? !!v === val : sv === svl;
+    case "!=": return typeof val === "boolean" ? !!v !== val : sv !== svl;
+    case ">":  return parseFloat(v) >  parseFloat(val);
+    case "<":  return parseFloat(v) <  parseFloat(val);
+    case ">=": return parseFloat(v) >= parseFloat(val);
+    case "<=": return parseFloat(v) <= parseFloat(val);
+  }
+  return false;
+}
+function runQuery(src){
+  const ast = parseQuery(src);
+  const ent = ast.flat().find(c => c.field === "entity");
+  const pool = (ent && String(ent.val).toLowerCase() === "run") ? runRows : rows;
+  const out = pool.filter(row => ast.some(group => group.every(cl => testClause(row, cl))));
+  return {rows: out, entity: pool === runRows ? "run" : "case"};
+}
+
+const PRESETS = [
+  ["Quipu QA cases",    'entity = "case" and project = "QQA"'],
+  ["Automated cases",   'entity = "case" and automation = "automated"'],
+  ["Currently failing", 'entity = "case" and verdict = "failed"'],
+  ["Unstable",          'entity = "case" and unstable = true'],
+  ["Never executed",    'entity = "case" and executed = false'],
+  ["No Linear id",      'entity = "case" and linked = false'],
+  ["Schema Management", 'entity = "case" and area = "Schema Management"'],
+  ["Sample project",    'entity = "case" and project = "DEMO"'],
+  ["Failed runs",       'entity = "run" and status = "failed"'],
+];
+let activeQuery = PRESETS[0][1];
+
+function renderQueries(){
+  document.getElementById("qchips").innerHTML = PRESETS.map(([label,q],i) => {
+    let n = "";
+    try { n = runQuery(q).rows.length; } catch(e){ n = "!"; }
+    return `<button class="qchip" type="button" data-q="${esc(q)}"
+      aria-pressed="${q===activeQuery}">${esc(label)}<span class="n">${n}</span></button>`;
+  }).join("");
+  document.getElementById("q").value = activeQuery;
+
+  const err = document.getElementById("qerr"), meta = document.getElementById("qmeta");
+  const tbl = document.getElementById("qtable"), more = document.getElementById("qmore");
+  let res;
+  try { res = runQuery(activeQuery); err.hidden = true; }
+  catch(e){
+    err.hidden = false; err.textContent = e.message;
+    meta.textContent = "Query not run."; tbl.innerHTML = ""; more.hidden = true; return;
+  }
+  const LIMIT = 200, shown = res.rows.slice(0, LIMIT);
+  meta.innerHTML = `<b>${res.rows.length}</b> ${res.entity}${res.rows.length===1?"":"s"} match`;
+  more.hidden = res.rows.length <= LIMIT;
+  more.textContent = `Showing the first ${LIMIT} of ${res.rows.length}.`;
+
+  if (!res.rows.length){ tbl.innerHTML = `<tbody><tr><td class="empty">Nothing matches.</td></tr></tbody>`; return; }
+
+  if (res.entity === "run"){
+    tbl.innerHTML = `<thead><tr><th>Run</th><th>Project</th><th>Title</th><th>Build</th>
+      <th>Status</th><th>Verdicts</th><th>Rate</th></tr></thead><tbody>` +
+      shown.map(r => `<tr><td class="mono">#${r.id}</td><td class="mono">${esc(r.project)}</td>
+        <td>${esc(r.title)}</td><td class="mono">${esc(r.build||"—")}</td>
+        <td class="mono">${esc(r.status)}</td><td class="mono">${r.verdicts}</td>
+        <td class="mono">${pct(r.rate)}</td></tr>`).join("") + `</tbody>`;
+  } else {
+    tbl.innerHTML = `<thead><tr><th>Case</th><th>Suite</th><th>Automation</th>
+      <th>Latest verdict</th><th>Build</th><th>Runs</th></tr></thead><tbody>` +
+      shown.map(r => `<tr>
+        <td><span class="lid">${esc(r.linear||"—")}</span>
+          <div>${esc(r.title)}${r.unstable?`<span class="flag">UNSTABLE</span>`:""}</div></td>
+        <td><span class="tag">${esc(r.area)}</span>
+          <div style="color:var(--muted);font-size:12px;margin-top:3px">${esc(r.feature||"—")}${r.cat?" ▸ "+esc(r.cat):""}</div></td>
+        <td class="mono">${esc(r.automation||"—")}</td>
+        <td><span class="vd vd-${esc(r.verdict)}">${esc(LBL[r.verdict]||r.verdict)}</span></td>
+        <td class="mono">${esc(r.lastbuild||"—")}</td>
+        <td class="mono">${r.executions}/${r.runs}</td></tr>`).join("") + `</tbody>`;
+  }
+}
+function renderSyntax(){
+  const blocks = Object.entries(FIELDS).map(([ent,fs]) =>
+    `<dt>entity = "${ent}"</dt><dd>${Object.keys(fs).length} fields</dd>` +
+    Object.entries(fs).map(([f,d]) => `<dt>${f}</dt><dd>${esc(d)}</dd>`).join(""));
+  document.getElementById("syn").innerHTML =
+    `<dt>= != ~ !~</dt><dd>equals, not equals, contains, does not contain</dd>
+     <dt>&gt; &lt; &gt;= &lt;=</dt><dd>numeric comparison</dd>
+     <dt>and / or</dt><dd>combine clauses; <code>and</code> binds tighter. Parentheses are not supported.</dd>`
+    + blocks.join("");
+}
+
+/* ---------- tabs ---------- */
+const TABS = [["overview","Overview",""],["queries","Queries",""],["runs","All runs",runs.length]];
+function renderTabs(active){
+  document.getElementById("tabs").innerHTML = TABS.map(([id,label,n]) =>
+    `<button class="tab" role="tab" data-tab="${id}" aria-selected="${id===active}">
+      ${label}${n!==""?`<span class="n">${n}</span>`:""}</button>`).join("");
+  TABS.forEach(([id]) => document.getElementById("p-"+id).hidden = (id !== active));
+  document.querySelectorAll(".tab").forEach(b =>
+    b.onclick = () => renderTabs(b.dataset.tab));
+}
+
+renderOverview(); renderSyntax(); renderQueries(); renderTabs("overview");
+document.getElementById("plan").textContent = "Teams tier (inferred)";
+document.getElementById("meta").textContent =
+  `${DATA.users.length} user${DATA.users.length===1?"":"s"} · ${totals.results} results published`;
+document.getElementById("snap").textContent = "Snapshot: " + DATA.snapshot;
+document.getElementById("qrun").onclick = () => {
+  activeQuery = document.getElementById("q").value.trim(); renderQueries(); };
+document.getElementById("q").addEventListener("keydown", e => {
+  if (e.key === "Enter"){ activeQuery = e.target.value.trim(); renderQueries(); } });
+document.getElementById("qchips").addEventListener("click", e => {
+  const b = e.target.closest(".qchip"); if (!b) return;
+  activeQuery = b.dataset.q; renderQueries(); });
+</script>
