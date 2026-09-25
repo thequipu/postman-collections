@@ -1,0 +1,163 @@
+// Qase-triggered automation run — Jenkins pipeline
+// Started FROM Qase (Test Runs -> Launch), which passes the run it just created as
+// build parameters. The job runs a test script, converts its output into Qase results,
+// posts them against that run, and optionally completes it.
+//
+// One-time setup:
+//   1. Jenkins: store the Qase API token as a Secret text credential, id `qase-api-token`
+//   2. Qase:    Apps -> Jenkins, point it at this job with a Jenkins API token
+//   3. Qase:    the job must be parameterized with the five QASE_* parameters below
+//
+// The script is expected to leave `reports/results.json` behind:
+//   [{"id": "TC_LOGIN01", "status": "passed", "ms": 240},
+//    {"id": "TC_LOGIN02", "status": "failed", "ms": 900, "error": "expected 400, got 500"}]
+// `id` is the external id; qase-case-map.json turns it into a Qase case id.
+
+pipeline {
+  agent {
+    docker {
+      image 'python:3.12-bookworm'
+      args  '-u root:root'
+    }
+  }
+
+  parameters {
+    // --- passed in by Qase when it launches the run ---
+    string(name: 'QASE_PROJECT_CODE', defaultValue: '',  description: 'Qase project code, e.g. AM')
+    string(name: 'QASE_RUN_ID',       defaultValue: '',  description: 'Qase run id to report against')
+    booleanParam(name: 'QASE_REPORT',        defaultValue: true,  description: 'Publish results to Qase')
+    booleanParam(name: 'QASE_RUN_COMPLETE',  defaultValue: true,  description: 'Complete the Qase run afterwards')
+    string(name: 'QASE_API_BASE_URL', defaultValue: 'https://api.qase.io', description: 'Qase API base URL')
+
+    // --- ours ---
+    choice(name: 'ENVIRONMENT', choices: ['onprem', 'prestage', 'local'],
+           description: 'Target environment')
+    string(name: 'SCRIPT', defaultValue: 'scripts/run_suite.sh',
+           description: 'Test script to run, relative to the repo root')
+    booleanParam(name: 'FAIL_ON_TEST_FAILURE', defaultValue: true,
+           description: 'Fail the build when any case fails. Uncheck to report-only.')
+  }
+
+  options {
+    timestamps()
+    ansiColor('xterm')
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    timeout(time: 45, unit: 'MINUTES')
+  }
+
+  environment {
+    QASE_API_TOKEN = credentials('qase-api-token')
+    RESULTS        = 'reports/results.json'
+    CASE_MAP       = 'qase-case-map.json'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    stage('Run tests') {
+      steps {
+        sh '''
+          set -uo pipefail          # not -e: let every case run, gate on results instead
+          mkdir -p reports
+          echo ">> environment: ${ENVIRONMENT}"
+          echo ">> script:      ${SCRIPT}"
+          bash "${SCRIPT}" || echo ">> script exited non-zero — results still published"
+          test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
+          echo ">> $(python3 -c "import json;print(len(json.load(open('${RESULTS}'))))") results"
+        '''
+      }
+    }
+
+    stage('Publish to Qase') {
+      when {
+        allOf {
+          expression { params.QASE_REPORT }
+          expression { params.QASE_RUN_ID?.trim() }
+        }
+      }
+      steps {
+        sh '''
+          set -euo pipefail
+          python3 - <<'PY'
+import json, os, urllib.request
+
+base  = os.environ["QASE_API_BASE_URL"].rstrip("/")
+code  = os.environ["QASE_PROJECT_CODE"]
+run   = os.environ["QASE_RUN_ID"]
+token = os.environ["QASE_API_TOKEN"]
+
+results  = json.load(open(os.environ["RESULTS"]))
+case_map = json.load(open(os.environ["CASE_MAP"]))      # external id -> qase case id
+
+# our vocabulary -> Qase's
+STATUS = {"passed": "passed", "pass": "passed",
+          "failed": "failed", "fail": "failed",
+          "skipped": "skipped", "skip": "skipped",
+          "blocked": "blocked", "error": "failed"}
+
+payload, unmapped = [], []
+for r in results:
+    cid = case_map.get(r["id"])
+    if not cid:
+        unmapped.append(r["id"]); continue
+    entry = {"case_id": cid,
+             "status": STATUS.get(str(r.get("status", "")).lower(), "skipped")}
+    if r.get("ms"):    entry["time_ms"] = int(r["ms"])
+    if r.get("error"): entry["comment"] = str(r["error"])[:5000]
+    payload.append(entry)
+
+if unmapped:
+    print(f"!! {len(unmapped)} results had no Qase case: {unmapped[:10]}")
+
+req = urllib.request.Request(
+    f"{base}/v1/result/{code}/{run}/bulk",
+    data=json.dumps({"results": payload}).encode(),
+    headers={"Token": token, "Content-Type": "application/json"},
+    method="POST")
+with urllib.request.urlopen(req, timeout=120) as resp:
+    print(f">> published {len(payload)} results: HTTP {resp.status}")
+PY
+        '''
+      }
+    }
+
+    stage('Complete run') {
+      when {
+        allOf {
+          expression { params.QASE_RUN_COMPLETE }
+          expression { params.QASE_RUN_ID?.trim() }
+        }
+      }
+      steps {
+        sh '''
+          set -euo pipefail
+          curl -sS -X POST \
+            -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
+            "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}/complete"
+          echo ""
+        '''
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+    }
+    success {
+      script {
+        if (params.FAIL_ON_TEST_FAILURE) {
+          def failed = sh(returnStdout: true, script: '''
+            python3 -c "import json;print(sum(1 for r in json.load(open('reports/results.json')) if str(r.get('status','')).lower() in ('failed','fail','error')))"
+          ''').trim()
+          if (failed != '0') {
+            error("${failed} case(s) failed — see the Qase run for detail")
+          }
+        }
+      }
+    }
+  }
+}
