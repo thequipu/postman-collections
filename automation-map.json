@@ -1253,5 +1253,65 @@
   "suite": "datacatalog_login_positive",
   "test": "QUI-003",
   "title": "Valid admin credentials sign in"
+ },
+ "QUI-004": {
+  "automated": true,
+  "qase_id": 175,
+  "runner": "suite",
+  "stage": "Continue is disabled until a tenant is entered",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-004",
+  "title": "Continue is disabled until a tenant is entered"
+ },
+ "QUI-005": {
+  "automated": true,
+  "qase_id": 176,
+  "runner": "suite",
+  "stage": "Valid tenant is accepted and reveals the sign-in screen",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-005",
+  "title": "Valid tenant is accepted and reveals the sign-in screen"
+ },
+ "QUI-006": {
+  "automated": true,
+  "qase_id": 177,
+  "runner": "suite",
+  "stage": "Unregistered tenant is rejected",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-006",
+  "title": "Unregistered tenant is rejected"
+ },
+ "QUI-007": {
+  "automated": true,
+  "qase_id": 178,
+  "runner": "suite",
+  "stage": "Sign in is disabled until credentials are entered",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-007",
+  "title": "Sign in is disabled until credentials are entered"
+ },
+ "QUI-008": {
+  "automated": true,
+  "qase_id": 179,
+  "runner": "suite",
+  "stage": "Wrong password is rejected",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-008",
+  "title": "Wrong password is rejected"
+ },
+ "QUI-009": {
+  "automated": true,
+  "qase_id": 180,
+  "runner": "suite",
+  "stage": "Unknown username is rejected",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-009",
+  "title": "Unknown username is rejected"
  }
 }
