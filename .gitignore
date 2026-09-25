@@ -28,3 +28,9 @@ realm_globals_*.json
 .DS_Store
 Thumbs.db
 config/db-configs/csv-users.json
+
+# Neuro test scripts — these embed credentials in plaintext (USERNAME, PASSWORD,
+# CLIENT_SECRET). Ignoring them stops NEW copies being added; the ones already
+# tracked are unaffected until removed from the index with `git rm --cached`.
+scripts/neuro_*.sh
+tools/neuro-sim/config/*.yaml
