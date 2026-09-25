@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 JUNIT_DIR = ROOT / "reports" / "junit"
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "onprem")
 UI_REPO = Path(os.environ.get("UI_REPO", ROOT.parent / "automation_fast_api"))
+UI_DOCKER_IMAGE = os.environ.get("UI_DOCKER_IMAGE", "")   # empty = use the local interpreter
 TIMEOUT = int(os.environ.get("RUNNER_TIMEOUT", "900"))
 
 # Postman variable name <- environment variable. Secrets never live in the collection.
@@ -157,18 +158,33 @@ def pytest(cases):
             emit(k, "blocked", 0, f"UI repo not present at {UI_REPO}")
         return
 
-    python = UI_REPO / "venv" / "bin" / "python"
-    python = str(python) if python.exists() else sys.executable
-
     report = JUNIT_DIR / "pytest.xml"
     report.unlink(missing_ok=True)
     nodeids = sorted({v["nodeid"] for v in cases.values()})
     # Named node ids only. A bare `pytest` here would pull in tests that hit shared
     # preprod with committed credentials, and one that truncates a checked-in fixture.
-    cmd = [python, "-m", "pytest", *nodeids, "-p", "no:cacheprovider",
-           f"--junitxml={report}", "-q"]
-    print(f">> pytest {' '.join(nodeids)}", file=sys.stderr)
-    code, out = run(cmd, UI_REPO)
+    args = ["-m", "pytest", *nodeids, "-p", "no:cacheprovider", "-q"]
+
+    if UI_DOCKER_IMAGE:
+        # Ubuntu 20.04 ships python3.8 and Playwright needs >=3.10, so the UI tests
+        # run in the Playwright image instead of on the agent's interpreter.
+        inner = UI_REPO / ".junit-pytest.xml"
+        inner.unlink(missing_ok=True)
+        cmd = ["docker", "run", "--rm",
+               "-u", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp",
+               "-v", f"{UI_REPO}:/work", "-w", "/work", UI_DOCKER_IMAGE,
+               "python", *args, "--junitxml=/work/.junit-pytest.xml"]
+        print(f">> pytest in {UI_DOCKER_IMAGE}: {' '.join(nodeids)}", file=sys.stderr)
+        code, out = run(cmd, ROOT)
+        if inner.exists():
+            shutil.copyfile(inner, report)
+    else:
+        python = UI_REPO / "venv" / "bin" / "python"
+        python = str(python) if python.exists() else sys.executable
+        cmd = [python, *args, f"--junitxml={report}"]
+        print(f">> pytest {' '.join(nodeids)}", file=sys.stderr)
+        code, out = run(cmd, UI_REPO)
+
     if not report.exists():
         tail = " | ".join(out.strip().splitlines()[-3:])[:300] or f"exit {code}"
         for k in cases:

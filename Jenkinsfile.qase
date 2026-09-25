@@ -36,6 +36,8 @@ pipeline {
     string(name: 'UI_REPO_URL', defaultValue: 'https://github.com/thequipu/automation_fast_api.git',
            description: 'Playwright repo, checked out only when the run holds pytest-bound cases')
     string(name: 'UI_REPO_BRANCH', defaultValue: 'main', description: 'Branch of the Playwright repo')
+    string(name: 'UI_REPO_CREDENTIALS', defaultValue: 'Jenkins-token-classic',
+           description: 'Jenkins credential id used to clone the Playwright repo (it is private)')
     string(name: 'SEED', defaultValue: '1',
            description: 'Seed for simulate mode; the same seed reproduces the same results')
     string(name: 'BUILD_ENDPOINT', defaultValue: '',
@@ -54,6 +56,7 @@ pipeline {
   environment {
     QASE_API_TOKEN = credentials('qase-api-token')
     RESULTS        = 'reports/results.json'
+    UI_DOCKER_IMAGE = 'quipu/ui-tests:1.63.0'
     CASE_MAP       = 'qase-case-map.json'
   }
 
@@ -65,27 +68,39 @@ pipeline {
     stage('Prepare runners') {
       when { expression { params.MODE == 'real' } }
       steps {
+        script {
+          // Only fetch the UI repo when a pytest-bound case could be in scope.
+          def needsUI = sh(returnStatus: true, script: '''
+            python3 -c "import json,sys; m=json.load(open('automation-map.json')); sys.exit(0 if any(v.get('runner')=='pytest' for v in m.values()) else 1)"
+          ''') == 0
+          if (needsUI) {
+            dir('ui-repo') {
+              checkout([$class: 'GitSCM',
+                        branches: [[name: "*/${params.UI_REPO_BRANCH}"]],
+                        userRemoteConfigs: [[url: params.UI_REPO_URL,
+                                             credentialsId: params.UI_REPO_CREDENTIALS]]])
+            }
+            // Ubuntu 20.04 has python3.8; Playwright needs >=3.10, so the UI tests
+            // run in this image rather than on the agent's interpreter.
+            sh """#!/usr/bin/env bash
+              set -uo pipefail
+              docker image inspect "${UI_DOCKER_IMAGE}" >/dev/null 2>&1 || \
+                docker build -t "${UI_DOCKER_IMAGE}" -f docker/ui-tests.Dockerfile docker/ || \
+                echo "!! could not build ${UI_DOCKER_IMAGE} - preflight will fail on it"
+            """
+          }
+        }
+      }
+    }
+
+    stage('Preflight') {
+      when { expression { params.MODE == 'real' } }
+      steps {
+        // Fail here, with the reason, rather than letting every case report
+        // `blocked` later and look like a test problem.
         sh '''#!/usr/bin/env bash
           set -uo pipefail
-          command -v newman >/dev/null || npm install -g newman || \
-            echo "!! newman install failed - newman-bound cases will report blocked"
-          newman --version 2>/dev/null || true
-        '''
-        // Only clone the UI repo when a pytest-bound case is actually in scope.
-        sh '''#!/usr/bin/env bash
-          set -uo pipefail
-          python3 - <<'EOF' || exit 0
-import json, sys
-m = json.load(open("automation-map.json"))
-sys.exit(0 if any(v.get("runner") == "pytest" for v in m.values()) else 1)
-EOF
-          if [ ! -d ui-repo ]; then
-            git clone --depth 1 -b "${UI_REPO_BRANCH}" "${UI_REPO_URL}" ui-repo || {
-              echo "!! could not clone the UI repo - pytest cases will report blocked"; exit 0; }
-          fi
-          cd ui-repo && python3 -m pip install -q -r requirements.txt \
-            && python3 -m playwright install --with-deps chromium \
-            || echo "!! playwright setup failed - pytest cases will report blocked"
+          UI_REPO="${WORKSPACE}/ui-repo" python3 scripts/preflight.py
         '''
       }
     }
@@ -100,6 +115,7 @@ EOF
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
           MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
           ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
+          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" \
             bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
