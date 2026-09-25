@@ -65,31 +65,47 @@ pipeline {
       steps { checkout scm }
     }
 
-    stage('Prepare runners') {
+    stage('Resolve scope') {
       when { expression { params.MODE == 'real' } }
       steps {
         script {
-          // Only fetch the UI repo when a pytest-bound case could be in scope.
-          def needsUI = sh(returnStatus: true, script: '''
-            python3 -c "import json,sys; m=json.load(open('automation-map.json')); sys.exit(0 if any(v.get('runner')=='pytest' for v in m.values()) else 1)"
-          ''') == 0
-          if (needsUI) {
-            dir('ui-repo') {
-              checkout([$class: 'GitSCM',
-                        branches: [[name: "*/${params.UI_REPO_BRANCH}"]],
-                        userRemoteConfigs: [[url: params.UI_REPO_URL,
-                                             credentialsId: params.UI_REPO_CREDENTIALS]]])
-            }
-            // Ubuntu 20.04 has python3.8; Playwright needs >=3.10, so the UI tests
-            // run in this image rather than on the agent's interpreter.
-            sh """#!/usr/bin/env bash
-              set -uo pipefail
-              docker image inspect "${UI_DOCKER_IMAGE}" >/dev/null 2>&1 || \
-                docker build -t "${UI_DOCKER_IMAGE}" -f docker/ui-tests.Dockerfile docker/ || \
-                echo "!! could not build ${UI_DOCKER_IMAGE} - preflight will fail on it"
-            """
-          }
+          // One question to Qase, answered once: which cases, and so which runners.
+          def runners = sh(returnStdout: true, script: '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports
+            python3 scripts/resolve_scope.py
+          ''').trim().split('\n').findAll { it }
+          env.SCOPE_RUNNERS = runners.join(',')
+          env.SCOPE_RESOLVED = '1'
+          echo ">> runners in scope: ${env.SCOPE_RUNNERS ?: 'none'}"
         }
+      }
+    }
+
+    stage('Prepare UI runner') {
+      // Only when this run actually holds a pytest-bound case, so an API-only
+      // run neither clones the UI repo nor needs the Playwright image.
+      when {
+        allOf {
+          expression { params.MODE == 'real' }
+          expression { (env.SCOPE_RUNNERS ?: '').tokenize(',').contains('pytest') }
+        }
+      }
+      steps {
+        dir('ui-repo') {
+          checkout([$class: 'GitSCM',
+                    branches: [[name: "*/${params.UI_REPO_BRANCH}"]],
+                    userRemoteConfigs: [[url: params.UI_REPO_URL,
+                                         credentialsId: params.UI_REPO_CREDENTIALS]]])
+        }
+        // Ubuntu 20.04 has python3.8; Playwright needs >=3.10, so the UI tests
+        // run in this image rather than on the agent's interpreter.
+        sh '''#!/usr/bin/env bash
+          set -uo pipefail
+          docker image inspect "${UI_DOCKER_IMAGE}" >/dev/null 2>&1 || \
+            docker build -t "${UI_DOCKER_IMAGE}" -f docker/ui-tests.Dockerfile docker/ || \
+            echo "!! could not build ${UI_DOCKER_IMAGE} - preflight will fail on it"
+        '''
       }
     }
 

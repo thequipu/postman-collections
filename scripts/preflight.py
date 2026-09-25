@@ -47,11 +47,21 @@ def main():
     if not amap_path.exists():
         print("!! automation-map.json not found — run from the repo root")
         return 2
-    amap = json.load(open(amap_path))
-    bound = {v.get("runner", "none") for v in amap.values()} - {"none"}
+    # Prefer the resolved scope: an API-only run must not be failed by a broken
+    # Playwright image, and a UI-only run must not require newman.
+    scope_path = ROOT / "reports" / "scope.json"
+    if scope_path.exists():
+        source = json.load(open(scope_path))
+        where = "this run's scope"
+    else:
+        source = json.load(open(amap_path))
+        where = "automation-map.json (no run scope resolved)"
+    bound = {v.get("runner", "none") for v in source.values()
+             if v.get("automated")} - {"none"}
+    amap = source
     print(f">> environment : {ENVIRONMENT}")
     print(f">> mode        : {MODE}")
-    print(f">> runners bound in automation-map.json: {', '.join(sorted(bound)) or 'none'}")
+    print(f">> runners required by {where}: {', '.join(sorted(bound)) or 'none'}")
     print()
 
     check("python3", True, lambda: have("python3"))

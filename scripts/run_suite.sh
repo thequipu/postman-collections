@@ -57,29 +57,13 @@ echo ">> build       : ${BUILD:-unknown}"
 
 # ---- which cases is this run asking for? ------------------------------------
 SCOPE=reports/scope.json
-if [ -n "$QASE_RUN_ID" ] && [ -n "$QASE_API_TOKEN" ] && [ -n "$QASE_PROJECT_CODE" ]; then
-  curl -sk -m 30 -H "Token: $QASE_API_TOKEN" -H "accept: application/json" \
-    "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}?include=cases" \
-    -o reports/run.json
-  python3 - "$MAP" reports/run.json "$SCOPE" <<'PY'
-import json, sys
-amap = json.load(open(sys.argv[1]))
-try:
-    in_run = set(json.load(open(sys.argv[2]))["result"]["cases"])
-except Exception as e:
-    print(f"!! could not read the run's cases ({e}) — using the whole map")
-    in_run = None
-sel = {k: v for k, v in amap.items() if in_run is None or v["qase_id"] in in_run}
-json.dump(sel, open(sys.argv[3], "w"))
-run = sum(1 for v in sel.values() if v["automated"] and v["test"])
-print(f">> run holds {len(sel)} cases — {run} automated, {len(sel)-run} manual")
-PY
+# Resolved by one owner, so preflight and the pipeline see exactly the same scope.
+# Already resolved by an earlier pipeline stage? Reuse it rather than asking twice.
+if [ -s "$SCOPE" ] && [ "${SCOPE_RESOLVED:-}" = "1" ]; then
+  echo ">> reusing the scope resolved earlier in this build"
 else
-  cp "$MAP" "$SCOPE"
-  python3 -c "
-import json;d=json.load(open('$SCOPE'))
-run=sum(1 for v in d.values() if v['automated'] and v['test'])
-print(f'>> no run scope given — {len(d)} cases, {run} automated')"
+  MAP="$MAP" python3 scripts/resolve_scope.py >/dev/null || {
+    echo "!! could not resolve which cases this run covers" >&2; exit 1; }
 fi
 
 # ---- execute ----------------------------------------------------------------
