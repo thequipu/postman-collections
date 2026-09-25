@@ -1,0 +1,2244 @@
+<!doctype html><html><head><!-- frame-runtime --><script>window.__FRAME_PREAMBLE={"v":1,"capabilities":{"artifact":"artifact.DF6_9MzE.js","assets":"assets.8Gk803W0.js","comments":"comments.vw5vQdGA.js","db":"db.h-3sndFg.js","downloads":"downloads.C3GSvEDP.js","embed":"embed.CxGAyc-v.js","mcp":"mcp.Bvma3qD7.js","network":"network.B5UA9Su4.js","notifications":"notifications.ssU4jy7G.js","permissions":"permissions.BNySkLV5.js","room":"room.BMMoe2BY.js","sample":"sample.BW2Uysoh.js","self":"artifact.DF6_9MzE.js","user":"user.BpKav-Rf.js"},"transforms":"_transforms.DSB5x63f.js","comments":"_comments.C6E0cR5g.js","translate":"_translate.5HCW4BJh.js"}</script><script>(function(){"use strict";var te=["light","dark","system"],re=/^[A-Za-z0-9_-]{1,64}$/,$=/^[a-zA-Z_:][a-zA-Z0-9_:.-]{0,127}$/,ne=new Set(["class","hidden","value","checked","style","title","alt","placeholder","lang","dir","role","tabindex","disabled","readonly","contenteditable","open","colspan","rowspan"]);function oe(e){const t=e.toLowerCase();return t.startsWith("data-")||t.startsWith("aria-")||ne.has(t)}var Be="http://www.w3.org/1999/xhtml",se="http://www.w3.org/2000/svg",ae=new Set(["script","style","iframe","noscript","noframes","noembed","xmp","plaintext","template","title","textarea","object","embed"]),ie=new Set(["script","style"]);function ce(e){const t=e.localName.toLowerCase();return e.namespaceURI==="http://www.w3.org/1999/xhtml"?!ae.has(t):e.namespaceURI===se?!ie.has(t):!1}function M(e,t){return e===t||(e===160||e===32)&&(t===160||t===32)}function le(e,t){const r=e.length,n=t.length;let s=0;for(;s<r&&s<n&&M(e.charCodeAt(s),t.charCodeAt(s));)s++;let o=0;for(;o<r-s&&o<n-s&&M(e.charCodeAt(r-1-o),t.charCodeAt(n-1-o));)o++;return{p:s,s:o}}function ue(e,t){const r=e.firstChild;if(e.childNodes.length!==1||r===null||r.nodeType!==Node.TEXT_NODE){e.textContent=t;return}const n=r.data,s=n.length,o=t.length,{p:i,s:c}=le(n,t);i===s&&c===0&&s===o||r.replaceData(i,s-i-c,t.slice(i,o-c));const h=r.data,p=e.ownerDocument.getSelection?.()??null,w=p!==null&&p.rangeCount>0&&(p.anchorNode===r||p.focusNode===r)?{anchor:p.anchorNode,anchorOffset:p.anchorOffset,focus:p.focusNode,focusOffset:p.focusOffset}:null;let m=-1,g=-1;for(let f=0;f<h.length&&f<t.length;f++){const v=h.charCodeAt(f),b=t.charCodeAt(f);v!==b&&M(v,b)&&(m<0&&(m=f),g=f)}const a=m>=0;if(a&&r.replaceData(m,g-m+1,t.slice(m,g+1)),a&&w!==null&&w.anchor!==null&&w.focus!==null)try{p.setBaseAndExtent(w.anchor,w.anchorOffset,w.focus,w.focusOffset)}catch{}}var fe=new Set(["html","head","body","frameset"]);function de(e){return e.namespaceURI==="http://www.w3.org/1999/xhtml"&&fe.has(e.localName)}function pe(e){if(e===null||typeof e!="object")return!1;const t=e;if(typeof t.target!="string"||!re.test(t.target)||t.text!==void 0&&typeof t.text!="string")return!1;if(t.attrsSet!==void 0){if(t.attrsSet===null||typeof t.attrsSet!="object")return!1;for(const[r,n]of Object.entries(t.attrsSet))if(!$.test(r)||typeof n!="string")return!1}if(t.attrsRemoved!==void 0){if(!Array.isArray(t.attrsRemoved))return!1;for(const r of t.attrsRemoved)if(typeof r!="string"||!$.test(r))return!1}return!0}function me(e,t){if(e===null||typeof e!="object")return!1;const{seq:r,elements:n}=e;if(typeof r!="number"||!Number.isSafeInteger(r)||!Array.isArray(n)||n.length===0||n.length>64)return!1;for(let s=0;s<n.length;s++)if(!t(n[s]))return!1;return!0}function he(e){return e===null||typeof e!="object"?!1:me(e.__frame_patch,pe)}function _e(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_init;return t!==null&&typeof t=="object"}function ve(e){return e!==null&&typeof e=="object"&&e.__frame_size_poke===!0}function ye(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_theme;if(t===null||typeof t!="object")return!1;const r=t.theme;return typeof r=="string"&&te.includes(r)}var A=/^[\w.-]+\.js$/;function we(e,t,r){return r?"inert":typeof t=="string"&&A.test(t)?e?[t]:"inert":e?"inert":"framed"}function ge(){return{post(e,t){parent.postMessage(e,t)},on(e){const t=r=>{r.source===parent&&e(r.data,r.origin,r.isTrusted)};return addEventListener("message",t),()=>removeEventListener("message",t)}}}function be(){return{post:()=>{},on:()=>()=>{}}}var j="__frame_scroll",Ee=150,Ae=310,Se=160,Te=3e4;function ke(){let e=0,t=!1,r=!1,n=!1,s=0,o=null;const i=l=>{try{sessionStorage.setItem(j,JSON.stringify({y:l}))}catch{}},c=()=>{if(clearTimeout(e),o===null)return;const l=o;o=null,i(l)},h=()=>{if(t){t=!1;return}r=!0,o=scrollY,clearTimeout(e),e=setTimeout(c,Ee)};try{addEventListener("scroll",h,{passive:!0}),addEventListener("pagehide",c)}catch{}const p=()=>{let l;try{l=sessionStorage.getItem(j)}catch{return null}if(l===null)return null;let _;try{_=JSON.parse(l)}catch{_=null}const d=_?.y;if(!(typeof d=="number"&&Number.isFinite(d)&&d>=0)){try{sessionStorage.removeItem(j)}catch{}return null}return d};let w=!1;const m=l=>{try{const _=scrollY;scrollTo({top:l,left:0,behavior:"instant"}),s=l,n=!0,clearTimeout(e),o=null,i(l);const d=scrollY;d!==_&&(t=!0),d!==l&&!w&&(w=!0,addEventListener("load",()=>{try{if(scrollY===d){const T=p();m(T!==null?T:s)}}catch{}},{once:!0}))}catch{}},g=()=>{try{return!!location.hash}catch{return!0}};let a=!1;const f=()=>{try{if(a||innerWidth>Ae||innerHeight>Se)return;a=!0;const l=Date.now(),_=()=>{try{removeEventListener("resize",_)}catch{}if(Date.now()-l>Te||r||g())return;const d=p();m(d!==null?d:s)};addEventListener("resize",_)}catch{}};let v=!1,b=!1;return{restore(){if(v||(v=!0,g()))return;const l=p();l!==null&&(m(l),f())},promoted(){if(b||(b=!0,g()))return;const l=p();l!==null?(m(l),f()):n&&m(s)}}}function Re(e,t,r,n){let s=null;try{s=window.trustedTypes?.createPolicy("frame-runtime",{createScriptURL:h=>h})??null}catch{}const o=window.Worker,i=o?.prototype,c=Object.freeze({Worker:o,workerOn:i?.addEventListener,workerPost:i?.postMessage,workerTerminate:i?.terminate,fetch:window.fetch.bind(window),preventDefault:Event.prototype.preventDefault,policy:s,origins:t});r(e).then(h=>h?.bootTopLevel?h.bootTopLevel(c,n):n.settle()).catch(()=>n.settle())}var De="modulepreload",Ie=function(e){return"/"+e},Ue={},Le=function(t,r,n){let s=Promise.resolve();function o(i){const c=new Event("vite:preloadError",{cancelable:!0});if(c.payload=i,window.dispatchEvent(c),!c.defaultPrevented)throw i}return s.then(i=>{for(const c of i||[])c.status==="rejected"&&o(c.reason);return t().catch(o)})},Oe=window===top,q=Object.getOwnPropertyDescriptor(window,"claude"),k=we(Oe,window.__FRAME_PREAMBLE?.topLevel,q?.writable===!1),N=typeof k=="object"&&k[0],y=N?be():ge();(function(){const e=Object.defineProperty,t=globalThis,r=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let n=0;for(let s=0;s<r.length;s++){const o=r[s];try{e(t,o,{value:void 0,writable:!1,configurable:!1})}catch{try{delete t[o]}catch{}try{e(t,o,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof t[o]=="function"&&n++}if(n&&k==="framed")try{y.post({__frame_rtc_lockdown_failed:n},"*")}catch{}})();var Pe=1e4,Y=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function X(e){for(const t of Y)if(t.endsWith(":*"))try{const r=new URL(e);if(`${r.protocol}//${r.hostname}:*`===t)return!0}catch{}else if(e===t)return!0;return!1}var R=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),B=window.__FRAME_PREAMBLE?.transforms,D=window.__FRAME_PREAMBLE?.comments,I=window.__FRAME_PREAMBLE?.translate;function S(e){return Le(()=>import("/_runtime/"+e),void 0)}function G(e,t){return{contract:e.contract,changes:new Set(e.changes??[]),flags:new Set(e.flags??[]),capabilities:e.capabilities??{},capBudgets:e.capBudgets??{},transforms:new Map,shellOrigin:t,mount:x,hooks:O,pipe:()=>({wrap:(r,n)=>(...s)=>{try{return n(...s)}catch(o){return Promise.reject(o)}}})}}var L=null,E=null;function V(e,t,r){try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var U=!1,O={editBefore:null,edit:null};function Ce(e,t,r=!1){const n=[];let s;if(r)try{O.editBefore?.(e)}catch{}for(const o of e.elements){const i=document.querySelector(`[data-id="${o.target}"]`);if(!i){s=o.target;break}if([...Object.keys(o.attrsSet??{}),...o.attrsRemoved??[]].some(c=>!oe(c))){s=o.target;break}if(o.text!==void 0&&(!ce(i)||de(i))){s=o.target;break}for(const[c,h]of Object.entries(o.attrsSet??{}))if(!J(i,c)){try{i.setAttribute(c,h)}catch{}Z(i,c,h)}for(const c of o.attrsRemoved??[])J(i,c)||(i.removeAttribute(c),Z(i,c,null));typeof o.text=="string"&&ue(i,o.text),n.push(o.target)}if(r)try{O.edit?.(e.seq,n,s)}catch{}if(s!==void 0){y.post({__frame_patch_miss:{seq:e.seq}},t);return}try{document.dispatchEvent(new CustomEvent("claude:edit",{detail:{seq:e.seq,targets:n}}))}catch{}}function Z(e,t,r){if(!(e instanceof HTMLInputElement))return;const n=t.toLowerCase();n==="checked"?e.checked=r!==null:n==="value"&&e.type!=="file"&&(e.value=r??"")}function J(e,t){const r=t.toLowerCase(),n=e;return r==="data-id"||(r==="value"||r==="checked")&&(n.__artifactSecret===!0||/^(password|hidden|file)$/.test(n.type??"")||/(^|\s)(cc-|one-time-code|current-password|new-password)/i.test(`${e.getAttribute("autocomplete")??""} ${n.autocomplete??""}`))}function Q(e){const t=document.documentElement;e==="light"||e==="dark"?(t.dataset.theme=e,t.style.colorScheme=e,U=!0):U&&(delete t.dataset.theme,t.style.colorScheme="",U=!1)}var P=new Map;function Me(){let e;const t={u:new Promise(r=>{e=r}),r:r=>{t.done=!0,e(r)},done:!1,nulled:!1};return t}function F(){for(const e of P.values())e.done||(e.nulled=!0,e.r(null))}var je=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),x=(e,t)=>{const r=P.get(e);if(!r||r.done){r?.nulled&&E&&y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:e}},E);return}const n=typeof t=="function"?Object.setPrototypeOf(t,je):Object.assign(Object.create(null),t);typeof n.then=="function"&&delete n.then,r.r(Object.freeze(n))};function ee(){const e=q?.value??{};V(window,"claude",e);for(const t of Object.keys(R)){if(e[t]!==void 0){V(e,t,e[t]);continue}P.set(t,Me())}if(e.use===void 0){const t=r=>{if(typeof r!="string"||!Object.hasOwn(R,r))return Promise.resolve(null);const n=P.get(r);return n?n.u:Promise.resolve(e[r]??null)};try{Object.defineProperty(e,"use",{value:t,writable:!0,configurable:!0,enumerable:!1})}catch{}}}if(k==="framed"){const e=B&&A.test(B)?S(B).catch(()=>{}):Promise.resolve(void 0),t=a=>{if(a.type==="auxclick"&&a.button!==1)return;const f=a.target,v=f&&f.closest?f.closest("a[href],area[href]"):null;if(!v)return;const b=v.getAttribute("href");if(!b)return;let l;try{l=new URL(b,document.baseURI)}catch{return}if((l.protocol==="http:"||l.protocol==="https:")&&l.origin!==location.origin){a.preventDefault();const _=(v.getAttribute("target")??"").toLowerCase(),d=a.type==="auxclick"||a.metaKey||a.ctrlKey||a.shiftKey||a.altKey||!["","_self","_top","_parent"].includes(_);y.post({__frame_nav:!0,url:l.href,newTab:d},"*")}};addEventListener("click",t,!0),addEventListener("auxclick",t,!0);const r={},n=a=>{a.isTrusted&&(r.pointer=!0)},s=a=>{a.isTrusted&&(r.click=!0)};addEventListener("pointermove",n,{capture:!0,passive:!0}),addEventListener("click",s,{capture:!0,passive:!0}),e.then(a=>{a?.wireNav&&(a.wireNav(),removeEventListener("click",t,!0),removeEventListener("auxclick",t,!0),removeEventListener("pointermove",n,!0),removeEventListener("click",s,!0),a.wireEngagement?.(r))});let o=null;try{o=ke()}catch{}ee();let i=null,c=null,h=0;const p=y.on((a,f)=>{X(f)&&_e(a)&&(i=a.__frame_init,E=f,p(),clearTimeout(h),c?.())});y.post({__frame_connect:!0},"*");const w=new Promise(a=>{c=a,h=setTimeout(()=>{p(),a()},Pe)}),m=document.readyState==="loading"?new Promise(a=>document.addEventListener("DOMContentLoaded",()=>a(),{once:!0})):Promise.resolve();m.then(()=>{try{o?.restore()}catch{}});const g={cb:null};y.on((a,f)=>{if(X(f)&&ve(a)){try{o?.promoted()}catch{}g.cb?.()}}),w.then(async()=>{if(!i||!E){F();return}Q(i.theme);const a=E;let f=!1,v=!1;y.on((u,z,C)=>{if(z!==a)return;ye(u)&&Q(u.__frame_theme.theme),he(u)&&Ce(u.__frame_patch,a,C);const H=u?.__fc_mode;H&&typeof H=="object"&&!f&&D&&A.test(D)&&(f=!0,S(D).then(K=>K.install?.(a,H.on===!0)).catch(()=>{}));const W=u?.__ft_cmd;W&&typeof W=="object"&&!v&&I&&A.test(I)&&(v=!0,S(I).then(K=>K.install?.(a,W)).catch(()=>{}))});const b=Object.keys(i.capabilities??{}).filter(u=>Object.hasOwn(R,u)).map(u=>[u,R[u]]).filter(u=>typeof u[1]=="string"&&A.test(u[1])),l=await Promise.allSettled(b.map(([,u])=>S(u))),_=await e,d=E;if(_?.buildBoot||y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},d),_?.buildBoot)try{L=_.buildBoot(i,_.TRANSFORMS??{},{shellOrigin:d,mount:x,hooks:O},u=>y.post({__frame_cap_telemetry:u},d))}catch{y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},d),L=G(i,d)}else L=G(i,d);const T=u=>y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:u}},d),Ne=L;l.forEach((u,z)=>{const C=b[z][0];if(u.status!=="fulfilled"){T(C);return}try{u.value?.install?.(Ne)}catch{T(C)}}),F(),await m,y.post({__frame_ready:!0},E),e.then(u=>u?.installSizeReporter?.(d,g))})}else N&&(ee(),Re(N,Y,S,{settle:F,mount:x}))})();</script><!-- /frame-runtime --><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Newman API Runbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f4f0e8;
+    --bg-card: #ebe5d8;
+    --bg-code: #e0d9cb;
+    --bg-table-alt: #f0ebe0;
+    --text: #3d4555;
+    --text-muted: #6b6a65;
+    --text-faint: #9a968d;
+    --accent: #c17832;
+    --accent-bg: #f5e6d3;
+    --accent-text: #8a5520;
+    --border: #d5cdbf;
+    --heading: #1b2537;
+    --tag-bg: #ddd6c8;
+    --tag-text: #5a5548;
+    --success: #4a7c59;
+    --warn: #c17832;
+    --danger: #a04040;
+    --method-get: #4a7c59;
+    --method-post: #c17832;
+    --method-put: #5a6fb5;
+    --method-del: #a04040;
+    --toc-bg: #ede8de;
+    --toc-active: #c17832;
+    --sidebar-w: 240px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b2030;
+      --bg-card: #232839;
+      --bg-code: #2a3045;
+      --bg-table-alt: #272c3d;
+      --text: #d0cbc0;
+      --text-muted: #8e8b82;
+      --text-faint: #5e5c55;
+      --accent: #d4943f;
+      --accent-bg: #2e2518;
+      --accent-text: #e8b86a;
+      --border: #333849;
+      --heading: #ede8df;
+      --tag-bg: #2e3344;
+      --tag-text: #a09d94;
+      --success: #5aab6a;
+      --warn: #d4943f;
+      --danger: #d06060;
+      --method-get: #5aab6a;
+      --method-post: #d4943f;
+      --method-put: #7a8ed0;
+      --method-del: #d06060;
+      --toc-bg: #1e2334;
+      --toc-active: #d4943f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b2030;
+    --bg-card: #232839;
+    --bg-code: #2a3045;
+    --bg-table-alt: #272c3d;
+    --text: #d0cbc0;
+    --text-muted: #8e8b82;
+    --text-faint: #5e5c55;
+    --accent: #d4943f;
+    --accent-bg: #2e2518;
+    --accent-text: #e8b86a;
+    --border: #333849;
+    --heading: #ede8df;
+    --tag-bg: #2e3344;
+    --tag-text: #a09d94;
+    --success: #5aab6a;
+    --warn: #d4943f;
+    --danger: #d06060;
+    --method-get: #5aab6a;
+    --method-post: #d4943f;
+    --method-put: #7a8ed0;
+    --method-del: #d06060;
+    --toc-bg: #1e2334;
+    --toc-active: #d4943f;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  h1, h2, h3, h4 { font-family: 'DM Serif Display', Georgia, serif; color: var(--heading); margin: 0; }
+  h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent); }
+  h3 { font-size: 1.15rem; margin-top: 0; margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; margin-top: 1rem; margin-bottom: 0.3rem; font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; }
+  p { margin: 0.5rem 0; }
+  code, .mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.85em; }
+  .code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 0.5rem 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .tag-jenkins { background: var(--accent-bg); color: var(--accent-text); }
+  .tag-success { background: #d4edda; color: #155724; }
+  :root[data-theme="dark"] .tag-success,
+  :root:not([data-theme="light"]) .tag-success { background: #1a3a24; color: #5aab6a; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .tag-success { background: #d4edda; color: #155724; }
+  }
+
+  .cov-good { background: #e8f5e9; color: #1b5e20; }
+  .cov-mod  { background: #fff3e0; color: #e65100; }
+  .cov-low  { background: #ffebee; color: #c62828; }
+  :root[data-theme="dark"] .cov-good,
+  :root:not([data-theme="light"]) .cov-good { background: #1a3a24; color: #66bb6a; }
+  :root[data-theme="dark"] .cov-mod,
+  :root:not([data-theme="light"]) .cov-mod { background: #3e2723; color: #ffb74d; }
+  :root[data-theme="dark"] .cov-low,
+  :root:not([data-theme="light"]) .cov-low { background: #3b1515; color: #ef9a9a; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .cov-good { background: #e8f5e9; color: #1b5e20; }
+    :root:not([data-theme="dark"]) .cov-mod  { background: #fff3e0; color: #e65100; }
+    :root:not([data-theme="dark"]) .cov-low  { background: #ffebee; color: #c62828; }
+  }
+  .cicd-pending { background: #e3f2fd; color: #1565c0; }
+  :root[data-theme="dark"] .cicd-pending,
+  :root:not([data-theme="light"]) .cicd-pending { background: #0d2137; color: #64b5f6; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .cicd-pending { background: #e3f2fd; color: #1565c0; }
+  }
+
+  .method {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    min-width: 38px;
+    text-align: center;
+  }
+  .m-get { background: #d4edda; color: var(--method-get); }
+  .m-post { background: #fde8d0; color: var(--method-post); }
+  .m-put { background: #d6dff5; color: var(--method-put); }
+  .m-del { background: #f5d4d4; color: var(--method-del); }
+  .m-patch { background: #e8d6f5; color: #7a5ab5; }
+  :root[data-theme="dark"] .m-get,
+  :root:not([data-theme="light"]) .m-get { background: #1a3a24; }
+  :root[data-theme="dark"] .m-post,
+  :root:not([data-theme="light"]) .m-post { background: #3a2a14; }
+  :root[data-theme="dark"] .m-put,
+  :root:not([data-theme="light"]) .m-put { background: #1a2040; }
+  :root[data-theme="dark"] .m-del,
+  :root:not([data-theme="light"]) .m-del { background: #3a1a1a; }
+  :root[data-theme="dark"] .m-patch,
+  :root:not([data-theme="light"]) .m-patch { background: #2a1a40; color: #b08ae0; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .m-get { background: #d4edda; }
+    :root:not([data-theme="dark"]) .m-post { background: #fde8d0; }
+    :root:not([data-theme="dark"]) .m-put { background: #d6dff5; }
+    :root:not([data-theme="dark"]) .m-del { background: #f5d4d4; }
+    :root:not([data-theme="dark"]) .m-patch { background: #e8d6f5; }
+  }
+
+  .flow-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .flow-card summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    list-style: none;
+  }
+  .flow-card summary::-webkit-details-marker { display: none; }
+  .flow-card summary::before {
+    content: '\25B6';
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+  .flow-card[open] > summary::before { transform: rotate(90deg); }
+  .flow-card summary:hover { background: var(--bg); }
+  .flow-card .fc-title { font-weight: 600; font-size: 0.95rem; color: var(--heading); }
+  .flow-card .fc-meta { font-size: 0.78rem; color: var(--text-muted); margin-left: auto; }
+  .flow-card .fc-body { padding: 0 1rem 1rem; }
+  .flow-card .fc-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    padding: 0.4rem 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--bg-table-alt); }
+  td.ep { word-break: break-all; }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+  }
+  .stat-card .num { font-size: 1.8rem; font-weight: 600; color: var(--accent); font-family: 'DM Serif Display', serif; }
+  .stat-card .label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .env-table { margin: 0.5rem 0; }
+  .env-table th:first-child { min-width: 180px; }
+
+  .cat-header {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .svc-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--bg-code);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .cicd-svc {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .cicd-svc-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .cicd-svc-header .svc-name {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.05rem;
+    color: var(--heading);
+  }
+  .cicd-svc-header .svc-repo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .cicd-svc-header .svc-param {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+  }
+  .cicd-svc-body { padding: 0.75rem 1rem; }
+  .cicd-svc-body p { font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0; }
+
+  .suite-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+  .suite-row:last-child { border-bottom: none; }
+  .suite-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 80px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .suite-default { background: var(--accent-bg); color: var(--accent-text); }
+  .suite-other { background: var(--tag-bg); color: var(--tag-text); }
+  .suite-flows { color: var(--text); }
+  .suite-flows code { font-size: 0.78rem; }
+
+  .matrix-table th { font-size: 0.7rem; text-align: center; padding: 0.3rem 0.4rem; }
+  .matrix-table td { text-align: center; padding: 0.3rem 0.4rem; font-size: 0.78rem; }
+  .matrix-table td:first-child { text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
+  .mx-yes { color: var(--success); font-weight: 600; }
+  .mx-opt { color: var(--warn); font-size: 0.72rem; }
+  .mx-no { color: var(--text-faint); font-size: 0.72rem; }
+
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; }
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+    .flow-card summary { font-size: 0.85rem; }
+    table { font-size: 0.75rem; }
+    .cicd-svc-header { flex-direction: column; align-items: flex-start; }
+    .cicd-svc-header .svc-param { margin-left: 0; }
+    .suite-row { flex-direction: column; gap: 0.25rem; }
+  }
+</style>
+
+<h1>Newman API Flow Runbook</h1>
+<p class="subtitle">Quipu platform API test automation &mdash; 31 Postman collections generated from <code>scripts/services/*.py</code></p>
+
+<div class="overview-grid">
+  <div class="stat-card"><div class="num">31</div><div class="label">Flow Collections</div></div>
+  <div class="stat-card"><div class="num">4</div><div class="label">Service CI/CD Pipelines</div></div>
+  <div class="stat-card"><div class="num">350+</div><div class="label">Test Steps</div></div>
+  <div class="stat-card"><div class="num">12</div><div class="label">Backend Services</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="arch">Framework Architecture</h2>
+
+<h4>flowlib Stack</h4>
+<p>All flows are generated by Python scripts that produce Postman v2.1 JSON collections. The framework lives in <code>scripts/flowlib/</code>:</p>
+<table>
+  <tr><th>Module</th><th>Role</th></tr>
+  <tr><td><code>core.py</code></td><td><code>req()</code> builds steps with skip-on-fail, <code>build_setup()</code>/<code>build_teardown()</code>, <code>global_capture_test()</code> (5xx tracker), <code>build_collection()</code>/<code>write_flow()</code></td></tr>
+  <tr><td><code>auth.py</code></td><td>Collection-level Keycloak pre-request: password grant to <code>{{keycloak_token_url}}</code>, auto-refresh within 60s of expiry</td></tr>
+  <tr><td><code>setup.py</code></td><td>Shared reusable steps: <code>create_ds_step()</code>, <code>fetch_entities_step()</code>, <code>create_schema_graph_step()</code>, <code>full_setup_steps()</code>, <code>cleanup_steps()</code></td></tr>
+</table>
+
+<h4>Skip-on-Fail Pattern</h4>
+<p>Every <code>req()</code> step checks <code>_flow_failed</code> in the pre-request script. If a critical step fails, it sets this variable and all subsequent steps (except teardown) redirect to a harmless health URL. Teardown always runs (<code>skip_on_fail=False</code>).</p>
+
+<h4>Global 5xx Tracker</h4>
+<p>A collection-level test runs after every request. Any 5xx response registers a hard failure assertion, except for soft-exempted endpoints: <code>/synapse/namespace/status</code>, <code>/test-connection/sample-records</code>, <code>/s3-upload/*</code>, Excel steps.</p>
+
+<h4>Regenerating Flows</h4>
+<div class="code-block">cd postman-collections
+python scripts/gen_flow.py              # all 29 flows
+python scripts/gen_flow.py realm tenant # specific flows
+python scripts/gen_flow.py --list       # list available generators
+python scripts/gen_ds_flow.py           # standalone DataSource-CRUD</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="running">Running Flows</h2>
+
+<h4>Local (Newman CLI)</h4>
+<div class="code-block">newman run flows/FLOW-DataSource-CRUD.postman_collection.json \
+  -e environments/minikube.postman_environment.json --insecure \
+  --env-var "test_username=admin" --env-var "test_password=admin123" \
+  --env-var "client_secret=hbrghdZl..." \
+  --env-var "driverType=POSTGRES" --env-var "dbHost=..." \
+  --timeout-request 60000</div>
+
+<h4>Batch Runner</h4>
+<div class="code-block">python scripts/run_all_flows.py --user karthik --password karthik12 \
+  --env environments/minikube.postman_environment.json</div>
+<p style="font-size:0.85rem;color:var(--text-muted)">Runs 17 flows in sequence with postgres + S3 + Keycloak credentials, prints pass/fail summary table.</p>
+
+<h4>Jenkins Pipeline (per Service)</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">Each backend service repo has its own <code>jenkinsfile</code> on <code>main</code> that runs Newman API tests <strong>after deployment</strong>. The pipeline clones <code>postman-collections</code>, syncs secrets from S3, then runs the selected flows. See the full breakdown below in <a href="#cicd" style="color:var(--accent)">CI/CD Pipeline per Service</a>.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="cicd">CI/CD Pipeline per Service</h2>
+<p style="font-size:0.85rem;color:var(--text-muted)">Each service repo has a <code>jenkinsfile</code> on <code>main</code> with a post-deployment API test stage. The pipeline: <strong>checkout service</strong> &rarr; <strong>build &amp; deploy</strong> &rarr; <strong>clone <code>postman-collections</code></strong> &rarr; <strong>sync secrets from <code>s3://quipu-api-tests/</code></strong> &rarr; <strong>run selected flows via Newman</strong> &rarr; <strong>publish JUnit + HTML reports</strong>. <strong>4 services active</strong> (gate on <code>RUN_API_TESTS=true</code>), <strong>6 services pending</strong> (flows already running, CI/CD needs to be enabled).</p>
+
+<!-- application-service -->
+<div class="cicd-svc">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Application Service</span>
+    <span class="svc-repo">thequipu/application-service</span>
+    <span class="svc-param">Param: <code>API_TEST_FLOWS</code> (multi-select checkbox)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <p><strong>Default flows</strong> (run on every deployment):</p>
+    <div class="suite-row">
+      <span class="suite-label suite-default">default</span>
+      <span class="suite-flows">
+        <code>FLOW-Realm-CRUD</code>, <code>FLOW-DataSource-CRUD</code>, <code>FLOW-Version-CRUD</code>, <code>FLOW-Entity-CRUD</code>, <code>FLOW-Transformation-Connection</code>
+      </span>
+    </div>
+    <p style="margin-top:0.5rem"><strong>All selectable</strong> (18 flows):</p>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Flow</th><th>Steps</th><th>What it covers</th><th>Default?</th></tr>
+      <tr><td><code>FLOW-Realm-CRUD</code></td><td>61</td><td>8-DS realm: DS &rarr; schema &rarr; namespace &rarr; streams &rarr; ingest &rarr; verify</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-DataSource-CRUD</code></td><td>14</td><td>DS lifecycle: test-connection &rarr; create &rarr; metadata &rarr; query &rarr; update &rarr; delete</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Version-CRUD</code></td><td>13</td><td>Schema version: get &rarr; LB &rarr; unlock &rarr; delete</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Entity-CRUD</code></td><td>~20</td><td>Entity page: create entity &rarr; add/merge property &rarr; relationship CRUD &rarr; delete</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Transformation-Connection</code></td><td>25</td><td>Transform: connection + S3 upload + Hive/Trino + ingest + schema</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Schema-CRUD</code></td><td>15</td><td>Schema lifecycle + schema-graph save</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Namespace-CRUD</code></td><td>16</td><td>Namespace + source management</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Entity360-CRUD</code></td><td>16</td><td>Entity 360 config lifecycle</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-SchemaGraph-CRUD</code></td><td>14</td><td>Schema graph: create &rarr; get &rarr; update &rarr; copy-version &rarr; delete</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Permissions-CRUD</code></td><td>54</td><td>Full RBAC: 2 users, 4 permissions, 2 roles, assignments, verify</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Watcher-CRUD</code></td><td>8</td><td>Watcher lifecycle: create &rarr; pause &rarr; resume &rarr; delete</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Metadata-Read</code></td><td>8</td><td>Metadata: DS listing, tables, nodes, graph fetch</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-DataSource-Extended</code></td><td>22</td><td>Extended DS: is-unique, by-type, signature, CSV/Excel/PDF creates</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-App-Misc</code></td><td>10</td><td>Misc: tenant-specific, KG listing, NE Solr, S3 entity-resolution</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-DS-Migration</code></td><td>10</td><td>Migration: Neo4j, Hive, Trino catalog, password</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Document-Extraction</code></td><td>9</td><td>Doc extraction: status, streams, extract</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Ingestion-Streams</code></td><td>9</td><td>Atomic ingest stream: create &rarr; status &rarr; running &rarr; remove</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>SMOKE-Platform-Health</code></td><td>multi</td><td>Health probes across all services</td><td class="mx-opt">opt-in</td></tr>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- transformation-service -->
+<div class="cicd-svc">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Transformation Service</span>
+    <span class="svc-repo">thequipu/transformation-service</span>
+    <span class="svc-param">Param: <code>API_TEST_FLOWS</code> (multi-select checkbox)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <p><strong>Default flows</strong> (run on every deployment):</p>
+    <div class="suite-row">
+      <span class="suite-label suite-default">default</span>
+      <span class="suite-flows">
+        <code>FLOW-Transformation-Connection</code>, <code>FLOW-DataSource-CRUD</code>, <code>FLOW-Version-CRUD</code>, <code>FLOW-Entity-CRUD</code>
+      </span>
+    </div>
+    <p style="margin-top:0.5rem"><strong>All selectable</strong> (7 flows):</p>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Flow</th><th>Steps</th><th>What it covers</th><th>Default?</th></tr>
+      <tr><td><code>FLOW-Transformation-Connection</code></td><td>25</td><td>All 23 transform endpoints: connection, S3, Hive/Trino, ingest, schema</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-DataSource-CRUD</code></td><td>14</td><td>DS lifecycle validates app-service integration</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Version-CRUD</code></td><td>13</td><td>Schema version operations</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Entity-CRUD</code></td><td>~20</td><td>Entity operations</td><td class="mx-yes">YES</td></tr>
+      <tr><td><code>FLOW-Realm-CRUD</code></td><td>61</td><td>Full pipeline including event/ingest via transform</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>FLOW-Schema-CRUD</code></td><td>15</td><td>Schema lifecycle</td><td class="mx-opt">opt-in</td></tr>
+      <tr><td><code>SMOKE-Platform-Health</code></td><td>multi</td><td>Health probes</td><td class="mx-opt">opt-in</td></tr>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- tenant-service -->
+<div class="cicd-svc">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Tenant Service</span>
+    <span class="svc-repo">thequipu/tenant-service</span>
+    <span class="svc-param">Param: <code>API_TEST_SUITE</code> (choice: tenant | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">tenant</span>
+      <span class="suite-flows"><code>FLOW-Tenant-CRUD</code> &mdash; 30 steps: create tenant (SSO) &rarr; list/get/verify &rarr; config &rarr; encryption &rarr; Vault secrets &rarr; toggle active &rarr; user enable/disable &rarr; audit &rarr; provisioning wait &rarr; KC admin delete &rarr; verify gone</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-Tenant-CRUD</code> + <code>FLOW-Security-Auth</code></span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.82rem">Default suite: <strong>tenant</strong> &mdash; runs <code>FLOW-Tenant-CRUD</code> on every deployment.</p>
+  </div>
+</div>
+
+<!-- security-service -->
+<div class="cicd-svc">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Security Service</span>
+    <span class="svc-repo">thequipu/security-service</span>
+    <span class="svc-param">Param: <code>API_TEST_SUITE</code> (choice: security | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">security</span>
+      <span class="suite-flows"><code>FLOW-Security-Auth</code> &mdash; 16 steps: admin login/validate/introspect/refresh/logout + user OTP/login/token/introspect/refresh/users/logout (13/13 endpoints, 100% coverage)</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-Security-Auth</code></span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.82rem">Default suite: <strong>security</strong> &mdash; runs <code>FLOW-Security-Auth</code> on every deployment.</p>
+  </div>
+</div>
+
+<h4 style="margin-top:2rem;color:var(--accent)">CI/CD Not Yet Enabled &mdash; Flows Already Running</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">These 6 services have flow collections that are already running and tested, but their <code>jenkinsfile</code> does not yet have a Newman API test stage. The proposed configuration follows the tenant-service / security-service pattern (<code>API_TEST_SUITE</code> choice parameter).</p>
+
+<!-- knowledge-graph-service -->
+<div class="cicd-svc" style="border-left:3px solid #6ba3d6">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Knowledge Graph Service</span>
+    <span class="svc-repo">thequipu/knowledge-graph-service</span>
+    <span class="svc-param"><span class="tag" style="background:#d6e9f8;color:#2a6496">CI/CD pending</span> &bull; Proposed: <code>API_TEST_SUITE</code> (choice: kg | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">kg</span>
+      <span class="suite-flows"><code>FLOW-KnowledgeGraph-Metadata</code> &mdash; 7 endpoints: get-saved-schema-graph, synapse namespace stats/status/watchers, save-schema-version, namespace/remove</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-KnowledgeGraph-Metadata</code></span>
+    </div>
+  </div>
+</div>
+
+<!-- quipu-synapse -->
+<div class="cicd-svc" style="border-left:3px solid #6ba3d6">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Synapse</span>
+    <span class="svc-repo">thequipu/quipu-synapse</span>
+    <span class="svc-param"><span class="tag" style="background:#d6e9f8;color:#2a6496">CI/CD pending</span> &bull; Proposed: <code>API_TEST_SUITE</code> (choice: synapse | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">synapse</span>
+      <span class="suite-flows"><code>FLOW-Synapse-Namespace</code> + <code>FLOW-Synapse-Query</code> &mdash; 16 endpoints: namespace CRUD (create/status/stats/enable/disable/delete), query/cypher (sync/explain/async + v2), node/fetch, consumer pause/resume</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-Synapse-Health</code> &mdash; health probes</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-Synapse-Health</code> + <code>FLOW-Synapse-Namespace</code> + <code>FLOW-Synapse-Query</code></span>
+    </div>
+  </div>
+</div>
+
+<!-- quipu-nexus -->
+<div class="cicd-svc" style="border-left:3px solid #6ba3d6">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Nexus</span>
+    <span class="svc-repo">thequipu/quipu-nexus</span>
+    <span class="svc-param"><span class="tag" style="background:#d6e9f8;color:#2a6496">CI/CD pending</span> &bull; Proposed: <code>API_TEST_SUITE</code> (choice: nexus | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">nexus</span>
+      <span class="suite-flows"><code>FLOW-Nexus-Search</code> &mdash; 4 endpoints: schema/traversable/get, search, gin, labels</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-Nexus-Search</code></span>
+    </div>
+  </div>
+</div>
+
+<!-- quipu-lumen -->
+<div class="cicd-svc" style="border-left:3px solid #6ba3d6">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Lumen</span>
+    <span class="svc-repo">thequipu/quipu-lumen</span>
+    <span class="svc-param"><span class="tag" style="background:#d6e9f8;color:#2a6496">CI/CD pending</span> &bull; Proposed: <code>API_TEST_SUITE</code> (choice: lumen | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">lumen</span>
+      <span class="suite-flows"><code>FLOW-Lumen-Pipeline</code> &mdash; 6 endpoints: query-builder (query, reset-schema), lumen (describe, embed, cluster), semantic-chat/getAnswer</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-Lumen-Pipeline</code></span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.82rem"><em>Note:</em> Steps 03&ndash;05 need <code>versionUri</code> env-var pre-configured.</p>
+  </div>
+</div>
+
+<!-- quipu-nlp -->
+<div class="cicd-svc" style="border-left:3px solid #6ba3d6">
+  <div class="cicd-svc-header">
+    <span class="svc-name">NLP</span>
+    <span class="svc-repo">thequipu/quipu-nlp</span>
+    <span class="svc-param"><span class="tag" style="background:#d6e9f8;color:#2a6496">CI/CD pending</span> &bull; Proposed: <code>API_TEST_SUITE</code> (choice: nlp | smoke | all)</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">nlp</span>
+      <span class="suite-flows"><code>FLOW-NLP-Pipeline</code> &mdash; 4 endpoints: tokenize, sentenize, finalize-spans, embed</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + <code>FLOW-NLP-Pipeline</code></span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.82rem"><em>Note:</em> No auth needed (port 4055). Uses <code>/health</code> not <code>/actuator/health</code>.</p>
+  </div>
+</div>
+
+<!-- quipu-neuro -->
+<div class="cicd-svc" style="border-left:3px solid #c17832">
+  <div class="cicd-svc-header">
+    <span class="svc-name">Neuro</span>
+    <span class="svc-repo">thequipu/quipu-neuro</span>
+    <span class="svc-param"><span class="tag" style="background:#fff3cd;color:#856404">Needs conversion</span> &bull; Shell script exists, convert to Newman first</span>
+  </div>
+  <div class="cicd-svc-body">
+    <div class="suite-row">
+      <span class="suite-label suite-default">neuro</span>
+      <span class="suite-flows"><code>neuro_graph_test_prestage.sh</code> &mdash; 29 Neuro + 9 AppService endpoints (51 total calls). Covers: steering config, ingest, assert, recall (LIVE/AS_OF), graph CRUD (nodes/edges/episodes/threads), pin/unpin, invalidation, pagination, negative tests, cleanup. See <a href="#neuro-breakdown" style="color:var(--accent)">endpoint breakdown</a></span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">smoke</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> &mdash; health probes only</span>
+    </div>
+    <div class="suite-row">
+      <span class="suite-label suite-other">all</span>
+      <span class="suite-flows"><code>SMOKE-Platform-Health</code> + Neuro flow (after conversion)</span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.82rem"><em>Action needed:</em> Convert <code>scripts/neuro_graph_test_prestage.sh</code> to a Postman/Newman collection, then wire into <code>jenkinsfile</code>.</p>
+  </div>
+</div>
+
+<h4>postman-collections Jenkinsfile (standalone)</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">The <code>postman-collections</code> repo itself has a separate <code>Jenkinsfile</code> with two suites:</p>
+<table>
+  <tr><th>Suite</th><th>Collection</th><th>Auth</th></tr>
+  <tr><td><span class="tag tag-jenkins">smoke</span></td><td><code>SMOKE-Platform-Health</code></td><td>No auth needed</td></tr>
+  <tr><td><span class="tag tag-jenkins">auth</span></td><td><code>FLOW-Auth-Token</code></td><td>Vault: client_secret, test_username, test_password</td></tr>
+</table>
+
+<h4>Cross-Service Flow Matrix</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">Which flows run in which service pipeline. <span class="mx-yes">&check;</span> = runs by default, <span class="mx-opt">opt</span> = selectable, <span class="mx-no">&mdash;</span> = not available. <span style="color:#2a6496;font-weight:600">&#9679;</span> = proposed (CI/CD pending).</p>
+<div style="overflow-x:auto">
+<table class="matrix-table">
+  <tr>
+    <th style="text-align:left">Flow Collection</th>
+    <th>application-<br>service</th>
+    <th>transformation-<br>service</th>
+    <th>tenant-<br>service</th>
+    <th>security-<br>service</th>
+    <th style="border-left:2px solid var(--accent)">KG<br><span style="font-size:0.65rem;color:var(--text-faint)">pending</span></th>
+    <th>synapse<br><span style="font-size:0.65rem;color:var(--text-faint)">pending</span></th>
+    <th>nexus<br><span style="font-size:0.65rem;color:var(--text-faint)">pending</span></th>
+    <th>lumen<br><span style="font-size:0.65rem;color:var(--text-faint)">pending</span></th>
+    <th>nlp<br><span style="font-size:0.65rem;color:var(--text-faint)">pending</span></th>
+    <th>neuro<br><span style="font-size:0.65rem;color:var(--text-faint)">convert</span></th>
+  </tr>
+  <tr><td>FLOW-Realm-CRUD</td><td class="mx-yes">&check;</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-DataSource-CRUD</td><td class="mx-yes">&check;</td><td class="mx-yes">&check;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Version-CRUD</td><td class="mx-yes">&check;</td><td class="mx-yes">&check;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Entity-CRUD</td><td class="mx-yes">&check;</td><td class="mx-yes">&check;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Transformation-Connection</td><td class="mx-yes">&check;</td><td class="mx-yes">&check;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Schema-CRUD</td><td class="mx-opt">opt</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Namespace-CRUD</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Entity360-CRUD</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-SchemaGraph-CRUD</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Permissions-CRUD</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Watcher-CRUD</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Metadata-Read</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-DataSource-Extended</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-App-Misc</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-DS-Migration</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Document-Extraction</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Ingestion-Streams</td><td class="mx-opt">opt</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Tenant-CRUD</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-yes">&check;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Security-Auth</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-opt">opt<sup>*</sup></td><td class="mx-yes">&check;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr style="border-top:2px solid var(--accent)"><td>FLOW-KnowledgeGraph-Metadata</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Synapse-Namespace</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Synapse-Query</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Synapse-Health</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Nexus-Search</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-Lumen-Pipeline</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>FLOW-NLP-Pipeline</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#2a6496;font-weight:600;text-align:center">&#9679;</td><td class="mx-no">&mdash;</td></tr>
+  <tr><td>Neuro Graph (shell&rarr;Newman)</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td class="mx-no">&mdash;</td><td style="color:#856404;font-weight:600;text-align:center">&#9679;</td></tr>
+  <tr><td>SMOKE-Platform-Health</td><td class="mx-opt">opt</td><td class="mx-opt">opt</td><td class="mx-opt">opt</td><td class="mx-opt">opt</td><td style="color:#2a6496;text-align:center">&#9679;</td><td style="color:#2a6496;text-align:center">&#9679;</td><td style="color:#2a6496;text-align:center">&#9679;</td><td style="color:#2a6496;text-align:center">&#9679;</td><td style="color:#2a6496;text-align:center">&#9679;</td><td style="color:#2a6496;text-align:center">&#9679;</td></tr>
+</table>
+</div>
+<p style="font-size:0.78rem;color:var(--text-faint);margin-top:0.3rem"><sup>*</sup> tenant-service runs FLOW-Security-Auth only when <code>API_TEST_SUITE=all</code>. <span style="color:#2a6496;font-weight:600">&#9679;</span> = proposed mapping, CI/CD not yet enabled in jenkinsfile.</p>
+
+<h4>How the Pipeline Runs Tests</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">All 4 services follow the same pattern in their <code>jenkinsfile</code>:</p>
+<div class="code-block">// 1. Clone postman-collections repo
+checkout([$class: 'GitSCM', branches: [[name: '*/main']],
+  userRemoteConfigs: [[url: 'https://github.com/thequipu/postman-collections.git']]])
+
+// 2. Copy flows + environments, sync secrets from S3
+cp -r api-tests/repo/flows api-tests/flows
+aws s3 sync s3://quipu-api-tests/config/secrets/ api-tests/secrets/
+aws s3 sync s3://quipu-api-tests/config/environments/ api-tests/environments/
+
+// 3. Install Newman if needed
+which newman || npm install -g newman newman-reporter-htmlextra
+
+// 4. Load secrets from {env}.secrets.env → --env-var flags
+// 5. Run each selected flow:
+newman run "api-tests/flows/${flow}.postman_collection.json" \
+  -e "api-tests/environments/${testEnv}.postman_environment.json" \
+  ${insecureFlag} ${secretVars} \
+  -r cli,htmlextra,junit \
+  --reporter-junit-export "api-tests/reports/.../slug.xml" \
+  --reporter-htmlextra-export "api-tests/reports/.../slug.html" \
+  --timeout-request 60000
+
+// 6. Publish: junit + archiveArtifacts + publishHTML
+// 7. Upload reports to S3 for historical tracking</div>
+<p style="font-size:0.82rem;color:var(--text-muted)">Environment auto-selection: when <code>DEPLOY_TO_MINIKUBE=true</code>, the test env is overridden to <code>minikube</code> regardless of <code>API_TEST_ENV</code>. Onprem/local environments use <code>--insecure</code> for self-signed TLS.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="env">Environment Variables</h2>
+
+<h4>Keycloak / Auth</h4>
+<table class="env-table">
+  <tr><th>Variable</th><th>Description</th></tr>
+  <tr><td><code>keycloak_token_url</code></td><td>Token endpoint, e.g. <code>https://kc-quipueks.thequipu.in/realms/eksquipu/protocol/openid-connect/token</code></td></tr>
+  <tr><td><code>client_id</code></td><td>Keycloak client, e.g. <code>eksquipu-client</code></td></tr>
+  <tr><td><code>client_secret</code></td><td>Client secret (from Vault or <code>--env-var</code>)</td></tr>
+  <tr><td><code>test_username / test_password</code></td><td>User creds (<code>admin/admin123</code> or <code>karthik/karthik12</code>)</td></tr>
+  <tr><td><code>tenant_id</code></td><td>Tenant code, e.g. <code>eksquipu</code></td></tr>
+</table>
+
+<h4>Database (Postgres)</h4>
+<table class="env-table">
+  <tr><th>Variable</th><th>Description</th></tr>
+  <tr><td><code>driverType</code></td><td><code>POSTGRES</code></td></tr>
+  <tr><td><code>dbHost / dbPort / dbName</code></td><td>Target database</td></tr>
+  <tr><td><code>dbUser / dbPassword</code></td><td>Encrypted password + <code>aesRandomIV</code></td></tr>
+  <tr><td><code>dbSchema / driverClassName</code></td><td>Schema name + JDBC driver class</td></tr>
+</table>
+
+<h4>S3 / File Sources</h4>
+<table class="env-table">
+  <tr><th>Variable</th><th>Description</th></tr>
+  <tr><td><code>s3_bucket / s3_region</code></td><td>S3 bucket + region</td></tr>
+  <tr><td><code>s3_access_key / s3_secret_key</code></td><td>AWS credentials (raw, no aesRandomIV)</td></tr>
+  <tr><td><code>s3_csv_key / s3_csv_file</code></td><td>CSV S3 prefix + file path</td></tr>
+  <tr><td><code>s3_excel_file / s3_pdf_key</code></td><td>Excel + PDF S3 keys</td></tr>
+</table>
+
+<h4>Service Base URLs</h4>
+<table class="env-table">
+  <tr><th>Variable</th><th>Service</th></tr>
+  <tr><td><code>app_base_url</code></td><td>Application Service (gateway)</td></tr>
+  <tr><td><code>transform_base_url</code></td><td>Transformation Service</td></tr>
+  <tr><td><code>kg_base_url</code></td><td>Knowledge Graph Service</td></tr>
+  <tr><td><code>synapse_base_url</code></td><td>Synapse (port 8888, direct)</td></tr>
+  <tr><td><code>nexus_base_url</code></td><td>Nexus Search</td></tr>
+  <tr><td><code>lumen_base_url</code></td><td>Lumen AI</td></tr>
+  <tr><td><code>nlp_base_url</code></td><td>NLP Service (port 4055, no auth)</td></tr>
+  <tr><td><code>docgraph_base_url</code></td><td>DocumentGraph (port 3048)</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="catalog">Flow Catalog</h2>
+<p style="font-size:0.85rem;color:var(--text-muted)">All 31 collections organized by category. Click to expand step details.</p>
+
+<!-- ─── PLATFORM & AUTH ─── -->
+<div class="cat-header">Platform &amp; Auth</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">SMOKE &ndash; Platform Health</span>
+  <span class="tag tag-jenkins">Jenkins</span>
+  <span class="svc-badge">multi-service</span>
+  <span class="fc-meta">Hand-crafted &bull; Health probes</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Probes actuator health endpoints across all platform services. No auth required for health checks. Includes a prod safety guard that blocks destructive HTTP methods when <code>allow_destructive=false</code>.</p>
+  <p class="fc-desc"><strong>Collection:</strong> <code>flows/SMOKE-Platform-Health.postman_collection.json</code></p>
+  <p class="fc-desc"><strong>Generator:</strong> Hand-crafted JSON (not from gen_flow.py)</p>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Security Auth</span>
+  <span class="svc-badge">admin + user API</span>
+  <span class="fc-meta">16 steps &bull; 13/13 endpoints</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Full security endpoint coverage: admin login/validate/introspect/refresh/logout + user OTP/login/token/introspect/refresh/logout.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/security.py</code> &rarr; <code>FLOW-Security-Auth.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Assertion</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/login</td><td>Full: access_token, refresh_token, expires_in, token_type</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/validate-tenant (valid)</td><td>response.valid === true</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/validate-tenant (invalid)</td><td>response.valid === false</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/introspect</td><td>Reachability (200)</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/refreshToken</td><td>Reachability</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/short-lived-token</td><td>Reachability</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/logout</td><td>Reachability</td></tr>
+    <tr><td>08</td><td><span class="method m-post">POST</span></td><td class="ep">/user/generate-otp</td><td>Full: "OTP sent" message</td></tr>
+    <tr><td>09</td><td><span class="method m-post">POST</span></td><td class="ep">/user/login</td><td>Wrong OTP &rarr; 401</td></tr>
+    <tr><td>10</td><td><span class="method m-post">POST</span></td><td class="ep">/user/internal-token</td><td>Reachability</td></tr>
+    <tr><td>11</td><td><span class="method m-post">POST</span></td><td class="ep">/user/introspect</td><td>Reachability</td></tr>
+    <tr><td>12</td><td><span class="method m-post">POST</span></td><td class="ep">/user/refreshToken</td><td>Reachability</td></tr>
+    <tr><td>13</td><td><span class="method m-get">GET</span></td><td class="ep">/user/users</td><td>Reachability</td></tr>
+    <tr><td>14</td><td><span class="method m-post">POST</span></td><td class="ep">/user/logout</td><td>Reachability</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Tenant CRUD</span>
+  <span class="svc-badge">admin API</span>
+  <span class="fc-meta">30 steps &bull; Full lifecycle</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Complete tenant lifecycle: create (with SSO) &rarr; list/get/verify &rarr; config update &rarr; encryption &rarr; Vault secrets &rarr; toggle active &rarr; user enable/disable &rarr; audit &rarr; provisioning wait &rarr; Keycloak admin delete &rarr; verify gone.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/tenant.py</code> &rarr; <code>FLOW-Tenant-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Assertion</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/admin/tenant</td><td>Create tenant (SSO config). Captures tenantCode</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant</td><td>List all, verify new tenant in list</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/active</td><td>200</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/{code}</td><td>200</td></tr>
+    <tr><td>05</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/tenantSpecific/{code}</td><td>200</td></tr>
+    <tr><td>06</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/users/{code}</td><td>200</td></tr>
+    <tr><td>07</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/sso/{code}</td><td>200</td></tr>
+    <tr><td>08</td><td><span class="method m-put">PUT</span></td><td class="ep">/admin/tenant/config/{code}</td><td>Update config 200</td></tr>
+    <tr><td>08b</td><td><span class="method m-put">PUT</span></td><td class="ep">/admin/tenant/{code}/encryption-details</td><td>Set encryption 200</td></tr>
+    <tr><td>08c</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/{code}/secrets</td><td>Vault read-back</td></tr>
+    <tr><td>09&ndash;12</td><td><span class="method m-put">PUT</span>/<span class="method m-get">GET</span></td><td class="ep">/admin/tenant/{code}/deactivate, /active, /activate</td><td>Toggle active: deactivate &rarr; verify &rarr; reactivate &rarr; verify</td></tr>
+    <tr><td>13&ndash;13d</td><td><span class="method m-put">PUT</span>/<span class="method m-get">GET</span></td><td class="ep">/admin/tenant/{code}/user-status</td><td>Disable user &rarr; verify &rarr; enable &rarr; verify</td></tr>
+    <tr><td>14</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/audit</td><td>200</td></tr>
+    <tr><td>15</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/audit/tenantRequests</td><td>200</td></tr>
+    <tr><td>15b&ndash;d</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/{code}</td><td>Provisioning wait loop (15s, 30s, 60s)</td></tr>
+    <tr><td>15e</td><td><span class="method m-put">PUT</span></td><td class="ep">/admin/tenant/config/{code}</td><td>Re-configure</td></tr>
+    <tr><td>15f</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant/{code}/secrets</td><td>Verify Vault secrets</td></tr>
+    <tr><td>16a</td><td><span class="method m-post">POST</span></td><td class="ep">Keycloak master /token</td><td>Get admin token (noauth, master realm)</td></tr>
+    <tr><td>16</td><td><span class="method m-del">DEL</span></td><td class="ep">/admin/tenant/{code}</td><td>Delete with PURGE preset header</td></tr>
+    <tr><td>17</td><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant</td><td>Verify deleted from list</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Permissions CRUD</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">54 steps &bull; Full RBAC</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Full RBAC lifecycle with 2 Keycloak users, 3 entity types (DATA_FABRIC, SCHEMA, DATA_SOURCE). Phases: create dependencies (DS+Schema+Realm) &rarr; create 2 test users via Keycloak Admin API &rarr; create 4 permissions (VIEW, EDIT, ADMIN, ROW_ACCESS) &rarr; create 2 roles (viewer, admin) &rarr; assign user-permissions &rarr; verify access per user &rarr; role-permissions &rarr; deactivate user &rarr; cleanup.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/permissions.py</code> &rarr; <code>FLOW-Permissions-CRUD.postman_collection.json</code></p>
+  <p class="fc-desc"><strong>Key phases:</strong> P0: DS+Schema+Realm &bull; P1: 2 Keycloak users &bull; P2: 4 perms &bull; P3: 2 roles &bull; P4: 5 assignments &bull; P5: Verify User1 (viewer only) &bull; P6: Verify User2 (admin) &bull; P7: Query endpoints &bull; P8: Role-perms &bull; P9: Deactivate &bull; P10: Cleanup</p>
+</div>
+</details>
+
+<!-- ─── DATA LAYER ─── -->
+<div class="cat-header">Data Layer</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">DataSource CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">14 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Core DS lifecycle: test-connection &rarr; create &rarr; get by ID &rarr; test by ID &rarr; fetch metadata graph &rarr; sample rows &rarr; run query &rarr; update description &rarr; verify update &rarr; delete &rarr; verify deleted.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>gen_ds_flow.py</code> (standalone) &rarr; <code>FLOW-DataSource-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Assertion</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection</td><td>DB connected (config-based)</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/datasource</td><td>Create DS, capture dsId</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/datasource/{dsId}</td><td>Verify, capture metadata</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/{dsId}/{driverType}</td><td>Created DS connects</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/metadata-graph/fetch-data-source</td><td>Capture tables/columns</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/source-query/fetch-sample-source</td><td>Sample rows from first table</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/source-query/query</td><td>SELECT * LIMIT 10</td></tr>
+    <tr><td>08</td><td><span class="method m-put">PUT</span></td><td class="ep">/datasource</td><td>Update description</td></tr>
+    <tr><td>09</td><td><span class="method m-get">GET</span></td><td class="ep">/datasource/{dsId}</td><td>Verify description changed</td></tr>
+    <tr><td>10</td><td><span class="method m-del">DEL</span></td><td class="ep">/datasource/{dsId}</td><td>Delete</td></tr>
+    <tr><td>11</td><td><span class="method m-get">GET</span></td><td class="ep">/datasource?page=0&amp;size=20</td><td>Verify gone from list</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">DataSource Extended</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">22 steps &bull; DB + CSV + Excel + PDF</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Extended DS endpoints: is-unique, get-by-ids, get-sources, get-by-type, graph-ids, update-signature, keys + CSV/Excel/PDF datasource creation via S3.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/datasource_extended.py</code> &rarr; <code>FLOW-DataSource-Extended.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Note</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/datasource</td><td>Create DB DS</td></tr>
+    <tr><td>02&ndash;08</td><td><span class="method m-get">GET</span></td><td class="ep">/datasource/is-unique, /ids, /sources, /get-by-type, /get-graph-ids, /id, ?page</td><td>7 read endpoints</td></tr>
+    <tr><td>09&ndash;10</td><td><span class="method m-put">PUT</span>/<span class="method m-post">POST</span></td><td class="ep">/datasource/update-signature-presence, /update-signature</td><td>Signature ops</td></tr>
+    <tr><td>11</td><td><span class="method m-post">POST</span></td><td class="ep">/datasource/keys</td><td>S3 key listing</td></tr>
+    <tr><td>12&ndash;17</td><td><span class="method m-post">POST</span>/<span class="method m-get">GET</span></td><td class="ep">/datasource (CSV, Excel, PDF creates + verify)</td><td>3 file-based DS types</td></tr>
+    <tr><td>18&ndash;21</td><td><span class="method m-del">DEL</span></td><td class="ep">/datasource/{id} &times;4</td><td>Cleanup all created DSes</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">DS Migration</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">10 steps &bull; Read-only probes</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">DataSource migration endpoints: Neo4j migrate-all/single, Hive all/single, Trino catalog all/single, password migration + decrypt.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/ds_migration.py</code> &rarr; <code>FLOW-DS-Migration.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source/migrate-all</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source?sourceId={id}</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source/hive</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source/hive-source/{id}</td></tr>
+    <tr><td>05</td><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source/create-trino-catalogs</td></tr>
+    <tr><td>06</td><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source/create-trino-catalog/{id}</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/migrate-data-source/migratePassword</td></tr>
+    <tr><td>08</td><td><span class="method m-post">POST</span></td><td class="ep">/migrate-data-source/decryptPassword</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Metadata Read</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">8 steps &bull; Read-only</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Metadata read operations: datasource listing, get by ID, tables URNs, nodes, metadata-graph fetch + add description. Uses existing data.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/metadata.py</code> &rarr; <code>FLOW-Metadata-Read.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-get">GET</span></td><td class="ep">/metadata/datasource</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/metadata/datasource/{id}</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/metadata/tables/urns</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/metadata/nodes?schemaName&amp;versionId</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/metadata-graph/fetch-data-source</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/metadata-graph/add-description</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ─── SCHEMA & VERSION ─── -->
+<div class="cat-header">Schema &amp; Version</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Schema CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">15 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Schema lifecycle with real entities: setup DS &rarr; fetch entities &rarr; create schema &rarr; save schema-graph (KG version + Neo4j merge + verify) &rarr; get by name &rarr; update description &rarr; verify update &rarr; cleanup (graph, version, schema, DS).</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/schema.py</code> &rarr; <code>FLOW-Schema-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Note</th></tr>
+    <tr><td>01a&ndash;b</td><td><span class="method m-post">POST</span></td><td class="ep">/datasource, /metadata-graph/fetch-data-source</td><td>Setup: DS + fetch entities</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/schema</td><td>Create schema with generated name</td></tr>
+    <tr><td>03b</td><td colspan="2">3-step schema-graph save (KG &rarr; Neo4j &rarr; verify)</td><td>Uses <code>create_schema_graph_step()</code></td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/schema/name</td><td>Verify by name</td></tr>
+    <tr><td>05</td><td><span class="method m-put">PUT</span></td><td class="ep">/schema</td><td>Update description</td></tr>
+    <tr><td>06</td><td><span class="method m-get">GET</span></td><td class="ep">/schema/name</td><td>Verify update</td></tr>
+    <tr><td>07&ndash;10</td><td><span class="method m-del">DEL</span></td><td class="ep">/schema-graph, /versions, /schema, /datasource</td><td>Cleanup chain</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Schema Graph CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">14 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Schema graph operations: create &rarr; get by versionUri &rarr; get by name+versionId &rarr; update (DETACH-DELETE + re-add full graph) &rarr; copy-version &rarr; delete &rarr; cleanup.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/schema_graph.py</code> &rarr; <code>FLOW-SchemaGraph-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>02</td><td colspan="2"><code>create_schema_graph_step()</code> &mdash; KG save-schema-version &rarr; POST /schema-graph &rarr; verify</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/schema-graph?versionUri={enc}</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/schema-graph/by-name?schemaName&amp;versionId</td></tr>
+    <tr><td>05</td><td><span class="method m-put">PUT</span></td><td class="ep">/schema-graph</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/schema-graph/copy-version</td></tr>
+    <tr><td>07</td><td><span class="method m-del">DEL</span></td><td class="ep">/schema-graph?schemaId</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Version CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">13 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Schema version lifecycle: setup (DS &rarr; entities &rarr; schema &rarr; schema-graph with version) &rarr; get version &rarr; get LB &rarr; unlock &rarr; delete &rarr; cleanup. Note: PUT /versions/update was removed from the API.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/versions.py</code> &rarr; <code>FLOW-Version-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/versions?versionId={id}</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/versions/lb?versionId={id}</td></tr>
+    <tr><td>07</td><td><span class="method m-put">PUT</span></td><td class="ep">/versions/veriosn-unlock?versionId={id}</td></tr>
+    <tr><td>08</td><td><span class="method m-del">DEL</span></td><td class="ep">/versions/delete?versionId={id}</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ─── ENTITY ─── -->
+<div class="cat-header">Entity</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Entity CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">~20 steps &bull; Full entity page ops</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Entity page operations on real DS entities. 5 phases: (1) Create DS, (2) Get entity subgraph + capture columns, (3) Entity operations: create with dataSourceUri+properties, add property (mappedColumnUri), merge properties, create from existing, relationship CRUD, delete + verify, (4) Schema-graph save, (5) Cleanup.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/entity.py</code> &rarr; <code>FLOW-Entity-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Note</th></tr>
+    <tr><td>01a&ndash;b</td><td><span class="method m-post">POST</span></td><td class="ep">/datasource, /metadata-graph/fetch-data-source</td><td>Setup DS + entities</td></tr>
+    <tr><td>02b</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-graph/entity-subgraph?uri={uri}</td><td>Capture column URIs</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/entity</td><td>Create new entity with DS properties</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/entity/property?entityUri={uri}</td><td>Add property with mappedColumnUri</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/entity/property?entityUri={uri}</td><td>Merge 2 columns into 1 property</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/entity</td><td>Copy entity from existing</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/entity/relationship?entityUri={uri}</td><td>Add relationship between entities</td></tr>
+    <tr><td>08</td><td><span class="method m-del">DEL</span></td><td class="ep">/entity/relationship?uri={uri}</td><td>Delete relationship</td></tr>
+    <tr><td>09</td><td><span class="method m-del">DEL</span></td><td class="ep">/entity/property?uri={uri}</td><td>Delete property + verify</td></tr>
+    <tr><td>10&ndash;11</td><td><span class="method m-del">DEL</span></td><td class="ep">/entity?uri={uri}</td><td>Delete entities + verify gone</td></tr>
+    <tr><td>12&ndash;13</td><td><span class="method m-post">POST</span></td><td class="ep">/schema, schema-graph save</td><td>Schema with remaining entities</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Entity360 CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">16 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Entity 360 configuration lifecycle: full_setup (DS+Schema) &rarr; create entity360 &rarr; get &rarr; get all &rarr; by versionIds &rarr; ERFlow &rarr; flow info &rarr; vector search &rarr; get by ID &rarr; by pathId &rarr; update &rarr; delete &rarr; cleanup.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/entity360.py</code> &rarr; <code>FLOW-Entity360-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/entity-360?versionsId={vid}</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360?namedEntity&amp;versionsId</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/all?versionsId</td></tr>
+    <tr><td>05</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/all/versionIds?versionsIds</td></tr>
+    <tr><td>06</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/erflow-enabled</td></tr>
+    <tr><td>07</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/entity-360-flow-info?versionsId&amp;pathId</td></tr>
+    <tr><td>08</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/vector-search-with-status?versionId</td></tr>
+    <tr><td>09</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/entity360entity/{id}</td></tr>
+    <tr><td>10</td><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/entity360-path-id?pathId</td></tr>
+    <tr><td>11</td><td><span class="method m-put">PUT</span></td><td class="ep">/entity-360?versionsId</td></tr>
+    <tr><td>12</td><td><span class="method m-del">DEL</span></td><td class="ep">/entity-360/{id}</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ─── FABRIC & INGESTION ─── -->
+<div class="cat-header">Fabric &amp; Ingestion</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Realm CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app + kg + transform</span>
+  <span class="fc-meta">61 steps &bull; 8-DS full pipeline</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">The largest flow: 8 datasources (4 Postgres + 2 CSV + 2 Excel) &rarr; schema &rarr; schema-graph &rarr; realm &rarr; namespace (wait UP) &rarr; streams/generate &rarr; SAVE + event/ingest &rarr; verify labels. Mid-way re-ingest with <code>truncate=true</code>. Ingestion verify is soft-assert (backend token TTL ~3 min causes partial ingestion).</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/realm.py</code> &rarr; <code>FLOW-Realm-CRUD.postman_collection.json</code></p>
+  <p class="fc-desc"><strong>Known issue:</strong> PipelineTokenProvider refresh is broken; Keycloak token expires in ~3 minutes, so CTAS queries submitted to Trino can't be polled. Step 24 uses soft-assert to prevent this from blocking the flow.</p>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Namespace CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">16 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Namespace + source management: full_setup (DS+Schema+Realm) &rarr; list all &rarr; create namespace &rarr; get by realm &rarr; get by ID &rarr; context &rarr; by-name context &rarr; add source &rarr; list sources &rarr; by-name source &rarr; remove source &rarr; delete namespace &rarr; cleanup.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/namespace.py</code> &rarr; <code>FLOW-Namespace-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/namespace/all</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/namespace?realmId</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/namespace?realmId&amp;page&amp;size</td></tr>
+    <tr><td>05</td><td><span class="method m-get">GET</span></td><td class="ep">/namespace/{id}?realmId</td></tr>
+    <tr><td>06</td><td><span class="method m-get">GET</span></td><td class="ep">/namespace/{id}/context</td></tr>
+    <tr><td>07</td><td><span class="method m-get">GET</span></td><td class="ep">/namespace/by-name/{name}/context</td></tr>
+    <tr><td>08</td><td><span class="method m-post">POST</span></td><td class="ep">/namespace/{id}/source</td></tr>
+    <tr><td>09&ndash;10</td><td><span class="method m-get">GET</span></td><td class="ep">/namespace/{id}/source, /by-name/{name}/source</td></tr>
+    <tr><td>11</td><td><span class="method m-del">DEL</span></td><td class="ep">/namespace/{id}/source/{sourceId}</td></tr>
+    <tr><td>12</td><td><span class="method m-del">DEL</span></td><td class="ep">/namespace/{id}?realmId</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Ingestion Streams</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">9 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Atomic ingest stream lifecycle: create stream &rarr; get by realm &rarr; check any running &rarr; create ingestion status &rarr; get latest status &rarr; change running status &rarr; remove stream.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/ingestion.py</code> &rarr; <code>FLOW-Ingestion-Streams.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/atomicIngestStream/create-stream</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/atomicIngestStream/get-atomic-stream/{realmId}</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/atomicIngestStream/{realmId}/atomic/any-running</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/atomic-ingestion-status/create</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/atomic-ingestion-status/get-latest</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/atomicIngestStream/atomic/running-status-change</td></tr>
+    <tr><td>07</td><td><span class="method m-del">DEL</span></td><td class="ep">/atomicIngestStream/remove-stream/{id}</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Watcher CRUD</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">8 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Watcher lifecycle: create &rarr; list &rarr; get by ID &rarr; pause &rarr; resume &rarr; delete.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/watcher.py</code> &rarr; <code>FLOW-Watcher-CRUD.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/watcher</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/watcher</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/watcher/{id}</td></tr>
+    <tr><td>04</td><td><span class="method m-put">PUT</span></td><td class="ep">/watcher/{id}/pause</td></tr>
+    <tr><td>05</td><td><span class="method m-put">PUT</span></td><td class="ep">/watcher/{id}/resume</td></tr>
+    <tr><td>06</td><td><span class="method m-del">DEL</span></td><td class="ep">/watcher/{id}</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Document Extraction</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app + transform</span>
+  <span class="fc-meta">9 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Document extraction lifecycle: create extraction status &rarr; get status &rarr; get by datasource &rarr; create doc streams &rarr; get doc streams &rarr; ingestion status by stream IDs &rarr; extract document (transformation service).</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/document_extraction.py</code> &rarr; <code>FLOW-Document-Extraction.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Service</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/document</td><td>app</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/document/extraction-status?realmId</td><td>app</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/document/extraction-status-by-datasource-id?datasourceId</td><td>app</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/documentIngestStream/create-streams</td><td>app</td></tr>
+    <tr><td>05</td><td><span class="method m-get">GET</span></td><td class="ep">/documentIngestStream/get-document-stream/{realmId}</td><td>app</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/document-ingestion-status/get-by-stream-ids</td><td>app</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/document/extract</td><td>transform</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ─── GRAPH SERVICES ─── -->
+<div class="cat-header">Graph Services</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Synapse Namespace</span>
+  <span class="svc-badge">synapse_base_url</span>
+  <span class="fc-meta">10 steps &bull; Direct port 8888</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Full Synapse namespace lifecycle (direct, not behind gateway): list &rarr; create &rarr; status &rarr; stats &rarr; enable &rarr; cypher query &rarr; disable &rarr; delete (permanent=true).</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/synapse.py</code> &rarr; <code>FLOW-Synapse-Namespace.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-get">GET</span></td><td class="ep">/namespaces</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/namespaces/create?name={name}&amp;isHistoricIngestRequired=false</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/namespaces/{name}/status</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/namespaces/{name}/stats</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/namespaces/{name}/enable</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/query/cypher</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/namespaces/{name}/disable</td></tr>
+    <tr><td>08</td><td><span class="method m-del">DEL</span></td><td class="ep">/namespaces/{name}?permanent=true</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Synapse Query (Advanced)</span>
+  <span class="svc-badge">synapse_base_url</span>
+  <span class="fc-meta">11 steps &bull; v1 + v2 engines</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Advanced Cypher query operations: sync query &rarr; explain &rarr; async submit + poll &rarr; v2 query &rarr; v2 explain &rarr; node fetch &rarr; consumer pause/resume.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/synapse_query.py</code> &rarr; <code>FLOW-Synapse-Query.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Engine</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/query/cypher</td><td>v1 sync</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/query/cypher/explain</td><td>v1 explain</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/query/cypher/async</td><td>v1 async submit</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/query/cypher/async/result?queryId</td><td>v1 async poll</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/api/v2/cypher/query</td><td>v2</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/api/v2/cypher/explain</td><td>v2</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/node/fetch</td><td>&mdash;</td></tr>
+    <tr><td>08</td><td><span class="method m-post">POST</span></td><td class="ep">/consumer/pause</td><td>&mdash;</td></tr>
+    <tr><td>09</td><td><span class="method m-post">POST</span></td><td class="ep">/consumer/resume</td><td>&mdash;</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Nexus Search</span>
+  <span class="svc-badge">nexus_base_url</span>
+  <span class="fc-meta">6 steps &bull; Read-only</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Read-only Nexus search validation: traversable schema &rarr; search &rarr; GIN &rarr; labels. Uses <code>{{realm}}</code> from environment.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/nexus.py</code> &rarr; <code>FLOW-Nexus-Search.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/nexus/schema/traversable/get</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/nexus/search</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/nexus/gin</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/nexus/labels</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">KG Metadata</span>
+  <span class="svc-badge">kg_base_url</span>
+  <span class="fc-meta">6 steps &bull; Read-only</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Read-only KG service validation: get saved schema graph &rarr; namespace stats &rarr; namespace status &rarr; list watchers.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/kg.py</code> &rarr; <code>FLOW-KnowledgeGraph-Metadata.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-get">GET</span></td><td class="ep">/metadata/get-saved-schema-graph?referenceName={realm}</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/synapse/namespace/stats?namespace={realm}</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/synapse/namespace/status?name={realm}</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/synapse/watchers?namespace={realm}</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">DocumentGraph Parse</span>
+  <span class="svc-badge">docgraph_base_url</span>
+  <span class="fc-meta">3 steps &bull; Health only</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Document Graph service health validation. Port 3048, direct (not behind gateway). Currently just health check.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/docgraph.py</code> &rarr; <code>FLOW-DocumentGraph-Parse.postman_collection.json</code></p>
+</div>
+</details>
+
+<!-- ─── AI / ML PIPELINE ─── -->
+<div class="cat-header">AI / ML Pipeline</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Lumen Pipeline</span>
+  <span class="svc-badge">lumen_base_url</span>
+  <span class="fc-meta">8 steps &bull; AI pipeline</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Lumen AI pipeline: query-builder (natural language &rarr; Cypher) &rarr; reset schema &rarr; describe datasource &rarr; embed datasource &rarr; cluster preview &rarr; semantic chat. Steps 03&ndash;05 require <code>--env-var versionUri=...</code>.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/lumen.py</code> &rarr; <code>FLOW-Lumen-Pipeline.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/query-builder/query</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/query-builder/reset-schema</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/lumen/describe/datasource</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/lumen/embed/datasource</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/lumen/cluster/final-clusters</td></tr>
+    <tr><td>06</td><td><span class="method m-post">POST</span></td><td class="ep">/semantic-chat/getAnswer</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">NLP Pipeline</span>
+  <span class="svc-badge">nlp_base_url</span>
+  <span class="fc-meta">6 steps &bull; No auth &bull; Port 4055</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Stateless NLP service validation: tokenize &rarr; sentenize &rarr; finalize-spans &rarr; embed. No auth required. Uses <code>/health</code> not <code>/actuator/health</code>.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/nlp.py</code> &rarr; <code>FLOW-NLP-Pipeline.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Assertion</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/tokenize</td><td>Has tokens</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/sentenize</td><td>Has sentences</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/finalize-spans</td><td>200 or 400</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/embed</td><td>Has embeddings (>10 chars)</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ─── TRANSFORMATION ─── -->
+<div class="cat-header">Transformation</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Transformation Service Full</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">transform_base_url</span>
+  <span class="fc-meta">25 steps &bull; 23 endpoints &bull; 6 categories</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Complete transformation service testing: Connection (5) + Source Query (2) + S3 Upload (7) + Hive/Trino (4) + Ingest/Extract (3) + Schema (2). Requires DB config + S3 config.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/transformation.py</code> &rarr; <code>FLOW-Transformation-Connection.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th><th>Category</th></tr>
+    <tr><td>01</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection</td><td>Connection</td></tr>
+    <tr><td>02</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/{dsId}/{driverType}</td><td>Connection</td></tr>
+    <tr><td>03</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/metadata</td><td>Connection</td></tr>
+    <tr><td>04</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/sample-records</td><td>Connection</td></tr>
+    <tr><td>05</td><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/upload-sample</td><td>Connection</td></tr>
+    <tr><td>06&ndash;07</td><td><span class="method m-post">POST</span></td><td class="ep">/source-query/fetch-sample-source, /query</td><td>Source Query</td></tr>
+    <tr><td>08&ndash;14</td><td><span class="method m-post">POST</span>/<span class="method m-get">GET</span></td><td class="ep">/s3-upload/* (Excel, CSV, PDF headers, URLs, view)</td><td>S3 Upload</td></tr>
+    <tr><td>15&ndash;18</td><td><span class="method m-post">POST</span></td><td class="ep">/trino-source/* (create-hive, create-catalog, remove-catalog, remove-hive)</td><td>Hive/Trino</td></tr>
+    <tr><td>19</td><td><span class="method m-post">POST</span></td><td class="ep">/event/ingest</td><td>Ingest</td></tr>
+    <tr><td>20</td><td><span class="method m-post">POST</span></td><td class="ep">/document/extract</td><td>Extract</td></tr>
+    <tr><td>21</td><td><span class="method m-post">POST</span></td><td class="ep">/streams/generate</td><td>Streams</td></tr>
+    <tr><td>22&ndash;23</td><td><span class="method m-get">GET</span>/<span class="method m-post">POST</span></td><td class="ep">/node/get-map, /schema/generate/node-objects</td><td>Schema</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ─── END-TO-END REALM + INGESTION ─── -->
+<div class="cat-header">End-to-End Realm + Ingestion</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Single-DS Realm + Ingestion</span>
+  <span class="svc-badge">app + kg + transform</span>
+  <span class="fc-meta">~18 steps &bull; Strict verify</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Full realm + real ingestion for ONE datasource. Same pipeline as 8-DS realm but for a single DB via env-vars. DS &rarr; entities &rarr; schema &rarr; schema-graph (+versionsModel) &rarr; realm &rarr; namespace (wait UP, 18 retries) &rarr; streams/generate &rarr; SAVE + event/ingest (in-memory sendRequest) &rarr; <strong>strict verify: every table must land rows or the flow FAILS</strong>. Honors <code>skip_cleanup=true</code>.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/single_ds_realm.py</code> &rarr; <code>FLOW-SingleDS-Realm.postman_collection.json</code></p>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Single-DS Entity-Layer Realm</span>
+  <span class="svc-badge">app + kg + transform</span>
+  <span class="fc-meta">~20 steps &bull; Product-faithful</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Product-faithful schema build: creates each business entity one-by-one via <code>POST /entity</code> (server stamps identity/tenant), then assembles the schema graph from the entity-graph (datasource-subgraph) instead of fabricating nodes client-side. Self-looping step for entity creation. Strict ingestion verify.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/single_ds_entity_realm.py</code> &rarr; <code>FLOW-SingleDS-EntityLayer-Realm.postman_collection.json</code></p>
+  <p class="fc-desc"><strong>Key difference from Single-DS Realm:</strong> Uses <code>POST /entity</code> per table (loop via <code>postman.setNextRequest</code>) + <code>GET /entity-graph/datasource-subgraph</code> for server-stamped nodes, rather than fabricating the graph in JavaScript.</p>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">CSV + Snowflake Entity-Layer Realm</span>
+  <span class="svc-badge">app + kg + transform</span>
+  <span class="fc-meta">~25 steps &bull; 2-DS realm</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Focused 2-DS realm: sample-data CSV (S3) + Snowflake (JDBC), built the product way via <code>POST /entity</code> one-by-one across both DSes. Snowflake creds via <code>snow_*</code> env-vars. CSV needs raw AWS accessKey/secret + <code>files[]</code> with <code>columnDetails</code>. Uses <code>create_entity_schema_graph_step()</code> for multi-DS entity assembly.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/csv_snow_entity_realm.py</code> &rarr; <code>FLOW-CSV-Snowflake-EntityLayer.postman_collection.json</code></p>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">CSV-only Entity-Layer Realm</span>
+  <span class="svc-badge">app + kg + transform</span>
+  <span class="fc-meta">~18 steps &bull; Isolates CSV ingestion</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Single CSV datasource realm, built the product way. Isolates CSV to test ingestion on its own. Reuses <code>_realm_ingest_steps()</code> and <code>_capture_ds()</code> from <code>csv_snow_entity_realm.py</code>. Default column schema for sample-data.csv (8 columns: id, name, email, age, salary, department, hire_date, is_active).</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/csv_entity_realm.py</code> &rarr; <code>FLOW-CSV-EntityLayer.postman_collection.json</code></p>
+</div>
+</details>
+
+<!-- ─── MISC ─── -->
+<div class="cat-header">Misc</div>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">App Misc</span>
+  <span class="tag tag-jenkins">Batch Runner</span>
+  <span class="svc-badge">app_base_url</span>
+  <span class="fc-meta">10 steps</span>
+</summary>
+<div class="fc-body">
+  <p class="fc-desc">Miscellaneous app-service endpoints: tenant-specific config, knowledge graph listing, NE Solr status (all / by entity / recent / recent all), S3 entity-resolution file ops.</p>
+  <p class="fc-desc"><strong>Generator:</strong> <code>services/app_misc.py</code> &rarr; <code>FLOW-App-Misc.postman_collection.json</code></p>
+  <div style="overflow-x:auto">
+  <table>
+    <tr><th>#</th><th>Method</th><th>Endpoint</th></tr>
+    <tr><td>01</td><td><span class="method m-get">GET</span></td><td class="ep">/tenant-specific</td></tr>
+    <tr><td>02</td><td><span class="method m-get">GET</span></td><td class="ep">/knowledgeGraph?page=0&amp;size=20</td></tr>
+    <tr><td>03</td><td><span class="method m-get">GET</span></td><td class="ep">/neSolrStatus</td></tr>
+    <tr><td>04</td><td><span class="method m-get">GET</span></td><td class="ep">/neSolrStatus/named-entity-status?namedEntity=test</td></tr>
+    <tr><td>05</td><td><span class="method m-get">GET</span></td><td class="ep">/neSolrStatus/recent-named-entity-status?namedEntity=test</td></tr>
+    <tr><td>06</td><td><span class="method m-get">GET</span></td><td class="ep">/neSolrStatus/recent?realmName={realm}</td></tr>
+    <tr><td>07</td><td><span class="method m-post">POST</span></td><td class="ep">/entity-resolution-s3/get-files</td></tr>
+    <tr><td>08</td><td><span class="method m-post">POST</span></td><td class="ep">/entity-resolution-s3/getCsvHeader</td></tr>
+  </table>
+  </div>
+</div>
+</details>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="batch">Batch Runner Coverage</h2>
+<p>The <code>run_all_flows.py</code> script runs 17 collections in sequence. These are the flows verified in every batch run:</p>
+<div style="overflow-x:auto">
+<table>
+  <tr><th>#</th><th>Collection</th><th>Service</th></tr>
+  <tr><td>1</td><td>FLOW-DataSource-CRUD</td><td>app</td></tr>
+  <tr><td>2</td><td>FLOW-Schema-CRUD</td><td>app</td></tr>
+  <tr><td>3</td><td>FLOW-Version-CRUD</td><td>app</td></tr>
+  <tr><td>4</td><td>FLOW-Entity-CRUD</td><td>app</td></tr>
+  <tr><td>5</td><td>FLOW-Namespace-CRUD</td><td>app</td></tr>
+  <tr><td>6</td><td>FLOW-Entity360-CRUD</td><td>app</td></tr>
+  <tr><td>7</td><td>FLOW-SchemaGraph-CRUD</td><td>app</td></tr>
+  <tr><td>8</td><td>FLOW-Permissions-CRUD</td><td>app + Keycloak</td></tr>
+  <tr><td>9</td><td>FLOW-Watcher-CRUD</td><td>app</td></tr>
+  <tr><td>10</td><td>FLOW-Metadata-Read</td><td>app</td></tr>
+  <tr><td>11</td><td>FLOW-DataSource-Extended</td><td>app + S3</td></tr>
+  <tr><td>12</td><td>FLOW-App-Misc</td><td>app</td></tr>
+  <tr><td>13</td><td>FLOW-DS-Migration</td><td>app</td></tr>
+  <tr><td>14</td><td>FLOW-Document-Extraction</td><td>app + transform</td></tr>
+  <tr><td>15</td><td>FLOW-Ingestion-Streams</td><td>app</td></tr>
+  <tr><td>16</td><td>FLOW-Transformation-Connection</td><td>transform</td></tr>
+  <tr><td>17</td><td>SMOKE-Platform-Health</td><td>multi</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="api-coverage">API Endpoint Coverage</h2>
+<p style="font-size:0.85rem;color:var(--text-muted)">~224 endpoints tested across 11 services (out of 357 total). All totals verified from source code scan of each service repository.</p>
+
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;display:flex;flex-wrap:wrap;gap:1.5rem;justify-content:center">
+  <div style="text-align:center">
+    <div style="font-size:2rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums">63%</div>
+    <div style="font-size:0.78rem;color:var(--text-muted)">Overall Coverage</div>
+  </div>
+  <div style="text-align:center">
+    <div style="font-size:2rem;font-weight:700;color:var(--heading);font-variant-numeric:tabular-nums">224</div>
+    <div style="font-size:0.78rem;color:var(--text-muted)">Endpoints Tested</div>
+  </div>
+  <div style="text-align:center">
+    <div style="font-size:2rem;font-weight:700;color:var(--text-muted);font-variant-numeric:tabular-nums">357</div>
+    <div style="font-size:0.78rem;color:var(--text-muted)">Total Endpoints</div>
+  </div>
+  <div style="text-align:center">
+    <div style="font-size:2rem;font-weight:700;color:var(--heading);font-variant-numeric:tabular-nums">11</div>
+    <div style="font-size:0.78rem;color:var(--text-muted)">Services</div>
+  </div>
+</div>
+
+<div style="overflow-x:auto">
+<table style="width:100%;table-layout:fixed">
+  <colgroup>
+    <col style="width:16%">
+    <col style="width:6%">
+    <col style="width:6%">
+    <col style="width:5%">
+    <col style="width:8%">
+    <col style="width:10%">
+    <col style="width:49%">
+  </colgroup>
+  <tr><th style="text-align:left">Target Service</th><th style="text-align:center">Tested</th><th style="text-align:center">Total</th><th style="text-align:center">Flows</th><th style="text-align:center">Coverage</th><th style="text-align:center">CI/CD</th><th style="text-align:left">Key API Areas</th></tr>
+  <tr>
+    <td><strong>Application Service</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">~110</td>
+    <td style="text-align:center">158</td>
+    <td style="text-align:center">22</td>
+    <td style="text-align:center"><span class="cov-good" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">70%</span></td>
+    <td style="text-align:center"><span class="tag tag-success" style="font-size:0.7rem">ACTIVE</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">DataSource</span> <span class="tag">Schema</span> <span class="tag">Entity</span> <span class="tag">Realm</span> <span class="tag">Ingestion</span> <span class="tag">Permissions</span> <span class="tag">Watcher</span> <span class="tag">Versions</span> <span class="tag">Document</span> <span class="tag">Migration</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: Websocket, TenantGraph (6), some Role/Permission endpoints</span></td>
+  </tr>
+  <tr>
+    <td><strong>Transformation Service</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">23</td>
+    <td style="text-align:center">23</td>
+    <td style="text-align:center">6</td>
+    <td style="text-align:center"><span class="cov-good" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">100%</span></td>
+    <td style="text-align:center"><span class="tag tag-success" style="font-size:0.7rem">ACTIVE</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">test-connection</span> <span class="tag">source-query</span> <span class="tag">s3-upload</span> <span class="tag">trino/hive</span> <span class="tag">event/ingest</span> <span class="tag">document/extract</span> <span class="tag">streams</span> <span class="tag">schema/generate</span></td>
+  </tr>
+  <tr>
+    <td><strong>Security Service</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">13</td>
+    <td style="text-align:center">14</td>
+    <td style="text-align:center">1</td>
+    <td style="text-align:center"><span class="cov-good" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">93%</span></td>
+    <td style="text-align:center"><span class="tag tag-success" style="font-size:0.7rem">ACTIVE</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">admin login</span> <span class="tag">validate-tenant</span> <span class="tag">introspect</span> <span class="tag">refreshToken</span> <span class="tag">short-lived-token</span> <span class="tag">user OTP</span> <span class="tag">logout</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: generate-admin-otp</span></td>
+  </tr>
+  <tr>
+    <td><strong>Tenant Service</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">10</td>
+    <td style="text-align:center">12</td>
+    <td style="text-align:center">1</td>
+    <td style="text-align:center"><span class="cov-good" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">83%</span></td>
+    <td style="text-align:center"><span class="tag tag-success" style="font-size:0.7rem">ACTIVE</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">tenant CRUD</span> <span class="tag">config</span> <span class="tag">toggle active</span> <span class="tag">user-status</span> <span class="tag">SSO</span> <span class="tag">audit</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: getActiveTenants, getUsersByTenant</span></td>
+  </tr>
+  <tr style="border-top:2px solid var(--border)">
+    <td><strong>Neuro</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">29</td>
+    <td style="text-align:center">36</td>
+    <td style="text-align:center">1 <span style="font-size:0.65rem;color:var(--text-muted)">(sh)</span></td>
+    <td style="text-align:center"><span class="cov-good" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">81%</span></td>
+    <td style="text-align:center"><span class="tag cicd-pending" style="font-size:0.65rem">NEXT</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">graph API</span> <span class="tag">spaces</span> <span class="tag">recall</span> <span class="tag">ingest</span> <span class="tag">pin/unpin</span> <span class="tag">stats</span> &bull; <a href="#neuro-breakdown" style="color:var(--accent);font-size:0.78rem">breakdown</a><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: historic/ask, historic/schema, OTLP traces &bull; Shell script needs Newman conversion</span></td>
+  </tr>
+  <tr>
+    <td><strong>Knowledge Graph</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">7</td>
+    <td style="text-align:center">35</td>
+    <td style="text-align:center">6</td>
+    <td style="text-align:center"><span class="cov-low" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">20%</span></td>
+    <td style="text-align:center"><span class="tag cicd-pending" style="font-size:0.65rem">NEXT</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">schema-graph</span> <span class="tag">namespace</span> <span class="tag">watchers</span> <span class="tag">schema-version</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: synapse query proxy (14), smart-llm (2), entity360 (2), doc-viz (2), vector-client (2) &bull; Flows ready, CI/CD not wired</span></td>
+  </tr>
+  <tr>
+    <td><strong>Synapse</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">16</td>
+    <td style="text-align:center">50</td>
+    <td style="text-align:center">2</td>
+    <td style="text-align:center"><span class="cov-low" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">32%</span></td>
+    <td style="text-align:center"><span class="tag cicd-pending" style="font-size:0.65rem">NEXT</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">namespace CRUD</span> <span class="tag">query/cypher</span> <span class="tag">node/fetch</span> <span class="tag">consumer</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: v2 cypher (6), fulltext index (5), watchers (6), shape (3), user-policy (3) &bull; Flows ready, CI/CD not wired</span></td>
+  </tr>
+  <tr>
+    <td><strong>Lumen</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">6</td>
+    <td style="text-align:center">8</td>
+    <td style="text-align:center">1</td>
+    <td style="text-align:center"><span class="cov-good" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">75%</span></td>
+    <td style="text-align:center"><span class="tag cicd-pending" style="font-size:0.65rem">PENDING</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">query-builder</span> <span class="tag">describe</span> <span class="tag">embed</span> <span class="tag">cluster</span> <span class="tag">semantic-chat</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: pipeline/datasources, relationships/suggest &bull; Flows ready, CI/CD not wired</span></td>
+  </tr>
+  <tr>
+    <td><strong>NLP</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">4</td>
+    <td style="text-align:center">9</td>
+    <td style="text-align:center">1</td>
+    <td style="text-align:center"><span class="cov-low" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">44%</span></td>
+    <td style="text-align:center"><span class="tag cicd-pending" style="font-size:0.65rem">PENDING</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">tokenize</span> <span class="tag">sentenize</span> <span class="tag">finalize-spans</span> <span class="tag">embed</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: milvus prepare/get-embeddings (2), health endpoints (3) &bull; Flows ready, CI/CD not wired</span></td>
+  </tr>
+  <tr>
+    <td><strong>Nexus</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">4</td>
+    <td style="text-align:center">12</td>
+    <td style="text-align:center">2</td>
+    <td style="text-align:center"><span class="cov-low" style="display:inline-block;font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">33%</span></td>
+    <td style="text-align:center"><span class="tag cicd-pending" style="font-size:0.65rem">PENDING</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">traversable/get</span> <span class="tag">search</span> <span class="tag">gin</span> <span class="tag">labels</span><br><span style="color:var(--text-muted);font-size:0.75rem">Gap: prepare, update, schema, anchors, mst, vectorize CRUD (3) &bull; Flows ready, CI/CD not wired</span></td>
+  </tr>
+  <tr>
+    <td><strong>Keycloak</strong></td>
+    <td style="text-align:center;font-weight:600;color:var(--accent)">2</td>
+    <td style="text-align:center;font-size:0.78rem">ext</td>
+    <td style="text-align:center">2</td>
+    <td style="text-align:center"><span style="display:inline-block;background:var(--tag-bg);color:var(--tag-text);font-weight:600;padding:2px 8px;border-radius:3px;font-size:0.82rem">N/A</span></td>
+    <td style="text-align:center"><span style="font-size:0.72rem;color:var(--text-muted)">&#8212;</span></td>
+    <td style="font-size:0.82rem;line-height:1.5"><span class="tag">master /token</span> <span class="tag">user CRUD</span><br><span style="color:var(--text-muted);font-size:0.75rem">External 3rd-party &bull; tested as part of other service flows</span></td>
+  </tr>
+</table>
+</div>
+
+<p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem"><strong>Coverage:</strong> <span class="cov-good" style="display:inline-block;font-weight:600;padding:1px 6px;border-radius:3px;font-size:0.75rem">70%+</span> good &nbsp; <span class="cov-mod" style="display:inline-block;font-weight:600;padding:1px 6px;border-radius:3px;font-size:0.75rem">50-69%</span> moderate &nbsp; <span class="cov-low" style="display:inline-block;font-weight:600;padding:1px 6px;border-radius:3px;font-size:0.75rem">&lt;50%</span> low &nbsp; | &nbsp; <strong>CI/CD:</strong> <span class="tag tag-success" style="font-size:0.7rem">ACTIVE</span> Jenkins pipeline running &nbsp; <span class="tag cicd-pending" style="font-size:0.65rem">NEXT</span> next in line for CI/CD enablement &nbsp; <span class="tag cicd-pending" style="font-size:0.65rem">PENDING</span> flows ready, CI/CD not wired yet &nbsp;&bull;&nbsp; <em>All totals verified from source code scan.</em></p>
+
+<h4>Endpoint Breakdown &mdash; Application Service (~110 endpoints)</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">The largest API surface. Click to expand each domain.</p>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">DataSource &amp; Connection</span>
+  <span class="fc-meta">16 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Tested By</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/datasource</td><td>DataSource-CRUD, Extended, Schema, Entity, Realm, SingleDS, CSV flows</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/datasource/id?sourceId</td><td>DataSource-CRUD, Extended</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/datasource/ids?sourceIds</td><td>Extended</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/datasource/sources</td><td>Extended</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/datasource/get-dataSources-by-type/{type}</td><td>Extended</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/datasource/get-graph-ids</td><td>Extended</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/datasource/is-unique?name</td><td>Extended</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/datasource</td><td>DataSource-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/datasource/update-signature-presence</td><td>Extended</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/datasource/update-signature</td><td>Extended</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/datasource/keys</td><td>Extended</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/datasource/{id}</td><td>DataSource-CRUD, Extended, Schema, Entity, Realm cleanup</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection</td><td>DataSource-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/{dsId}/{driverType}</td><td>DataSource-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/source-query/fetch-sample-source</td><td>DataSource-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/source-query/query</td><td>DataSource-CRUD</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Schema, Schema-Graph &amp; Versions</span>
+  <span class="fc-meta">14 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Tested By</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/schema</td><td>Schema-CRUD, Entity, Realm, SingleDS, CSV flows</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/schema/name?schemaName</td><td>Schema-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/schema</td><td>Schema-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/schema?schemaName</td><td>Schema-CRUD, cleanup flows</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/schema/vectorize/{referenceName}</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/schema-graph</td><td>SchemaGraph-CRUD, Schema-CRUD, Realm, setup.py</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/schema-graph?versionUri</td><td>SchemaGraph-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/schema-graph/by-name?schemaName&amp;versionId</td><td>SchemaGraph-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/schema-graph</td><td>SchemaGraph-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/schema-graph/copy-version</td><td>SchemaGraph-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/schema-graph?schemaId</td><td>SchemaGraph-CRUD, cleanup</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/versions?versionId</td><td>Version-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/versions/lb?versionId</td><td>Version-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/versions/delete?versionId</td><td>Version-CRUD, cleanup</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Entity &amp; Entity360</span>
+  <span class="fc-meta">18 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Tested By</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/entity</td><td>Entity-CRUD, SingleDS-Entity, CSV flows</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/entity/property?entityUri</td><td>Entity-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/entity/relationship?entityUri</td><td>Entity-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/entity?uri</td><td>Entity-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/entity/property?uri</td><td>Entity-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/entity/relationship?uri</td><td>Entity-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-graph/entity-subgraph?uri</td><td>Entity-CRUD, SingleDS-Entity</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/entity-360?versionsId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360?namedEntity&amp;versionsId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/all?versionsId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/all/versionIds?versionsIds</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/erflow-enabled</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/entity-360-flow-info?versionsId&amp;pathId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/vector-search-with-status?versionId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/entity360entity/{id}</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/entity-360/entity360-path-id?pathId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/entity-360?versionsId</td><td>Entity360-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/entity-360/{id}</td><td>Entity360-CRUD</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Realm &amp; Namespace</span>
+  <span class="fc-meta">24 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Tested By</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/realm</td><td>Realm-CRUD, Namespace, Permissions, SingleDS, CSV flows</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm?page&amp;size</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm/is-unique?realmName</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm/{id}</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm/by-name?realmName</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm/by-name-lb?realmName</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm/all-realms-data</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/realm/references</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/realm</td><td>Realm-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/realm/{id}</td><td>Realm-CRUD, cleanup</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace/all</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/namespace?realmId</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace?realmId&amp;page&amp;size</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace/{id}?realmId</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace/{id}/context</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace/by-name/{name}/context</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/namespace/{id}/source</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace/{id}/source</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespace/by-name/{name}/source</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/namespace/{id}/source/{sourceId}</td><td>Namespace-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/namespace/{id}?realmId</td><td>Namespace-CRUD</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Permissions &amp; RBAC</span>
+  <span class="fc-meta">25 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Tested By</th></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/permissions</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/permissions</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/get-all-users</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user-permission</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission?page&amp;size</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/user</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/entity360-paths</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/exists?entityType&amp;userIdentifier&amp;permissionNames</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/permission_by_userid?userId&amp;page&amp;size</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/permission_by_userid_and_entity_type?...</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/permission?entityType&amp;entityId</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user-permission/permission_by_entity?entityType&amp;page&amp;size</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user-permission/updateUser?username&amp;status</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/user-permission/delete?ids</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/roles</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/roles</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/roles/delete?ids</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/role-permission</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/role-permission?page&amp;size</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/role-permission/exists?entityType&amp;role&amp;permissionNames</td><td>Permissions-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/role-permission/delete?ids</td><td>Permissions-CRUD</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Ingestion, Watcher, Document, Metadata, Misc, Migration</span>
+  <span class="fc-meta">~33 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Domain</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/streams/generate</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/atomicIngestStream/create-stream</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/atomicIngestStream/get-atomic-stream/{realmId}</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/atomicIngestStream/{realmId}/atomic/any-running</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/atomic-ingestion-status/create</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/atomic-ingestion-status/get-latest</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/atomicIngestStream/remove-stream/{id}</td><td>Ingestion</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/watcher</td><td>Watcher</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/watcher, /watcher/{id}</td><td>Watcher</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/watcher/{id}/pause, /resume</td><td>Watcher</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/watcher/{id}</td><td>Watcher</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/document</td><td>Document</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/document/extraction-status?realmId</td><td>Document</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/document/extraction-status-by-datasource-id?datasourceId</td><td>Document</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/documentIngestStream/create-streams</td><td>Document</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/metadata-graph/fetch-data-source, /add-description</td><td>Metadata</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/metadata/datasource, /datasource/{id}, /tables/urns, /nodes</td><td>Metadata</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/tenant-specific, /knowledgeGraph, /neSolrStatus/*</td><td>Misc</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/entity-resolution-s3/get-files, /getCsvHeader</td><td>Misc</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/migrate-data-source/* (8 migration endpoints)</td><td>Migration</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<h4>Endpoint Breakdown &mdash; Transformation Service (23 endpoints)</h4>
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Category</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection</td><td>Connection</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/{dsId}/{driverType}</td><td>Connection</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/metadata</td><td>Connection</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/sample-records</td><td>Connection</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/test-connection/upload-sample</td><td>Connection</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/source-query/fetch-sample-source</td><td>Source Query</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/source-query/query</td><td>Source Query</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/s3-upload/getExcelHeader, /getExcelHeaderFromUrl</td><td>S3 Upload</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/s3-upload/getCsvHeadersFromUrl, /getCsvHeader</td><td>S3 Upload</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/s3-upload/getPdf, /getPdfFromUrl</td><td>S3 Upload</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/s3-upload/pdf-view?key</td><td>S3 Upload</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/trino-source/create-hive, /create-catalog</td><td>Hive/Trino</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/trino-source/remove-catalog, /remove-hive</td><td>Hive/Trino</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/event/ingest</td><td>Ingest</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/document/extract</td><td>Extract</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/streams/generate</td><td>Streams</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/node/get-map</td><td>Schema</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/schema/generate/node-objects</td><td>Schema</td></tr>
+</table>
+</div>
+
+<h4>Endpoint Breakdown &mdash; Other Services</h4>
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Service</th><th>Method</th><th>Endpoint</th><th>Flow</th></tr>
+  <tr><td rowspan="13" style="font-weight:600;vertical-align:top">Security<br><span style="font-size:0.72rem;color:var(--text-faint)">(13 endpoints)</span></td><td><span class="method m-post">POST</span></td><td class="ep">/admin/login</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/admin/validate-tenant (valid + invalid)</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/admin/introspect</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/admin/refreshToken</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/admin/short-lived-token</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/admin/logout</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user/generate-otp</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user/login</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user/internal-token</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user/introspect</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user/refreshToken</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/user/users</td><td>Security-Auth</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/user/logout</td><td>Security-Auth</td></tr>
+  <tr><td rowspan="7" style="font-weight:600;vertical-align:top">Tenant<br><span style="font-size:0.72rem;color:var(--text-faint)">(15 endpoints)</span></td><td><span class="method m-post">POST</span></td><td class="ep">/admin/tenant</td><td>Tenant-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/admin/tenant, /active, /{code}, /tenantSpecific/{code}, /users/{code}, /sso/{code}, /{code}/secrets</td><td>Tenant-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/admin/tenant/config/{code}</td><td>Tenant-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/admin/tenant/{code}/encryption-details</td><td>Tenant-CRUD</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/admin/tenant/{code}/toggle/{bool}</td><td>Tenant-CRUD</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/admin/audit, /admin/audit/tenantRequests</td><td>Tenant-CRUD</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/admin/tenant/{code}</td><td>Tenant-CRUD</td></tr>
+  <tr><td rowspan="4" style="font-weight:600;vertical-align:top">Synapse<br><span style="font-size:0.72rem;color:var(--text-faint)">(16 endpoints)</span></td><td><span class="method m-post">POST</span></td><td class="ep">/namespaces/create, /enable, /disable</td><td>Synapse-Namespace</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/namespaces, /{name}/status, /{name}/stats</td><td>Synapse-Namespace</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/query/cypher (sync, explain, async), /api/v2/cypher (query, explain), /node/fetch, /consumer/pause, /consumer/resume</td><td>Synapse-Query</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/namespaces/{name}?permanent</td><td>Synapse-Namespace</td></tr>
+  <tr><td rowspan="2" style="font-weight:600;vertical-align:top">KG<br><span style="font-size:0.72rem;color:var(--text-faint)">(7 endpoints)</span></td><td><span class="method m-get">GET</span></td><td class="ep">/metadata/get-saved-schema-graph, /synapse/namespace/stats, /status, /watchers</td><td>KG-Metadata</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/save-schema-version</td><td>setup.py (shared)</td></tr>
+  <tr><td style="font-weight:600">Lumen <span style="font-size:0.72rem;color:var(--text-faint)">(6)</span></td><td><span class="method m-post">POST</span></td><td class="ep">/query-builder/query, /reset-schema, /lumen/describe, /embed, /cluster, /semantic-chat/getAnswer</td><td>Lumen-Pipeline</td></tr>
+  <tr><td style="font-weight:600">Nexus <span style="font-size:0.72rem;color:var(--text-faint)">(4)</span></td><td><span class="method m-post">POST</span></td><td class="ep">/nexus/schema/traversable/get, /search, /gin, /labels</td><td>Nexus-Search</td></tr>
+  <tr><td style="font-weight:600">NLP <span style="font-size:0.72rem;color:var(--text-faint)">(4)</span></td><td><span class="method m-post">POST</span></td><td class="ep">/tokenize, /sentenize, /finalize-spans, /embed</td><td>NLP-Pipeline</td></tr>
+</table>
+</div>
+
+<h4 id="neuro-breakdown">Endpoint Breakdown &mdash; Neuro Service (29 endpoints via shell script)</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">Source: <code>scripts/neuro_graph_test_prestage.sh</code> &mdash; 1898-line bash test with assertion framework. Tests 8 sections (A&ndash;H) covering steering config, data injection, graph CRUD, pagination, pin/unpin, invalidation, negative tests, and cleanup.</p>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Steering Config (via applicationService)</span>
+  <span class="fc-meta">9 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Section</th></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/space/by-name/{name}/extraction-profile</td><td>A2 — set profile (6 fields)</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/space/by-name/{name}/extraction-profile</td><td>A3 — verify + A13 multi-profile + A19 after delete</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/space/by-name/{name}/extraction-profile</td><td>H3 + A18 (ns-scoped delete)</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/space/by-name/{name}/instructions</td><td>A4 — set 3 instructions</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/space/by-name/{name}/instructions</td><td>A5 — verify all 3</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/space/by-name/{name}/instructions?family&amp;instructionName</td><td>H1 — delete + verify</td></tr>
+  <tr><td><span class="method m-put">PUT</span></td><td class="ep">/space/by-name/{name}/model-selection</td><td>A7 — set model + A reset</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/space/by-name/{name}/graph</td><td>A10 — create namespace</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/space/by-name/{name}</td><td>H6 — delete space</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Neuro Core APIs</span>
+  <span class="fc-meta">10 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Section</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/ingest</td><td>A1,B — 4 messages (incl. exclusion test)</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graphs/{graphId}/ingest</td><td>A14 — graph namespace ingest</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/assert</td><td>B — 3 bi-temporal facts</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/recall</td><td>B — LIVE, LIVE+thread, AS_OF, negative:400</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/capture/spans</td><td>B</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/threads</td><td>B — old endpoint</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/participants</td><td>B</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/thread?threadUri</td><td>B</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/memories/{ns}/recall</td><td>B — + negative:404</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/extraction/status</td><td>A6 — profileConfigured + models</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Graph CRUD &amp; Listings</span>
+  <span class="fc-meta">14 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Section</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graph/nodes/list</td><td>C — paged entities + pagination</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graph/edges/list</td><td>C — paged facts + pagination</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graph/episodes/list</td><td>C — paged episodes + pagination</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graph/threads/list</td><td>C — paged threads + pagination</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/node?uri&amp;namespaceId</td><td>D — single read + URI round-trip</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/edge?uri</td><td>D — 12-field validation</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/episode?uri</td><td>D — sourceType, occurredAt</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/stats?namespaceId</td><td>D — labels, counts</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/graph/namespace?namespaceId&amp;limit</td><td>D — full graph view</td></tr>
+  <tr><td><span class="method m-get">GET</span></td><td class="ep">/v1/spaces/{space}/scopes</td><td>A11 — list scopes</td></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graph/node</td><td>E — create entity &rarr; 202</td></tr>
+  <tr><td><span class="method m-patch">PATCH</span></td><td class="ep">/v1/spaces/{space}/graph/node?uri</td><td>E — update entity</td></tr>
+  <tr><td><span class="method m-patch">PATCH</span></td><td class="ep">/v1/spaces/{space}/graph/edge?uri</td><td>E — correct fact + invalidation test</td></tr>
+  <tr><td><span class="method m-patch">PATCH</span></td><td class="ep">/v1/spaces/{space}/graph/episode?uri</td><td>E — correct episode</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<details class="flow-card">
+<summary>
+  <span class="fc-title">Pin/Unpin &amp; Deletes</span>
+  <span class="fc-meta">5 endpoints</span>
+</summary>
+<div class="fc-body">
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Section</th></tr>
+  <tr><td><span class="method m-post">POST</span></td><td class="ep">/v1/spaces/{space}/graph/edge/pin?namespaceId&amp;uri</td><td>E — pin 3, verify in recall</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/v1/spaces/{space}/graph/edge/pin?namespaceId&amp;uri</td><td>E — unpin 1, verify 2 remain</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/v1/spaces/{space}/graph/edge?uri</td><td>F — delete fact &rarr; 404 + list verify</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/v1/spaces/{space}/graph/node?uri</td><td>F — delete entity &rarr; 404</td></tr>
+  <tr><td><span class="method m-del">DEL</span></td><td class="ep">/v1/spaces/{space}/graph/episode?uri</td><td>F — delete episode &rarr; 404</td></tr>
+</table>
+</div>
+</div>
+</details>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="cicd-roadmap">CI/CD Enablement Roadmap</h2>
+<p style="font-size:0.85rem;color:var(--text-muted)">6 services targeted for CI/CD API test enablement, plus 4 additional services with flows still being tested. All have <code>jenkinsfile</code> on <code>main</code> but <strong>no Newman test stage yet</strong>. Flow collections exist for 5; Neuro has a shell script needing conversion to Newman.</p>
+
+<h4>Reference: How tenant-service CI/CD is configured</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">This is the pattern to follow for all remaining services. From <code>thequipu/tenant-service</code> <code>jenkinsfile</code> on <code>main</code>:</p>
+
+<div style="overflow-x:auto">
+<table>
+  <tr><th style="text-align:left;width:15%">Parameter</th><th style="text-align:left;width:20%">Value</th><th style="text-align:left">Flows Executed</th></tr>
+  <tr>
+    <td><code>API_TEST_SUITE</code></td>
+    <td><code>tenant</code></td>
+    <td><code>FLOW-Tenant-CRUD</code> &mdash; 30 steps: create tenant (SSO) &rarr; list/get/verify &rarr; config &rarr; encryption &rarr; Vault secrets &rarr; toggle active &rarr; user enable/disable &rarr; audit &rarr; provisioning wait &rarr; KC admin delete &rarr; verify gone</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td><code>smoke</code></td>
+    <td><code>SMOKE-Platform-Health</code> &mdash; health probes only</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td><code>all</code></td>
+    <td><code>SMOKE-Platform-Health</code> + <code>FLOW-Tenant-CRUD</code></td>
+  </tr>
+</table>
+</div>
+
+<div class="code-block" style="margin-top:0.75rem">// Jenkins parameters added to jenkinsfile:
+booleanParam(name: 'RUN_API_TESTS', defaultValue: true, ...)
+choice(name: 'API_TEST_SUITE', choices: ['tenant', 'smoke', 'all'], ...)
+choice(name: 'API_TEST_ENV', choices: ['onprem-api', 'onprem', ...], ...)
+
+// 4 pipeline stages:
+//   1. 'Setup API Tests'  — clone postman-collections, sync S3 secrets
+//   2. 'Run API Tests'    — map suite→flows, run each via newman
+//   3. 'Upload Reports'   — push to S3 for history
+//   4. post/always        — junit + archiveArtifacts + publishHTML</div>
+
+<h4 style="margin-top:2rem">Services — CI/CD Still Needs to Be Enabled</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">Flows are already running and tested. CI/CD integration into each service&rsquo;s <code>jenkinsfile</code> needs to be enabled following the tenant-service pattern above.</p>
+
+<div style="overflow-x:auto">
+<table>
+  <tr><th style="text-align:left">Service Repo</th><th style="text-align:left">Flow Collection(s)</th><th>Endpoints</th><th style="text-align:left">Proposed Suite Mapping</th><th style="text-align:left">CI/CD Status</th></tr>
+  <tr>
+    <td><code>knowledge-graph-service</code></td>
+    <td><code>FLOW-KnowledgeGraph-Metadata</code></td>
+    <td style="text-align:center">7</td>
+    <td><code>kg</code> = KG-Metadata<br><code>smoke</code> = SMOKE-Platform-Health<br><code>all</code> = both</td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Flows running &bull; CI/CD pending</span></td>
+  </tr>
+  <tr>
+    <td><code>quipu-synapse</code></td>
+    <td><code>FLOW-Synapse-Namespace</code> + <code>FLOW-Synapse-Query</code> + <code>FLOW-Synapse-Health</code></td>
+    <td style="text-align:center">17</td>
+    <td><code>synapse</code> = Namespace + Query<br><code>smoke</code> = Health + SMOKE-Platform-Health<br><code>all</code> = all four</td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Flows running &bull; CI/CD pending</span></td>
+  </tr>
+  <tr>
+    <td><code>quipu-nexus</code></td>
+    <td><code>FLOW-Nexus-Search</code></td>
+    <td style="text-align:center">4</td>
+    <td><code>nexus</code> = Nexus-Search<br><code>smoke</code> = SMOKE-Platform-Health<br><code>all</code> = both</td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Flows running &bull; CI/CD pending</span></td>
+  </tr>
+  <tr>
+    <td><code>quipu-lumen</code></td>
+    <td><code>FLOW-Lumen-Pipeline</code></td>
+    <td style="text-align:center">6</td>
+    <td><code>lumen</code> = Lumen-Pipeline<br><code>smoke</code> = SMOKE-Platform-Health<br><code>all</code> = both<br><em style="font-size:0.8rem;color:var(--text-faint)">Note: steps 03&ndash;05 need versionUri env-var</em></td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Flows running &bull; CI/CD pending</span></td>
+  </tr>
+  <tr>
+    <td><code>quipu-nlp</code></td>
+    <td><code>FLOW-NLP-Pipeline</code></td>
+    <td style="text-align:center">4</td>
+    <td><code>nlp</code> = NLP-Pipeline<br><code>smoke</code> = SMOKE-Platform-Health<br><code>all</code> = both<br><em style="font-size:0.8rem;color:var(--text-faint)">No auth needed (port 4055). Uses /health not /actuator/health</em></td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Flows running &bull; CI/CD pending</span></td>
+  </tr>
+  <tr>
+    <td><code>quipu-neuro</code></td>
+    <td><code>neuro_graph_test_prestage.sh</code></td>
+    <td style="text-align:center">29</td>
+    <td>Convert shell script to Newman collection first, then:<br><code>neuro</code> = Neuro-Graph<br><code>smoke</code> = SMOKE-Platform-Health<br><code>all</code> = both</td>
+    <td><span class="tag" style="background:#fff3cd;color:#856404">Needs conversion</span></td>
+  </tr>
+</table>
+</div>
+
+<h4 style="margin-top:2rem">Additional Flows &mdash; Testing in Progress</h4>
+<p style="font-size:0.85rem;color:var(--text-muted)">These flows exist but are still being tested. They will be added to CI/CD after proper testing is completed.</p>
+
+<div style="overflow-x:auto">
+<table>
+  <tr><th style="text-align:left">Service</th><th style="text-align:left">Flow Collection</th><th>Endpoints</th><th style="text-align:left">Status</th><th style="text-align:left">Notes</th></tr>
+  <tr>
+    <td><code>document-graph-service</code></td>
+    <td><code>FLOW-DocumentGraph-Parse</code></td>
+    <td style="text-align:center">1</td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Testing in progress</span></td>
+    <td>Parse endpoint on <code>docgraph_base_url</code> (port 3048). Will add after testing</td>
+  </tr>
+  <tr>
+    <td><code>application-service</code> <span style="font-size:0.72rem;color:var(--text-faint)">(additional)</span></td>
+    <td><code>FLOW-CreateDataSource-MySQL</code></td>
+    <td style="text-align:center">+3</td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Testing in progress</span></td>
+    <td>MySQL-specific flow &mdash; not yet in the 18 available flows in app-service Jenkinsfile</td>
+  </tr>
+  <tr>
+    <td><span style="color:var(--text-muted)">Utility</span></td>
+    <td><code>FLOW-Auth-Token</code></td>
+    <td style="text-align:center">2</td>
+    <td><span class="tag" style="background:#d6e9f8;color:#2a6496">Testing in progress</span></td>
+    <td>Keycloak token helper (master realm). Reusable as a pre-step across all pipelines</td>
+  </tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="issues">Known Issues</h2>
+
+<h4>Keycloak Token TTL (~3 minutes)</h4>
+<p>The eksquipu realm access token expires in approximately 3 minutes. For short flows this is fine, but for long flows like Realm-CRUD (61 steps), CTAS queries submitted to Trino can't be polled after the token expires. The <code>PipelineTokenProvider</code> enters an infinite 5-second refresh retry loop. This is a <strong>backend config issue</strong>, not a test issue.</p>
+<p><strong>Mitigation:</strong> Step 24 in Realm-CRUD uses soft-assert &mdash; it reports partial ingestion but doesn't fail the flow.</p>
+
+<h4>permanent=true blocked on eksquipu</h4>
+<p>Hard-delete (<code>permanent=true</code>) is blocked because <code>memory_space</code> migration V42&ndash;V44 has not been applied. The realm flow soft-deletes by default; pass <code>--hard</code> for migrated environments.</p>
+
+<h4>CSV DataSource requires raw AWS credentials</h4>
+<p>CSV datasources need real AWS <code>accessKey</code>/<code>secret</code> (raw, no <code>aesRandomIV</code> encryption) plus <code>files[]</code> with <code>columnDetails</code>. Excel datasources use server-side IAM. Pass S3 credentials via <code>--env-var</code> (not globals).</p>
+
+<h4>Excel/S3 5xx soft-exemptions</h4>
+<p>Steps that hit S3 upload endpoints or Excel staging may return 500 when S3 credentials are missing or files don't exist. These are soft-exempted in the global 5xx tracker so they don't cascade.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="generator-index">Generator Index</h2>
+<p style="font-size:0.85rem;color:var(--text-muted)">Complete list of all 29 generators in <code>gen_flow.py</code> SERVICES registry + 1 standalone.</p>
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Key</th><th>Label</th><th>Output File</th><th>Steps</th></tr>
+  <tr><td><code>tenant</code></td><td>Tenant CRUD</td><td>FLOW-Tenant-CRUD</td><td>30</td></tr>
+  <tr><td><code>security</code></td><td>Security Auth</td><td>FLOW-Security-Auth</td><td>16</td></tr>
+  <tr><td><code>realm</code></td><td>Realm CRUD</td><td>FLOW-Realm-CRUD</td><td>61</td></tr>
+  <tr><td><code>schema</code></td><td>Schema CRUD</td><td>FLOW-Schema-CRUD</td><td>15</td></tr>
+  <tr><td><code>entity</code></td><td>Entity CRUD</td><td>FLOW-Entity-CRUD</td><td>~20</td></tr>
+  <tr><td><code>permissions</code></td><td>Permissions CRUD</td><td>FLOW-Permissions-CRUD</td><td>54</td></tr>
+  <tr><td><code>transformation</code></td><td>Transformation Conn</td><td>FLOW-Transformation-Connection</td><td>25</td></tr>
+  <tr><td><code>kg</code></td><td>KnowledgeGraph Metadata</td><td>FLOW-KnowledgeGraph-Metadata</td><td>6</td></tr>
+  <tr><td><code>synapse</code></td><td>Synapse Namespace</td><td>FLOW-Synapse-Namespace</td><td>10</td></tr>
+  <tr><td><code>nexus</code></td><td>Nexus Search</td><td>FLOW-Nexus-Search</td><td>6</td></tr>
+  <tr><td><code>lumen</code></td><td>Lumen Pipeline</td><td>FLOW-Lumen-Pipeline</td><td>8</td></tr>
+  <tr><td><code>docgraph</code></td><td>DocumentGraph Parse</td><td>FLOW-DocumentGraph-Parse</td><td>3</td></tr>
+  <tr><td><code>nlp</code></td><td>NLP Pipeline</td><td>FLOW-NLP-Pipeline</td><td>6</td></tr>
+  <tr><td><code>ingestion</code></td><td>Ingestion Streams</td><td>FLOW-Ingestion-Streams</td><td>9</td></tr>
+  <tr><td><code>versions</code></td><td>Version CRUD</td><td>FLOW-Version-CRUD</td><td>13</td></tr>
+  <tr><td><code>watcher</code></td><td>Watcher CRUD</td><td>FLOW-Watcher-CRUD</td><td>8</td></tr>
+  <tr><td><code>document_extraction</code></td><td>Document Extraction</td><td>FLOW-Document-Extraction</td><td>9</td></tr>
+  <tr><td><code>synapse_query</code></td><td>Synapse Query (Advanced)</td><td>FLOW-Synapse-Query</td><td>11</td></tr>
+  <tr><td><code>namespace</code></td><td>Namespace CRUD</td><td>FLOW-Namespace-CRUD</td><td>16</td></tr>
+  <tr><td><code>entity360</code></td><td>Entity360 CRUD</td><td>FLOW-Entity360-CRUD</td><td>16</td></tr>
+  <tr><td><code>schema_graph</code></td><td>Schema Graph CRUD</td><td>FLOW-SchemaGraph-CRUD</td><td>14</td></tr>
+  <tr><td><code>metadata</code></td><td>Metadata Read</td><td>FLOW-Metadata-Read</td><td>8</td></tr>
+  <tr><td><code>app_misc</code></td><td>App Misc</td><td>FLOW-App-Misc</td><td>10</td></tr>
+  <tr><td><code>ds_migration</code></td><td>DS Migration</td><td>FLOW-DS-Migration</td><td>10</td></tr>
+  <tr><td><code>ds_extended</code></td><td>DataSource Extended</td><td>FLOW-DataSource-Extended</td><td>22</td></tr>
+  <tr><td><code>single_ds_realm</code></td><td>Single-DS Realm + Ingestion</td><td>FLOW-SingleDS-Realm</td><td>~18</td></tr>
+  <tr><td><code>single_ds_entity_realm</code></td><td>Single-DS Entity-Layer Realm</td><td>FLOW-SingleDS-EntityLayer-Realm</td><td>~20</td></tr>
+  <tr><td><code>csv_snow_entity_realm</code></td><td>CSV + Snowflake Entity-Layer</td><td>FLOW-CSV-Snowflake-EntityLayer</td><td>~25</td></tr>
+  <tr><td><code>csv_entity_realm</code></td><td>CSV-only Entity-Layer</td><td>FLOW-CSV-EntityLayer</td><td>~18</td></tr>
+  <tr><td colspan="4" style="border-top:2px solid var(--border)"><em>Standalone (not in gen_flow.py registry):</em></td></tr>
+  <tr><td><code>gen_ds_flow.py</code></td><td>DataSource CRUD</td><td>FLOW-DataSource-CRUD</td><td>14</td></tr>
+</table>
+</div>
+
+<p style="margin-top:2rem;font-size:0.78rem;color:var(--text-faint);text-align:center">Last updated: September 2026 &bull; Source: <code>postman-collections/scripts/</code></p>
+</body></html>

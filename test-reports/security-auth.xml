@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="FLOW - Security Service Auth (Full)" tests="16" time="5.590">
+  <testsuite name="Security Auth / 00 Setup" id="373f490e-ad3a-4c64-a462-99221a2a70fa" timestamp="2026-09-02T13:18:12.957Z" tests="2" failures="0" errors="0" time="0.581">
+    <testcase name="00 token acquired" time="0.581" classname="SecurityAuth00Setup"/>
+    <testcase name="00 service reachable" time="0.581" classname="SecurityAuth00Setup"/>
+  </testsuite>
+  <testsuite name="Security Auth / 01 Admin Login" id="3d201bcb-5e56-4f07-b075-1bda2fd895a6" timestamp="2026-09-02T13:18:12.957Z" tests="5" failures="0" errors="0" time="0.260">
+    <testcase name="01 Admin login 2xx" time="0.260" classname="SecurityAuth01AdminLogin"/>
+    <testcase name="01 has access_token" time="0.260" classname="SecurityAuth01AdminLogin"/>
+    <testcase name="01 has refresh_token" time="0.260" classname="SecurityAuth01AdminLogin"/>
+    <testcase name="01 has expires_in" time="0.260" classname="SecurityAuth01AdminLogin"/>
+    <testcase name="01 has token_type" time="0.260" classname="SecurityAuth01AdminLogin"/>
+  </testsuite>
+  <testsuite name="Security Auth / 02 Validate Tenant (valid)" id="31cc425f-6173-4e2d-9b0e-c7ca78076a61" timestamp="2026-09-02T13:18:12.957Z" tests="2" failures="0" errors="0" time="0.196">
+    <testcase name="02 Validate tenant 200" time="0.196" classname="SecurityAuth02ValidateTenantValid"/>
+    <testcase name="02 returns true" time="0.196" classname="SecurityAuth02ValidateTenantValid"/>
+  </testsuite>
+  <testsuite name="Security Auth / 03 Validate Tenant (invalid)" id="8fd9350f-0ca4-462b-b2a8-6f5d4270d834" timestamp="2026-09-02T13:18:12.957Z" tests="2" failures="0" errors="0" time="0.196">
+    <testcase name="03 Validate invalid 200" time="0.196" classname="SecurityAuth03ValidateTenantInvalid"/>
+    <testcase name="03 returns false" time="0.196" classname="SecurityAuth03ValidateTenantInvalid"/>
+  </testsuite>
+  <testsuite name="Security Auth / 04 Admin Introspect (reachability)" id="87fa634a-f342-4199-a05d-d3f3f58d7f66" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.196">
+    <testcase name="04 Introspect reachable" time="0.196" classname="SecurityAuth04AdminIntrospectReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 05 Admin Refresh Token (reachability)" id="822ed3ab-7fbb-4fe4-b31f-08bb50653afb" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.327">
+    <testcase name="05 Refresh reachable" time="0.327" classname="SecurityAuth05AdminRefreshTokenReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 06 Short-Lived Token (reachability)" id="e09f3355-383c-4bdb-bb8d-ec2b092409f3" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.192">
+    <testcase name="06 Short-lived reachable" time="0.192" classname="SecurityAuth06ShortLivedTokenReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 07 Admin Logout (reachability)" id="7ce5f024-b898-48e4-bd98-7c33047a523f" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.190">
+    <testcase name="07 Admin logout reachable" time="0.190" classname="SecurityAuth07AdminLogoutReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 08 Generate OTP (full validation)" id="4120e9c0-f035-46ae-a1c0-5002e54cfd25" timestamp="2026-09-02T13:18:12.957Z" tests="2" failures="0" errors="0" time="1.632">
+    <testcase name="08 Generate OTP 200" time="1.632" classname="SecurityAuth08GenerateOtpFullValidation"/>
+    <testcase name="08 OTP sent message" time="1.632" classname="SecurityAuth08GenerateOtpFullValidation"/>
+  </testsuite>
+  <testsuite name="Security Auth / 09 User Login (wrong OTP validation)" id="b0ee17e8-39e0-4e40-8fb0-fa7b9d3e99d3" timestamp="2026-09-02T13:18:12.957Z" tests="3" failures="0" errors="0" time="0.198">
+    <testcase name="09 Login returns 401" time="0.198" classname="SecurityAuth09UserLoginWrongOtpValidation"/>
+    <testcase name="09 OTP invalid message" time="0.198" classname="SecurityAuth09UserLoginWrongOtpValidation"/>
+    <testcase name="09 specific error (not generic 401)" time="0.198" classname="SecurityAuth09UserLoginWrongOtpValidation"/>
+  </testsuite>
+  <testsuite name="Security Auth / 10 User Internal Token (reachability)" id="82e75e73-1071-45f7-86e7-0755fdb0488c" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.245">
+    <testcase name="10 Internal token reachable" time="0.245" classname="SecurityAuth10UserInternalTokenReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 11 User Introspect (reachability)" id="dd910ac4-8146-4e2c-8b21-c387c70c2bbc" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.214">
+    <testcase name="11 User introspect reachable" time="0.214" classname="SecurityAuth11UserIntrospectReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 12 User Refresh (reachability)" id="97f7335c-9a82-407b-984b-4617341c8ccc" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.416">
+    <testcase name="12 User refresh reachable" time="0.416" classname="SecurityAuth12UserRefreshReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 13 User Get Users (reachability)" id="7a8df51e-ec45-4749-a4d3-7166369668a8" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.346">
+    <testcase name="13 Get users reachable" time="0.346" classname="SecurityAuth13UserGetUsersReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 14 User Logout (reachability)" id="01b4440e-7f24-42bc-9ed1-261f5ab4f609" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.203">
+    <testcase name="14 User logout reachable" time="0.203" classname="SecurityAuth14UserLogoutReachability"/>
+  </testsuite>
+  <testsuite name="Security Auth / 99 Teardown" id="9a50843e-76e5-4b4b-ab79-a012f1b834ae" timestamp="2026-09-02T13:18:12.957Z" tests="1" failures="0" errors="0" time="0.198">
+    <testcase name="99 teardown" time="0.198" classname="SecurityAuth99Teardown"/>
+  </testsuite>
+</testsuites>

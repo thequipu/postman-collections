@@ -46,8 +46,8 @@ simulation:
   hold_after_waves: 180
   cleanup_users: false
   max_deletes: 1
-  existing_space: neurosim-test-nsim-karthik-001
-  existing_namespace: neurosim-test-nsim-karthik-001-self
+  # Fresh space created each run: {space_prefix}-{timestamp}
+  # Each user gets own namespace: {space}-{username}
   # All operations enabled (empty list = all)
   enabled_ops: []
 
@@ -63,8 +63,11 @@ data_pool:
   min_items_per_user: 100
   max_items_per_user: 500
 
+# Dashboard stats printed every N seconds
+  dashboard_interval: 10
+
 waves:
-  - [5, 5]
+  - [3, 5]
 
 notifications:
   slack_webhook: ""

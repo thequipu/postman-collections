@@ -55,6 +55,29 @@ class AppServiceClient:
     def list_graphs(self, space: str, token: str) -> tuple[int, dict | str, float]:
         return self._request("GET", f"/space/by-name/{space}/graph", token, accept=self._SPACE_ACCEPT)
 
+    # ---- Extraction Profile / Instructions / Model ----
+
+    def delete_extraction_profile(self, space: str, token: str) -> tuple[int, dict | str, float]:
+        return self._request("DELETE", f"/space/by-name/{space}/extraction-profile", token, accept=self._SPACE_ACCEPT)
+
+    def put_extraction_profile(self, space: str, token: str,
+                               profile: dict) -> tuple[int, dict | str, float]:
+        return self._request("PUT", f"/space/by-name/{space}/extraction-profile", token, profile, self._SPACE_ACCEPT)
+
+    def get_extraction_profile(self, space: str, token: str) -> tuple[int, dict | str, float]:
+        return self._request("GET", f"/space/by-name/{space}/extraction-profile", token, accept=self._SPACE_ACCEPT)
+
+    def put_instructions(self, space: str, token: str,
+                         instructions: list[dict]) -> tuple[int, list | str, float]:
+        return self._request("PUT", f"/space/by-name/{space}/instructions", token, instructions, self._SPACE_ACCEPT)
+
+    def get_instructions(self, space: str, token: str) -> tuple[int, list | str, float]:
+        return self._request("GET", f"/space/by-name/{space}/instructions", token, accept=self._SPACE_ACCEPT)
+
+    def put_model_selection(self, space: str, token: str,
+                            selection: dict) -> tuple[int, dict | str, float]:
+        return self._request("PUT", f"/space/by-name/{space}/model-selection", token, selection, self._SPACE_ACCEPT)
+
     # ---- User Permissions ----
 
     def grant_user_permissions(self, token: str, username: str,

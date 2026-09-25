@@ -15,6 +15,7 @@ FLOWS = [
     "FLOW-Watcher-CRUD", "FLOW-Metadata-Read", "FLOW-DataSource-Extended", "FLOW-App-Misc",
     "FLOW-DS-Migration", "FLOW-Document-Extraction", "FLOW-Ingestion-Streams",
     "FLOW-Transformation-Connection", "SMOKE-Platform-Health",
+    "FLOW-Neuro-Payload-Validation",
 ]
 
 
@@ -28,6 +29,7 @@ def main():
     ap.add_argument("--password", default="karthik12")
     ap.add_argument("--env", default="environments/minikube.postman_environment.json")
     ap.add_argument("--secret", default=os.environ.get("CLIENT_SECRET", "h7rKFLYmYX407iWrgcDJPx9N2L04V4So"))
+    ap.add_argument("--fabric", default=os.environ.get("FABRIC_ID", ""))
     args = ap.parse_args()
 
     pg = cfg("postgres-datatype.json")
@@ -42,6 +44,7 @@ def main():
         "s3_bucket": csv["bucket"], "s3_csv_bucket": csv["bucket"], "s3_csv_key": csv["key"],
         "s3_region": csv["region"], "s3_access_key": csv["accessKey"], "s3_secret_key": csv["secret"],
         "s3_csv_file": csv["file"], "s3_excel_bucket": xls["bucket"], "s3_excel_file": xls["file"],
+        "fabric_id": args.fabric,
     }
     newman = shutil.which("newman") or shutil.which("newman.cmd")
     if not newman:

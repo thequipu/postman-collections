@@ -21,6 +21,8 @@ from services import ingestion, versions, watcher, document_extraction, synapse_
 from services import namespace, entity360, schema_graph, metadata, app_misc
 from services import ds_migration, datasource_extended, single_ds_realm, single_ds_entity_realm
 from services import csv_snow_entity_realm, csv_entity_realm
+from services import neuro_payload_validation
+from services import neuro_graph_test
 
 SERVICES = {
     # Core services
@@ -55,6 +57,9 @@ SERVICES = {
     "single_ds_entity_realm": ("Single-DS Entity-Layer Realm + Ingestion", single_ds_entity_realm.generate),
     "csv_snow_entity_realm": ("CSV + Snowflake Entity-Layer Realm", csv_snow_entity_realm.generate),
     "csv_entity_realm": ("CSV-only Entity-Layer Realm", csv_entity_realm.generate),
+    # Neuro (quipuNeuro ingest & recall)
+    "neuro": ("Neuro Payload Validation", neuro_payload_validation.generate),
+    "neuro_graph": ("Neuro Graph Test", neuro_graph_test.generate),
 }
 
 

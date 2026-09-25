@@ -209,6 +209,10 @@ class NeuroClient:
             token,
         )
 
+    # ---- Extraction status ----
+    def get_extraction_status(self, space: str, token: str) -> tuple[int, Any, float]:
+        return self._request("GET", f"/v1/spaces/{space}/extraction/status", token)
+
     # ---- Scopes ----
     def list_scopes(self, space: str, token: str) -> tuple[int, Any, float]:
         return self._request("GET", f"/v1/spaces/{space}/scopes", token)
