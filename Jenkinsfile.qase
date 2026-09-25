@@ -38,6 +38,8 @@ pipeline {
     string(name: 'UI_REPO_BRANCH', defaultValue: 'main', description: 'Branch of the Playwright repo')
     string(name: 'UI_REPO_CREDENTIALS', defaultValue: 'Jenkins-token-classic',
            description: 'Jenkins credential id used to clone the Playwright repo (it is private)')
+    string(name: 'APP_URL', defaultValue: 'https://app-onprem.thequipu.in',
+           description: 'Application the UI tests point at. Must match ENVIRONMENT.')
     string(name: 'SEED', defaultValue: '1',
            description: 'Seed for simulate mode; the same seed reproduces the same results')
     string(name: 'BUILD_ENDPOINT', defaultValue: '',
@@ -134,7 +136,7 @@ pipeline {
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
           MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
           ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
-          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" \
+          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL}" \
             bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }

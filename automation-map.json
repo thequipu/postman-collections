@@ -1127,5 +1127,13 @@
   "runner": "pytest",
   "test": "QUI-001",
   "title": "UI smoke: browser launches and a page loads"
+ },
+ "QUI-002": {
+  "automated": true,
+  "nodeid": "tests/test_app_available.py::test_app_serves_login_page",
+  "qase_id": 161,
+  "runner": "pytest",
+  "test": "QUI-002",
+  "title": "Application serves its login page"
  }
 }

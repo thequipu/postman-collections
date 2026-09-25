@@ -171,9 +171,12 @@ def pytest(cases):
         inner = UI_REPO / ".junit-pytest.xml"
         inner.unlink(missing_ok=True)
         cmd = ["docker", "run", "--rm",
-               "-u", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp",
-               "-v", f"{UI_REPO}:/work", "-w", "/work", UI_DOCKER_IMAGE,
-               "python", *args, "--junitxml=/work/.junit-pytest.xml"]
+               "-u", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp"]
+        for var in ("APP_URL",):          # which app the UI tests point at
+            if os.environ.get(var):
+                cmd += ["-e", f"{var}={os.environ[var]}"]
+        cmd += ["-v", f"{UI_REPO}:/work", "-w", "/work", UI_DOCKER_IMAGE,
+                "python", *args, "--junitxml=/work/.junit-pytest.xml"]
         print(f">> pytest in {UI_DOCKER_IMAGE}: {' '.join(nodeids)}", file=sys.stderr)
         code, out = run(cmd, ROOT)
         if inner.exists():
