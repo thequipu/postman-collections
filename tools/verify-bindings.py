@@ -50,6 +50,12 @@ def main():
                 problems.append(f"{key}: no collection flows/{coll}.postman_collection.json")
             elif v.get("junit_suite") not in cache[coll]:
                 problems.append(f"{key}: {v.get('junit_suite')!r} is not a request in {coll}")
+        elif runner == "suite":
+            f = os.path.join(UI_REPO, "test_suite", "suites", f"{v.get('suite')}.json")
+            if not v.get("suite") or not os.path.exists(f):
+                problems.append(f"{key}: no suite {v.get('suite')!r} in {UI_REPO}/test_suite/suites")
+            elif not v.get("stage"):
+                problems.append(f"{key}: binding has no 'stage' to match in the report")
         elif runner == "pytest":
             f = (v.get("nodeid") or "").split("::")[0]
             if not f or not os.path.exists(os.path.join(UI_REPO, f)):

@@ -1243,5 +1243,15 @@
   "runner": "pytest",
   "test": "QUI-002",
   "title": "Application serves its login page"
+ },
+ "QUI-003": {
+  "automated": true,
+  "qase_id": 174,
+  "runner": "suite",
+  "stage": "Valid admin credentials sign in",
+  "step": "login_tests",
+  "suite": "datacatalog_login_positive",
+  "test": "QUI-003",
+  "title": "Valid admin credentials sign in"
  }
 }

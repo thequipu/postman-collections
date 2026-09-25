@@ -85,12 +85,15 @@ pipeline {
     }
 
     stage('Prepare UI runner') {
-      // Only when this run actually holds a pytest-bound case, so an API-only
-      // run neither clones the UI repo nor needs the Playwright image.
+      // Only when this run holds a case that needs the UI repo, so an API-only
+      // run neither clones it nor needs the Playwright image.
       when {
         allOf {
           expression { params.MODE == 'real' }
-          expression { (env.SCOPE_RUNNERS ?: '').tokenize(',').contains('pytest') }
+          expression {
+            def rs = (env.SCOPE_RUNNERS ?: '').tokenize(',')
+            rs.contains('pytest') || rs.contains('suite')
+          }
         }
       }
       steps {

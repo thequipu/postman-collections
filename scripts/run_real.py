@@ -235,6 +235,71 @@ def pytest(cases):
             emit(key, "passed", total_ms)
 
 
+# ----------------------------------------------------------------- suite -----
+def suite(cases):
+    """test_suite/run_suite.py — the UI repo's own runner.
+
+    It drives full journeys (login, schema, data catalog) that pytest does not
+    cover, and writes its own JSON report rather than JUnit, so it is read here
+    instead of through the JUnit path.
+    """
+    if not UI_REPO.exists():
+        for k in cases:
+            emit(k, "blocked", 0, f"UI repo not present at {UI_REPO}")
+        return
+
+    results_dir = UI_REPO / "test_suite" / "results"
+    by_invocation = {}
+    for k, v in cases.items():
+        by_invocation.setdefault((v["suite"], v.get("step", "")), {})[k] = v
+
+    for (suite_name, step), members in sorted(by_invocation.items()):
+        # Clear this suite's old reports so the newest file is unambiguously ours.
+        for stale in results_dir.glob(f"{suite_name}_*.json"):
+            stale.unlink(missing_ok=True)
+
+        args = ["test_suite/run_suite.py", "--suite", suite_name] + ([step] if step else [])
+        if UI_DOCKER_IMAGE:
+            cmd = ["docker", "run", "--rm", "-u", f"{os.getuid()}:{os.getgid()}",
+                   "-e", "HOME=/tmp"]
+            for var in ("APP_URL",):
+                if os.environ.get(var):
+                    cmd += ["-e", f"{var}={os.environ[var]}"]
+            cmd += ["-v", f"{UI_REPO}:/work", "-w", "/work", UI_DOCKER_IMAGE, "python", *args]
+            cwd = ROOT
+        else:
+            python = UI_REPO / "venv" / "bin" / "python"
+            cmd = [str(python) if python.exists() else sys.executable, *args]
+            cwd = UI_REPO
+        print(f">> run_suite {suite_name} {step}".rstrip(), file=sys.stderr)
+        code, out = run(cmd, cwd)
+
+        reports = sorted(results_dir.glob(f"{suite_name}_*.json"),
+                         key=lambda p: p.stat().st_mtime) if results_dir.exists() else []
+        if not reports:
+            tail = " | ".join(out.strip().splitlines()[-3:])[:300] or f"exit {code}"
+            for k in members:
+                emit(k, "blocked", 0, f"run_suite produced no report: {tail}")
+            continue
+
+        # stages[] holds one entry per service, each with its own stages[] of cases.
+        found = {}
+        for service in json.load(open(reports[-1])).get("stages", []):
+            for st in service.get("stages", []):
+                found[st.get("stage")] = st
+
+        for key, entry in sorted(members.items()):
+            want = entry.get("stage")
+            st = found.get(want)
+            if st is None:
+                emit(key, "blocked", 0, f"run_suite reported no stage named '{want}'")
+                continue
+            status = {"SUCCESS": "passed", "FAILED": "failed",
+                      "SKIPPED": "skipped"}.get(st.get("status"), "blocked")
+            msg = "" if status == "passed" else (st.get("message") or "")[:300]
+            emit(key, status, st.get("duration_ms") or 0, msg)
+
+
 def main():
     scope = json.load(open(sys.argv[1] if len(sys.argv) > 1 else ROOT / "reports" / "scope.json"))
     JUNIT_DIR.mkdir(parents=True, exist_ok=True)
@@ -255,6 +320,8 @@ def main():
             newman(cases)
         elif runner == "pytest":
             pytest(cases)
+        elif runner == "suite":
+            suite(cases)
         else:
             for k in cases:
                 emit(k, "blocked", 0, f"unknown runner '{runner}'")
