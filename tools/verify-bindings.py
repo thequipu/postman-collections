@@ -16,7 +16,7 @@ UI_REPO = os.environ.get("UI_REPO", os.path.join(os.path.dirname(ROOT), "automat
 
 
 def junit_names(collection):
-    """The <testsuite> names newman will emit for this collection."""
+    """The <testsuite> names the Postman CLI will emit for this collection."""
     path = os.path.join(ROOT, "flows", f"{collection}.postman_collection.json")
     if not os.path.exists(path):
         return None
@@ -42,7 +42,7 @@ def main():
     for key, v in sorted(amap.items()):
         runner = v.get("runner", "none")
         counts[runner] = counts.get(runner, 0) + 1
-        if runner == "newman":
+        if runner == "postman":
             coll = v.get("collection")
             if coll not in cache:
                 cache[coll] = junit_names(coll)

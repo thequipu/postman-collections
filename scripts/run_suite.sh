@@ -70,7 +70,8 @@ fi
 # Each line: <linear-id> <passed|failed|skipped|blocked> <ms> [message]
 run_checks() {
   if [ "$MODE" = "real" ]; then
-    # Runs the automation each case is bound to — newman for flows, pytest for UI.
+    # Runs the automation each case is bound to — Postman CLI for flows, pytest and
+    # the UI repo's own suite runner for UI.
     ENVIRONMENT="$ENVIRONMENT" UI_REPO="$UI_REPO" python3 scripts/run_real.py "$SCOPE"
     return
   fi

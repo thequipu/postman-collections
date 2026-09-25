@@ -4,7 +4,7 @@
     QASE_API_TOKEN=... python3 tools/bind-collection.py \
         --collection SMOKE-Platform-Health --suite "API Testing" --prefix QAPI
 
-newman reports one JUnit <testsuite> per request, named "<folder> / <request>",
+The Postman CLI reports one JUnit <testsuite> per request, named "<folder> / <request>",
 so a request is the natural unit for a test case. This derives the cases from
 the collection rather than having someone retype the request names into Qase,
 where they would drift the first time a request is renamed.
@@ -121,7 +121,7 @@ def main():
                                f'{{"collection": "{args.collection}", "junit_suite": "{suite_name}"}}',
             })["result"]["id"]
             created += 1
-        amap[key] = {"automated": True, "qase_id": cid, "runner": "newman",
+        amap[key] = {"automated": True, "qase_id": cid, "runner": "postman",
                      "test": key, "collection": args.collection,
                      "junit_suite": suite_name, "title": req}
 

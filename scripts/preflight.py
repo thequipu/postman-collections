@@ -73,11 +73,11 @@ def main():
             return False, f"missing {p.relative_to(ROOT)}"
         json.load(open(p))
         return True, str(p.relative_to(ROOT))
-    check(f"environment '{ENVIRONMENT}'", "newman" in bound, envfile)
+    check(f"environment '{ENVIRONMENT}'", "postman" in bound, envfile)
 
     # --- newman ---
-    check("node", "newman" in bound, lambda: have("node"))
-    check("newman", "newman" in bound, lambda: have("newman"))
+    check("node", "postman" in bound, lambda: have("node"))
+    check("postman CLI", "postman" in bound, lambda: have("postman"))
 
     def bindings():
         """Every case in scope must resolve to something the runner can find."""

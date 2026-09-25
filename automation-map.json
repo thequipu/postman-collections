@@ -4,7 +4,7 @@
   "collection": "FLOW-Qase-Basic",
   "junit_suite": "Qase Basic / 00 Setup",
   "qase_id": 156,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-001",
   "title": "Setup: security service reachable and healthy"
  },
@@ -13,7 +13,7 @@
   "collection": "FLOW-Qase-Basic",
   "junit_suite": "Qase Basic / 01 Admin Login",
   "qase_id": 157,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-002",
   "title": "Admin login returns a valid token set"
  },
@@ -22,7 +22,7 @@
   "collection": "FLOW-Qase-Basic",
   "junit_suite": "Qase Basic / 02 Validate Tenant",
   "qase_id": 158,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-003",
   "title": "Valid tenant is accepted"
  },
@@ -31,7 +31,7 @@
   "collection": "FLOW-Qase-Basic",
   "junit_suite": "Qase Basic / 03 List Schemas",
   "qase_id": 159,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-004",
   "title": "Schema list is retrievable"
  },
@@ -40,7 +40,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Tenant Service",
   "qase_id": 162,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-101",
   "title": "Health: Tenant Service"
  },
@@ -49,7 +49,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Security Service",
   "qase_id": 163,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-102",
   "title": "Health: Security Service"
  },
@@ -58,7 +58,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Application Service",
   "qase_id": 164,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-103",
   "title": "Health: Application Service"
  },
@@ -67,7 +67,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Gateway",
   "qase_id": 165,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-104",
   "title": "Health: Gateway"
  },
@@ -76,7 +76,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Quipu Gateway",
   "qase_id": 166,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-105",
   "title": "Health: Quipu Gateway"
  },
@@ -85,7 +85,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Knowledge Graph Service",
   "qase_id": 167,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-106",
   "title": "Health: Knowledge Graph Service"
  },
@@ -94,7 +94,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Transformation Service",
   "qase_id": 168,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-107",
   "title": "Health: Transformation Service"
  },
@@ -103,7 +103,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: LLM Service",
   "qase_id": 169,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-108",
   "title": "Health: LLM Service"
  },
@@ -112,7 +112,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Instance Manager",
   "qase_id": 170,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-109",
   "title": "Health: Instance Manager"
  },
@@ -121,7 +121,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Load Balancer Service",
   "qase_id": 171,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-110",
   "title": "Health: Load Balancer Service"
  },
@@ -130,7 +130,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: NLP",
   "qase_id": 172,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-111",
   "title": "Health: NLP"
  },
@@ -139,7 +139,7 @@
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: Nexus",
   "qase_id": 173,
-  "runner": "newman",
+  "runner": "postman",
   "test": "QAPI-112",
   "title": "Health: Nexus"
  },

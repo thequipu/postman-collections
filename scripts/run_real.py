@@ -10,7 +10,7 @@ serialises:
 Each case names its runner and where to find itself in that runner's JUnit
 report, so selecting cases in Qase decides what actually executes:
 
-    "runner": "newman", "collection": "FLOW-Qase-Basic",
+    "runner": "postman", "collection": "FLOW-Qase-Basic",
                         "junit_suite": "Qase Basic / 01 Admin Login"
     "runner": "pytest", "nodeid": "tests/test_smoke.py::test_smoke"
 
@@ -52,13 +52,18 @@ def run(cmd, cwd):
         return 127, str(e)
 
 
-# ---------------------------------------------------------------- newman -----
-def newman(cases):
-    """cases: {key: entry} for runner == newman."""
-    exe = shutil.which("newman")
+# --------------------------------------------------------------- postman -----
+def postman(cases):
+    """cases: {key: entry} for runner == postman.
+
+    The Postman CLI, not newman. Its JUnit output is byte-for-byte compatible in
+    the part that matters — <testsuite name="<folder> / <request>"> — verified
+    against newman on SMOKE-Platform-Health: same 12 names, same verdicts.
+    """
+    exe = shutil.which("postman")
     if not exe:
         for k in cases:
-            emit(k, "blocked", 0, "newman is not installed on this agent")
+            emit(k, "blocked", 0, "the postman CLI is not installed on this agent")
         return
 
     envfile = ROOT / "environments" / f"{ENVIRONMENT}.postman_environment.json"
@@ -80,19 +85,19 @@ def newman(cases):
 
         report = JUNIT_DIR / f"{collection}.xml"
         report.unlink(missing_ok=True)          # never read a previous build's report
-        cmd = [exe, "run", str(path), "-e", str(envfile), "--insecure",
+        cmd = [exe, "collection", "run", str(path), "-e", str(envfile), "--insecure",
                "-r", "cli,junit", "--reporter-junit-export", str(report),
                "--timeout-request", "120000"]
         for pm_var, env_var in ENV_VAR_MAP.items():
             if os.environ.get(env_var):
                 cmd += ["--env-var", f"{pm_var}={os.environ[env_var]}"]
 
-        print(f">> newman {collection} against {ENVIRONMENT}", file=sys.stderr)
+        print(f">> postman {collection} against {ENVIRONMENT}", file=sys.stderr)
         code, out = run(cmd, ROOT)
         if not report.exists():
             tail = " | ".join(out.strip().splitlines()[-3:])[:300] or f"exit {code}"
             for k in members:
-                emit(k, "blocked", 0, f"newman produced no report: {tail}")
+                emit(k, "blocked", 0, f"postman produced no report: {tail}")
             continue
         report_suites(report, members, "junit_suite")
 
@@ -316,8 +321,8 @@ def main():
         groups.setdefault(runner, {})[key] = entry
 
     for runner, cases in sorted(groups.items()):
-        if runner == "newman":
-            newman(cases)
+        if runner == "postman":
+            postman(cases)
         elif runner == "pytest":
             pytest(cases)
         elif runner == "suite":
