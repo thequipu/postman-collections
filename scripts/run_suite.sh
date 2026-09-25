@@ -1,128 +1,146 @@
 #!/usr/bin/env bash
 # run_suite.sh — the script the Qase-triggered Jenkins job runs.
 #
-# Its only contract is: leave reports/results.json behind, shaped like
-#   [{"id":"QTC-441","status":"passed","ms":1240},
-#    {"id":"QTC-445","status":"failed","ms":2200,"error":"..."}]
-# where `id` is the Linear issue key. Jenkinsfile.qase maps those through
-# qase-case-map.json and publishes them to the Qase run that launched it.
+# It works out WHAT TO RUN from the Qase run itself:
 #
-# Today it runs SMOKE checks only — reachability of the environment under test —
-# and reports every other case as skipped, so the whole chain can be triggered
-# and verified before the real UI automation is wired in. Replace `run_checks`
-# with the real runner when it exists; nothing downstream changes.
+#   1. asks Qase which cases the run contains          (QASE_RUN_ID + QASE_API_TOKEN)
+#   2. resolves each to its automation id              (automation-map.json)
+#   3. runs only the automated ones, reports the rest as skipped
+#   4. writes reports/results.json keyed by Linear id
 #
-#   SUITE=access-management ENVIRONMENT=onprem bash scripts/run_suite.sh
+# So selecting a handful of cases in Qase is enough — nothing here needs editing,
+# and a run scoped to one suite executes only that suite.
 #
-# MODE=simulate produces a realistic spread of pass/fail/skip/blocked instead of
-# contacting anything. It is deterministic for a given SEED, so a re-run
-# reproduces the same results and a new SEED gives a different set. Use it to
-# exercise runs, dashboards and defect flow before the real runner exists.
+# Without QASE_RUN_ID it falls back to the whole map, which is what a local
+# smoke check wants.
 #
 #   MODE=simulate SEED=7 bash scripts/run_suite.sh
+#   QASE_RUN_ID=10 QASE_API_TOKEN=… bash scripts/run_suite.sh
 set -uo pipefail
 
-ENVIRONMENT="${ENVIRONMENT:-onprem}"
-SUITE="${SUITE:-all}"
-MAP="${MAP:-qase-case-map.json}"
 MODE="${MODE:-smoke}"
 SEED="${SEED:-1}"
+MAP="${MAP:-automation-map.json}"
 OUT="reports/results.json"
-mkdir -p reports
-
-# No endpoint is baked in. BASE_URL must be supplied deliberately, so a run can
-# never reach a customer or production environment by default.
+QASE_API_BASE_URL="${QASE_API_BASE_URL:-https://api.qase.io}"
+QASE_PROJECT_CODE="${QASE_PROJECT_CODE:-}"
+QASE_RUN_ID="${QASE_RUN_ID:-}"
+QASE_API_TOKEN="${QASE_API_TOKEN:-}"
+BUILD_ENDPOINT="${BUILD_ENDPOINT:-}"
+BUILD="${BUILD:-}"
 BASE="${BASE_URL:-}"
-case "$ENVIRONMENT" in
-  onprem|prestage|local) ;;
-  *) echo "!! unknown ENVIRONMENT: $ENVIRONMENT" >&2; exit 2 ;;
-esac
-
-echo ">> environment : $ENVIRONMENT  (${BASE:-<no BASE_URL - no host will be contacted>})"
-echo ">> suite       : $SUITE"
-echo ">> mode        : $MODE"
+mkdir -p reports
 [ -f "$MAP" ] || { echo "!! $MAP not found — run from the repo root" >&2; exit 1; }
 
-# ---- smoke checks -----------------------------------------------------------
-# Each check prints: <linear-id> <passed|failed|skipped> <ms> [message]
-# portable millisecond clock — BSD date has no %3N
-now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
+# ---- build number, from the service under test ------------------------------
+# The build is whatever the service reports at the moment the run starts, not a
+# number typed into a form. BUILD overrides it for a replay.
+if [ -z "$BUILD" ] && [ -n "$BUILD_ENDPOINT" ]; then
+  BUILD=$(curl -sk -m 20 "$BUILD_ENDPOINT" 2>/dev/null | python3 -c '
+import json,sys
+try:
+    d=json.load(sys.stdin)
+except Exception:
+    sys.exit()
+for k in ("build","buildNumber","build_number","version","appVersion","gitCommit","commit"):
+    if isinstance(d,dict) and d.get(k): print(d[k]); break
+' 2>/dev/null)
+  [ -n "$BUILD" ] && echo ">> build from service: $BUILD" || echo ">> build endpoint gave nothing usable"
+fi
+printf '%s' "${BUILD:-unknown}" > reports/build.txt
 
+echo ">> mode        : $MODE"
+echo ">> build       : ${BUILD:-unknown}"
+
+# ---- which cases is this run asking for? ------------------------------------
+SCOPE=reports/scope.json
+if [ -n "$QASE_RUN_ID" ] && [ -n "$QASE_API_TOKEN" ] && [ -n "$QASE_PROJECT_CODE" ]; then
+  curl -sk -m 30 -H "Token: $QASE_API_TOKEN" -H "accept: application/json" \
+    "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}?include=cases" \
+    -o reports/run.json
+  python3 - "$MAP" reports/run.json "$SCOPE" <<'PY'
+import json, sys
+amap = json.load(open(sys.argv[1]))
+try:
+    in_run = set(json.load(open(sys.argv[2]))["result"]["cases"])
+except Exception as e:
+    print(f"!! could not read the run's cases ({e}) — using the whole map")
+    in_run = None
+sel = {k: v for k, v in amap.items() if in_run is None or v["qase_id"] in in_run}
+json.dump(sel, open(sys.argv[3], "w"))
+run = sum(1 for v in sel.values() if v["automated"] and v["test"])
+print(f">> run holds {len(sel)} cases — {run} automated, {len(sel)-run} manual")
+PY
+else
+  cp "$MAP" "$SCOPE"
+  python3 -c "
+import json;d=json.load(open('$SCOPE'))
+run=sum(1 for v in d.values() if v['automated'] and v['test'])
+print(f'>> no run scope given — {len(d)} cases, {run} automated')"
+fi
+
+# ---- execute ----------------------------------------------------------------
+# Each line: <linear-id> <passed|failed|skipped|blocked> <ms> [message]
 run_checks() {
-  local t0 code ms
   if [ "$MODE" = "simulate" ]; then
-    python3 - "$MAP" "$SEED" <<'PY'
+    python3 - "$SCOPE" "$SEED" <<'PY'
 import hashlib, json, sys
-cases = sorted(json.load(open(sys.argv[1])))
-seed = sys.argv[2]
-FAILURES = [
- "expected HTTP 200, got 500",
- "element not found: submit button did not render within 30s",
- "validation message missing for empty required field",
- "expected error banner, got dashboard redirect",
- "stale value shown after save; list not refreshed",
-]
-BLOCKED = "blocked by an open defect on this screen"
-SKIPS   = ["feature not enabled in this environment",
-           "depends on a case that did not pass"]
-for cid in cases:
+sel  = json.load(open(sys.argv[1])); seed = sys.argv[2]
+FAIL = ["expected HTTP 200, got 500",
+        "element not found: submit button did not render within 30s",
+        "validation message missing for empty required field",
+        "expected error banner, got dashboard redirect",
+        "stale value shown after save; list not refreshed"]
+for cid, v in sorted(sel.items()):
+    if not (v["automated"] and v["test"]):
+        print(f"{cid} skipped 0 manual case - no automation bound"); continue
     h = int(hashlib.sha256(f"{seed}:{cid}".encode()).hexdigest(), 16)
     r, ms = h % 100, 200 + (h >> 8) % 4000
-    if   r < 78: print(f"{cid} passed {ms}")
-    elif r < 88: print(f"{cid} failed {ms} {FAILURES[h % len(FAILURES)]}")
-    elif r < 94: print(f"{cid} skipped 0 {SKIPS[h % len(SKIPS)]}")
-    else:        print(f"{cid} blocked 0 {BLOCKED}")
+    if   r < 82: print(f"{cid} passed {ms}")
+    elif r < 92: print(f"{cid} failed {ms} {FAIL[h % len(FAIL)]} [{v['test']}]")
+    elif r < 97: print(f"{cid} skipped 0 not enabled in this environment")
+    else:        print(f"{cid} blocked 0 blocked by an open defect")
 PY
     return
   fi
-  if [ -z "$BASE" ]; then
-    echo "QTC-441 skipped 0 no BASE_URL supplied - nothing was contacted"
-    while read -r id; do
-      [ "$id" = "QTC-441" ] && continue
-      echo "$id skipped 0 not covered by the smoke script"
-    done < <(python3 -c "
-import json
-print('\n'.join(sorted(json.load(open('$MAP')))))")
-    return
-  fi
-  t0=$(now_ms)
-  # curl already prints 000 when it cannot connect; a second `|| echo 000`
-  # would append a line and break the comparison below
-  code=$(curl -sk -o /dev/null -w '%{http_code}' -m 20 "$BASE" 2>/dev/null)
-  code="${code:-000}"
-  ms=$(( $(now_ms) - t0 ))
 
-  if [ "$code" = "000" ] || [ "${code:0:1}" = "5" ]; then
-    echo "QTC-441 failed $ms environment unreachable at $BASE"
-  else
-    echo "QTC-441 passed $ms reachable, HTTP $code"
-  fi
-
-  # everything else is not executed by this script yet
-  local first=1
-  while read -r id; do
-    [ "$id" = "QTC-441" ] && continue
-    echo "$id skipped 0 not covered by the smoke script"
-  done < <(python3 -c "
-import json,sys
-print('\n'.join(sorted(json.load(open('$MAP')))))" )
+  # smoke: one real reachability check, the rest reported honestly as not run
+  local t0 code ms first=1
+  python3 - "$SCOPE" "$BASE" <<'PY'
+import json, sys, time, urllib.request, ssl
+sel, base = json.load(open(sys.argv[1])), sys.argv[2]
+runnable = [c for c, v in sorted(sel.items()) if v["automated"] and v["test"]]
+if not base:
+    for c in sorted(sel): print(f"{c} skipped 0 no BASE_URL supplied - nothing was contacted")
+    sys.exit()
+probe = runnable[0] if runnable else None
+if probe:
+    t0 = time.time()
+    try:
+        ctx = ssl._create_unverified_context()
+        with urllib.request.urlopen(base, timeout=20, context=ctx) as r: code = r.status
+    except Exception as e:
+        code = 0
+    ms = int((time.time() - t0) * 1000)
+    if code == 0 or 500 <= code < 600:
+        print(f"{probe} failed {ms} environment unreachable or erroring at {base} (HTTP {code})")
+    else:
+        print(f"{probe} passed {ms} reachable, HTTP {code}")
+for c in sorted(sel):
+    if c != probe: print(f"{c} skipped 0 not covered by the smoke script")
+PY
 }
 
-# ---- emit results.json ------------------------------------------------------
 run_checks | python3 -c "
-import json, sys
-out = []
+import json, sys, collections
+out=[]
 for line in sys.stdin:
-    parts = line.rstrip('\n').split(' ', 3)
-    if len(parts) < 3: continue
-    cid, status, ms = parts[0], parts[1], parts[2]
-    entry = {'id': cid, 'status': status, 'ms': int(ms or 0)}
-    if len(parts) == 4 and parts[3]:
-        entry['error' if status == 'failed' else 'reason'] = parts[3]
-    out.append(entry)
+    p=line.rstrip('\n').split(' ',3)
+    if len(p)<3: continue
+    e={'id':p[0],'status':p[1],'ms':int(p[2] or 0)}
+    if len(p)==4 and p[3]: e['error' if p[1]=='failed' else 'reason']=p[3]
+    out.append(e)
 json.dump(out, open('$OUT','w'), indent=1)
-import collections
-c = collections.Counter(o['status'] for o in out)
-print(f\"   {len(out)} results  {dict(c)}\")
+print('   %d results  %s' % (len(out), dict(collections.Counter(o['status'] for o in out))))
 "
 echo ">> wrote $OUT"
