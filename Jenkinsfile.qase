@@ -31,6 +31,10 @@ pipeline {
            description: 'Target environment')
     string(name: 'SCRIPT', defaultValue: 'scripts/run_suite.sh',
            description: 'Test script to run, relative to the repo root')
+    choice(name: 'MODE', choices: ['smoke', 'simulate'],
+           description: 'smoke = real checks; simulate = deterministic sample results')
+    string(name: 'SEED', defaultValue: '1',
+           description: 'Seed for simulate mode; the same seed reproduces the same results')
     booleanParam(name: 'FAIL_ON_TEST_FAILURE', defaultValue: true,
            description: 'Fail the build when any case fails. Uncheck to report-only.')
   }
@@ -58,9 +62,11 @@ pipeline {
         sh '''#!/usr/bin/env bash
           set -uo pipefail          # not -e: let every case run, gate on results instead
           mkdir -p reports
+          rm -f "${RESULTS}"        # never publish a previous build's results
           echo ">> environment: ${ENVIRONMENT}"
-          echo ">> script:      ${SCRIPT}"
-          bash "${SCRIPT}" || echo ">> script exited non-zero — results still published"
+          echo ">> script:      ${SCRIPT}   (mode=${MODE} seed=${SEED})"
+          MODE="${MODE}" SEED="${SEED}" bash "${SCRIPT}" \
+            || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
           echo ">> $(python3 -c "import json;print(len(json.load(open('${RESULTS}'))))") results"
         '''
@@ -95,7 +101,7 @@ def _get(path):
     with urllib.request.urlopen(rq, timeout=60) as r:
         return json.loads(r.read())
 try:
-    in_run = set(_get(f"/v1/run/{code}/{run}")["result"]["cases"])
+    in_run = set(_get(f"/v1/run/{code}/{run}?include=cases")["result"]["cases"])
     print(f">> run {run} holds {len(in_run)} cases")
 except Exception as e:
     in_run = None
