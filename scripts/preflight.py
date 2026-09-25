@@ -79,13 +79,17 @@ def main():
     check("node", "newman" in bound, lambda: have("node"))
     check("newman", "newman" in bound, lambda: have("newman"))
 
-    def collections():
-        want = {v["collection"] for v in amap.values() if v.get("runner") == "newman"}
-        missing = [c for c in sorted(want)
-                   if not (ROOT / "flows" / f"{c}.postman_collection.json").exists()]
-        return (not missing), (f"missing: {', '.join(missing)}" if missing
-                               else f"{len(want)} collection(s) present")
-    check("bound collections", "newman" in bound, collections)
+    def bindings():
+        """Every case in scope must resolve to something the runner can find."""
+        import subprocess as _sp
+        r = _sp.run([sys.executable, str(ROOT / "tools" / "verify-bindings.py")],
+                    capture_output=True, text=True, timeout=120, cwd=str(ROOT),
+                    env={**os.environ, "UI_REPO": str(UI_REPO)})
+        if r.returncode != 0:
+            bad = [l.strip() for l in r.stdout.splitlines() if l.startswith("   ")]
+            return False, (bad[0][:90] if bad else "unresolved bindings")
+        return True, "every binding resolves"
+    check("bindings", bool(bound), bindings)
 
     # --- pytest / playwright ---
     def ui_repo():
