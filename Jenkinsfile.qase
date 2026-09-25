@@ -55,7 +55,7 @@ pipeline {
 
     stage('Run tests') {
       steps {
-        sh '''
+        sh '''#!/usr/bin/env bash
           set -uo pipefail          # not -e: let every case run, gate on results instead
           mkdir -p reports
           echo ">> environment: ${ENVIRONMENT}"
@@ -75,7 +75,7 @@ pipeline {
         }
       }
       steps {
-        sh '''
+        sh '''#!/usr/bin/env bash
           set -euo pipefail
           python3 - <<'PY'
 import json, os, urllib.request
@@ -128,7 +128,7 @@ PY
         }
       }
       steps {
-        sh '''
+        sh '''#!/usr/bin/env bash
           set -euo pipefail
           curl -sS -X POST \
             -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
