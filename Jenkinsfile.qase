@@ -35,6 +35,8 @@ pipeline {
            description: 'smoke = real checks; simulate = deterministic sample results')
     string(name: 'SEED', defaultValue: '1',
            description: 'Seed for simulate mode; the same seed reproduces the same results')
+    string(name: 'BUILD_ENDPOINT', defaultValue: '',
+           description: 'Service endpoint returning the build/version. Read when the run starts and stamped on the Qase run.')
     booleanParam(name: 'FAIL_ON_TEST_FAILURE', defaultValue: true,
            description: 'Fail the build when any case fails. Uncheck to report-only.')
   }
@@ -65,7 +67,8 @@ pipeline {
           rm -f "${RESULTS}"        # never publish a previous build's results
           echo ">> environment: ${ENVIRONMENT}"
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
-          MODE="${MODE:-smoke}" SEED="${SEED:-1}" bash "${SCRIPT}" \
+          MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
+            bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
           echo ">> $(python3 -c "import json;print(len(json.load(open('${RESULTS}'))))") results"
@@ -137,6 +140,29 @@ req = urllib.request.Request(
 with urllib.request.urlopen(req, timeout=120) as resp:
     print(f">> published {len(payload)} results for run {run}: HTTP {resp.status}")
 PY
+        '''
+      }
+    }
+
+    stage('Stamp build on the run') {
+      when {
+        allOf {
+          expression { params.QASE_RUN_ID?.trim() }
+          expression { fileExists('reports/build.txt') }
+        }
+      }
+      steps {
+        sh '''#!/usr/bin/env bash
+          set -euo pipefail
+          BUILD=$(cat reports/build.txt)
+          if [ "$BUILD" = "unknown" ] || [ -z "$BUILD" ]; then
+            echo ">> no build reported by the service - leaving the run's Build field alone"
+            exit 0
+          fi
+          curl -sS -X PATCH -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
+            "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}" \
+            -d "{\"custom_field\":{\"3\":\"${BUILD}\"}}" >/dev/null || true
+          echo ">> stamped run ${QASE_RUN_ID} with build ${BUILD}"
         '''
       }
     }
