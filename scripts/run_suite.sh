@@ -21,14 +21,15 @@ MAP="${MAP:-qase-case-map.json}"
 OUT="reports/results.json"
 mkdir -p reports
 
+# No endpoint is baked in. BASE_URL must be supplied deliberately, so a run can
+# never reach a customer or production environment by default.
+BASE="${BASE_URL:-}"
 case "$ENVIRONMENT" in
-  onprem)   BASE="${BASE_URL:-https://api-prod-netapp.quipu.netapp.com}" ;;
-  prestage) BASE="${BASE_URL:-https://api-prestage-1-prestage.thequipu.in}" ;;
-  local)    BASE="${BASE_URL:-http://localhost:8080}" ;;
-  *)        echo "!! unknown ENVIRONMENT: $ENVIRONMENT" >&2; exit 2 ;;
+  onprem|prestage|local) ;;
+  *) echo "!! unknown ENVIRONMENT: $ENVIRONMENT" >&2; exit 2 ;;
 esac
 
-echo ">> environment : $ENVIRONMENT  ($BASE)"
+echo ">> environment : $ENVIRONMENT  (${BASE:-<no BASE_URL - no host will be contacted>})"
 echo ">> suite       : $SUITE"
 [ -f "$MAP" ] || { echo "!! $MAP not found — run from the repo root" >&2; exit 1; }
 
@@ -39,6 +40,16 @@ now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
 
 run_checks() {
   local t0 code ms
+  if [ -z "$BASE" ]; then
+    echo "QTC-441 skipped 0 no BASE_URL supplied - nothing was contacted"
+    while read -r id; do
+      [ "$id" = "QTC-441" ] && continue
+      echo "$id skipped 0 not covered by the smoke script"
+    done < <(python3 -c "
+import json
+print('\n'.join(sorted(json.load(open('$MAP')))))")
+    return
+  fi
   t0=$(now_ms)
   # curl already prints 000 when it cannot connect; a second `|| echo 000`
   # would append a line and break the comparison below
