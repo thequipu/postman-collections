@@ -13,11 +13,20 @@
 # with the real runner when it exists; nothing downstream changes.
 #
 #   SUITE=access-management ENVIRONMENT=onprem bash scripts/run_suite.sh
+#
+# MODE=simulate produces a realistic spread of pass/fail/skip/blocked instead of
+# contacting anything. It is deterministic for a given SEED, so a re-run
+# reproduces the same results and a new SEED gives a different set. Use it to
+# exercise runs, dashboards and defect flow before the real runner exists.
+#
+#   MODE=simulate SEED=7 bash scripts/run_suite.sh
 set -uo pipefail
 
 ENVIRONMENT="${ENVIRONMENT:-onprem}"
 SUITE="${SUITE:-all}"
 MAP="${MAP:-qase-case-map.json}"
+MODE="${MODE:-smoke}"
+SEED="${SEED:-1}"
 OUT="reports/results.json"
 mkdir -p reports
 
@@ -31,6 +40,7 @@ esac
 
 echo ">> environment : $ENVIRONMENT  (${BASE:-<no BASE_URL - no host will be contacted>})"
 echo ">> suite       : $SUITE"
+echo ">> mode        : $MODE"
 [ -f "$MAP" ] || { echo "!! $MAP not found — run from the repo root" >&2; exit 1; }
 
 # ---- smoke checks -----------------------------------------------------------
@@ -40,6 +50,31 @@ now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
 
 run_checks() {
   local t0 code ms
+  if [ "$MODE" = "simulate" ]; then
+    python3 - "$MAP" "$SEED" <<'PY'
+import hashlib, json, sys
+cases = sorted(json.load(open(sys.argv[1])))
+seed = sys.argv[2]
+FAILURES = [
+ "expected HTTP 200, got 500",
+ "element not found: submit button did not render within 30s",
+ "validation message missing for empty required field",
+ "expected error banner, got dashboard redirect",
+ "stale value shown after save; list not refreshed",
+]
+BLOCKED = "blocked by an open defect on this screen"
+SKIPS   = ["feature not enabled in this environment",
+           "depends on a case that did not pass"]
+for cid in cases:
+    h = int(hashlib.sha256(f"{seed}:{cid}".encode()).hexdigest(), 16)
+    r, ms = h % 100, 200 + (h >> 8) % 4000
+    if   r < 78: print(f"{cid} passed {ms}")
+    elif r < 88: print(f"{cid} failed {ms} {FAILURES[h % len(FAILURES)]}")
+    elif r < 94: print(f"{cid} skipped 0 {SKIPS[h % len(SKIPS)]}")
+    else:        print(f"{cid} blocked 0 {BLOCKED}")
+PY
+    return
+  fi
   if [ -z "$BASE" ]; then
     echo "QTC-441 skipped 0 no BASE_URL supplied - nothing was contacted"
     while read -r id; do
