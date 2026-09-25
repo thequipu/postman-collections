@@ -1,0 +1,453 @@
+<title>QQA Run Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --page:#fbfcfd; --panel:#ffffff; --sunk:#f1f5f8; --line:#dce5ea; --line-soft:#eaf0f4;
+  --ink:#101a21; --ink-2:#3d4f5a; --muted:#5f717d;
+  --accent:#0f6d87; --accent-soft:#e2f0f4;
+  --pass:#1d7a4d; --fail:#b3352b; --skip:#a8760f; --block:#6a4fa0; --untested:#93a2ac;
+  --pass-bg:#e6f3eb; --fail-bg:#fbe9e7; --skip-bg:#fbf1dd; --block-bg:#efeaf8; --untested-bg:#eef2f5;
+  --shadow:0 1px 2px rgba(16,26,33,.06), 0 8px 24px -16px rgba(16,26,33,.24);
+  --sans:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0c1418; --panel:#121d23; --sunk:#16232a; --line:#23343d; --line-soft:#1b2a32;
+    --ink:#e8f0f4; --ink-2:#bacad3; --muted:#8ba0ac;
+    --accent:#4bb4d0; --accent-soft:#12303a;
+    --pass:#4cc183; --fail:#f2776a; --skip:#e0ab45; --block:#a98fe0; --untested:#7b8d98;
+    --pass-bg:#11301f; --fail-bg:#3a1712; --skip-bg:#33260c; --block-bg:#241b3b; --untested-bg:#1b2930;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0c1418; --panel:#121d23; --sunk:#16232a; --line:#23343d; --line-soft:#1b2a32;
+  --ink:#e8f0f4; --ink-2:#bacad3; --muted:#8ba0ac;
+  --accent:#4bb4d0; --accent-soft:#12303a;
+  --pass:#4cc183; --fail:#f2776a; --skip:#e0ab45; --block:#a98fe0; --untested:#7b8d98;
+  --pass-bg:#11301f; --fail-bg:#3a1712; --skip-bg:#33260c; --block-bg:#241b3b; --untested-bg:#1b2930;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---- header ---- */
+header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;background:var(--page);
+       border-bottom:1px solid var(--line)}
+.head-in{max-width:1180px;margin:0 auto;padding:18px 20px 0;display:flex;flex-wrap:wrap;
+         align-items:baseline;gap:8px 16px}
+.brand{font-size:19px;font-weight:600;letter-spacing:-.015em}
+.brand span{color:var(--muted);font-weight:500}
+.head-meta{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.rail{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;gap:8px;overflow-x:auto;
+      scrollbar-width:thin}
+.chip{flex:0 0 auto;display:flex;flex-direction:column;gap:3px;padding:7px 12px 8px;border:1px solid var(--line);
+      border-radius:7px;background:var(--panel);cursor:pointer;text-align:left;font:inherit;color:inherit;
+      min-width:112px;position:relative;overflow:hidden}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);
+      box-shadow:inset 0 0 0 1px var(--accent)}
+.chip .cid{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink)}
+.chip .cbuild{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.chip::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--st)}
+.chip:focus-visible,.row:focus-visible,.tgl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---- panels ---- */
+section{margin-top:28px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sec-head h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.sec-head .hint{font-size:12px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+
+/* ---- run summary ---- */
+.run-top{padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;
+         border-bottom:1px solid var(--line-soft)}
+.run-title{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.run-sub{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;
+      font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-passed{color:var(--pass);background:var(--pass-bg)}
+.p-failed{color:var(--fail);background:var(--fail-bg)}
+.p-in_progress{color:var(--skip);background:var(--skip-bg)}
+.p-abort{color:var(--block);background:var(--block-bg)}
+.build-tag{font-family:var(--mono);font-size:12px;padding:4px 9px;border-radius:5px;
+           background:var(--sunk);border:1px solid var(--line);color:var(--ink-2)}
+.run-actions{margin-left:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:1px;background:var(--line-soft)}
+.tile{background:var(--panel);padding:14px 16px 15px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:25px;font-weight:600;
+         line-height:1.15;margin-top:4px}
+.v-passed{color:var(--pass)} .v-failed{color:var(--fail)} .v-skipped{color:var(--skip)}
+.v-blocked{color:var(--block)} .v-untested{color:var(--untested)}
+.barwrap{padding:16px 20px 18px;border-top:1px solid var(--line-soft)}
+.bar{display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--sunk)}
+.bar i{display:block;height:100%}
+.b-passed{background:var(--pass)} .b-failed{background:var(--fail)} .b-skipped{background:var(--skip)}
+.b-blocked{background:var(--block)} .b-untested{background:var(--untested)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend b{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+
+/* ---- suite tree ---- */
+.tree{width:100%}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 128px 62px;gap:14px;align-items:center;
+     padding:9px 20px;border-top:1px solid var(--line-soft);width:100%;background:none;border-left:0;
+     border-right:0;border-bottom:0;font:inherit;color:inherit;text-align:left}
+.row.area{cursor:pointer;background:var(--sunk)}
+.row.area:hover{background:var(--accent-soft)}
+.row.feat{cursor:pointer;padding-left:34px}
+.row.feat:hover{background:var(--sunk)}
+.row.case{padding-left:50px;padding-block:7px;cursor:default}
+.lbl{min-width:0;display:flex;align-items:center;gap:9px}
+.tgl{width:14px;flex:0 0 14px;color:var(--muted);font-size:10px;transition:transform .12s ease}
+.tgl.open{transform:rotate(90deg)}
+.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.area .nm{font-weight:600}
+.row.feat .nm{font-weight:500}
+.row.case .nm{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+.cat{font-size:11px;color:var(--muted);white-space:nowrap;padding:1px 7px;border:1px solid var(--line);
+     border-radius:4px;flex:0 0 auto}
+.lid{font-family:var(--mono);font-size:11px;color:var(--accent);flex:0 0 auto}
+.minibar{display:flex;height:7px;border-radius:2px;overflow:hidden;background:var(--sunk)}
+.rate{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;text-align:right;
+      color:var(--ink-2)}
+.st{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;text-align:right}
+.s-passed{color:var(--pass)} .s-failed{color:var(--fail)} .s-skipped{color:var(--skip)}
+.s-blocked{color:var(--block)} .s-untested{color:var(--untested)}
+.reg{display:inline-block;margin-left:8px;font-size:10px;font-weight:600;letter-spacing:.04em;
+     padding:1px 6px;border-radius:3px;color:var(--fail);background:var(--fail-bg)}
+
+/* ---- failures ---- */
+.fail-list{display:flex;flex-direction:column}
+.fail-item{display:grid;grid-template-columns:78px minmax(0,1fr);gap:14px;padding:12px 20px;
+           border-top:1px solid var(--line-soft)}
+.fail-item:first-child{border-top:0}
+.fail-item .lid{font-size:12px;font-weight:600}
+.fail-item .ft{font-weight:500}
+.fail-item .fs{font-size:12px;color:var(--muted);margin-top:2px}
+.fail-item .fm{font-family:var(--mono);font-size:12px;color:var(--fail);margin-top:5px;
+                background:var(--fail-bg);padding:5px 9px;border-radius:4px;word-break:break-word}
+.empty{padding:26px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ---- matrix ---- */
+.mx-scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{padding:8px 10px;text-align:left;border-top:1px solid var(--line-soft);font-size:13px}
+thead th{border-top:0;position:sticky;top:0;background:var(--panel);font-size:11px;text-transform:uppercase;
+         letter-spacing:.06em;color:var(--muted);font-weight:600;white-space:nowrap;padding-top:14px;
+         padding-bottom:10px;border-bottom:1px solid var(--line)}
+thead th.b{font-family:var(--mono);font-size:11.5px;text-transform:none;letter-spacing:0;color:var(--ink-2)}
+thead th.b small{display:block;color:var(--muted);font-weight:400}
+tbody th{font-weight:500;color:var(--ink);max-width:290px}
+tbody th small{display:block;color:var(--muted);font-size:11.5px;font-weight:400}
+td.cell{text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:500;
+        white-space:nowrap}
+td.cell span{display:inline-block;min-width:54px;padding:3px 7px;border-radius:4px;font-size:12.5px}
+td.cell .dl{display:block;font-size:10.5px;color:var(--muted);margin-top:2px;font-weight:400}
+.na{color:var(--muted)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);
+       display:flex;flex-wrap:wrap;gap:6px 18px}
+footer code{font-family:var(--mono)}
+@media (max-width:640px){
+  .row{grid-template-columns:minmax(0,1fr) 74px 54px;gap:9px;padding-inline:14px}
+  .tiles{grid-template-columns:repeat(3,1fr)}
+  .cat{display:none}
+  .fail-item{grid-template-columns:1fr;gap:4px}
+  .wrap,.head-in,.rail{padding-inline:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header>
+  <div class="head-in">
+    <div class="brand">QQA Run Console <span>· Quipu QA</span></div>
+    <div class="head-meta" id="meta"></div>
+  </div>
+  <div class="rail" id="rail" role="group" aria-label="Test runs"></div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <div class="sec-head">
+      <h2>Run detail</h2>
+      <span class="hint" id="scope-hint"></span>
+    </div>
+    <div class="panel">
+      <div class="run-top" id="run-top"></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="barwrap">
+        <div class="bar" id="bar"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Suite breakdown</h2>
+      <span class="hint">Product area → feature → case. Click a row to expand.</span>
+    </div>
+    <div class="panel tree" id="tree"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Failures in this run</h2>
+      <span class="hint" id="fail-hint"></span>
+    </div>
+    <div class="panel fail-list" id="fails"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Suite health across builds</h2>
+      <span class="hint">Pass rate per feature, one column per run. Δ compares with the run to its left.</span>
+    </div>
+    <div class="panel mx-scroll"><table id="matrix"></table></div>
+  </section>
+
+  <footer>
+    <span>Source: Qase project <code>QQA</code></span>
+    <span>Case identity: <code>linerid</code> → Linear QUIPU-QA</span>
+    <span id="snap"></span>
+  </footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const ORDER = ["passed","failed","blocked","skipped","untested"];
+const LABEL = {passed:"Passed",failed:"Failed",blocked:"Blocked",skipped:"Skipped",untested:"Untested"};
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const runs = DATA.runs.slice().sort((a,b)=>a.id-b.id);
+const cases = DATA.cases;
+const withResults = runs.filter(r => Object.keys(r.results).length > 0);
+let current = (withResults[withResults.length-1] || runs[runs.length-1]).id;
+
+const statusOf = (run, cid) => (run.results[cid] || {}).status || "untested";
+const tally = (run, ids) => {
+  const t = {passed:0,failed:0,blocked:0,skipped:0,untested:0};
+  ids.forEach(cid => { const s = statusOf(run, cid); t[s in t ? s : "untested"]++; });
+  t.total = ids.length;
+  // A verdict is a real outcome. Skipped means the case was never attempted
+  // (manual case with no automation bound), so it can't count against pass rate.
+  t.verdicts = t.passed + t.failed + t.blocked;
+  t.rate = t.verdicts ? t.passed / t.verdicts : null;
+  return t;
+};
+const pct = v => v==null ? "—" : (v*100).toFixed(v===1||v===0 ? 0 : 0) + "%";
+const meta = cid => cases[cid] || {title:"case "+cid, area:"Unassigned", feature:"", cat:"", linear:null};
+const featKey = cid => { const m = meta(cid); return m.area + " ▸ " + (m.feature || "—") + " ▸ " + (m.cat || "—"); };
+
+function barHTML(t, cls){
+  return ORDER.filter(k=>t[k]>0).map(k =>
+    `<i class="b-${k}" style="width:${(t[k]/t.total*100).toFixed(3)}%" title="${LABEL[k]}: ${t[k]}"></i>`
+  ).join("") || `<i class="b-untested" style="width:100%"></i>`;
+}
+
+/* ---------- run rail ---------- */
+function renderRail(){
+  document.getElementById("rail").innerHTML = runs.map(r => {
+    const n = Object.keys(r.results).length;
+    const t = tally(r, r.cases);
+    const col = r.status==="passed" ? "var(--pass)" : r.status==="failed" ? "var(--fail)"
+              : r.status==="in_progress" ? "var(--skip)" : "var(--untested)";
+    return `<button class="chip" data-run="${r.id}" aria-pressed="${r.id===current}" style="--st:${col}">
+      <span class="cid">#${r.id}</span>
+      <span class="cbuild">${esc(r.build || "no build")}</span>
+      <span class="cbuild">${n ? t.passed+"/"+t.total+" pass" : "not run"}</span>
+    </button>`;
+  }).join("");
+  document.getElementById("meta").textContent =
+    `${runs.length} runs · ${Object.keys(cases).length} cases · ${new Set(runs.map(r=>r.build).filter(Boolean)).size} builds`;
+}
+
+/* ---------- run detail ---------- */
+function renderRun(run){
+  const t = tally(run, run.cases);
+  const when = run.end || run.start;
+  document.getElementById("run-top").innerHTML = `
+    <div>
+      <div class="run-title">${esc(run.title)}</div>
+      <div class="run-sub">run #${run.id}${when ? " · " + esc(when) : ""}</div>
+    </div>
+    <div class="run-actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="build-tag">build ${esc(run.build || "not stamped")}</span>
+      <span class="pill p-${esc(run.status)}">${esc(run.status.replace("_"," "))}</span>
+    </div>`;
+
+  document.getElementById("tiles").innerHTML =
+    `<div class="tile"><div class="k">In run</div><div class="v num">${t.total}</div></div>` +
+    ORDER.map(k => `<div class="tile"><div class="k">${LABEL[k]}</div>
+      <div class="v num v-${k}">${t[k]}</div></div>`).join("");
+
+  document.getElementById("bar").innerHTML = barHTML(t);
+  document.getElementById("legend").innerHTML =
+    `<span><b style="background:var(--pass)"></b>Pass rate <strong class="num">${pct(t.rate)}</strong>
+       ${t.verdicts ? "of " + t.verdicts + " with a verdict" : "— nothing attempted"}</span>` +
+    ORDER.filter(k=>t[k]>0).map(k =>
+      `<span><b style="background:var(--${k==="passed"?"pass":k==="failed"?"fail":k==="skipped"?"skip":k==="blocked"?"block":"untested"})"></b>${LABEL[k]} <span class="num">${t[k]}</span></span>`).join("");
+
+  const notRun = t.skipped + t.untested;
+  document.getElementById("scope-hint").textContent = t.verdicts
+    ? `${t.total} cases in scope, ${t.verdicts} with a verdict` +
+      (notRun ? `, ${notRun} not attempted` : "")
+    : `${t.total} cases in scope, none attempted`;
+}
+
+/* ---------- suite tree ---------- */
+const open = new Set();
+function renderTree(run){
+  const el = document.getElementById("tree");
+  if (!run.cases.length){ el.innerHTML = `<div class="empty">This run holds no cases.</div>`; return; }
+  const areas = new Map();
+  run.cases.forEach(cid => {
+    const m = meta(cid), fk = (m.feature||"—") + " ▸ " + (m.cat||"—");
+    if (!areas.has(m.area)) areas.set(m.area, new Map());
+    const f = areas.get(m.area);
+    if (!f.has(fk)) f.set(fk, []);
+    f.get(fk).push(cid);
+  });
+  const prev = previousRun(run);
+  let html = "";
+  for (const [area, feats] of [...areas].sort((a,b)=>a[0].localeCompare(b[0]))){
+    const aids = [...feats.values()].flat();
+    const at = tally(run, aids);
+    const aOpen = open.has(area);
+    html += rowHTML("area", area, "", at, aOpen, {key:area});
+    if (!aOpen) continue;
+    for (const [fk, ids] of [...feats].sort((a,b)=>a[0].localeCompare(b[0]))){
+      const ft = tally(run, ids);
+      const fkey = area + "|" + fk;
+      const fOpen = open.has(fkey);
+      const [fname, cat] = fk.split(" ▸ ");
+      html += rowHTML("feat", fname, cat, ft, fOpen, {key:fkey});
+      if (!fOpen) continue;
+      for (const cid of ids.sort((a,b)=>meta(a).title.localeCompare(meta(b).title))){
+        const m = meta(cid), s = statusOf(run, cid);
+        const regressed = prev && s==="failed" && statusOf(prev, cid)==="passed";
+        html += `<div class="row case">
+          <span class="lbl"><span class="tgl"></span>
+            ${m.linear ? `<span class="lid">${esc(m.linear)}</span>` : ""}
+            <span class="nm" title="${esc(m.title)}">${esc(m.title)}</span></span>
+          <span></span>
+          <span class="st s-${s}">${LABEL[s]}${regressed ? `<span class="reg">REG</span>` : ""}</span>
+        </div>`;
+      }
+    }
+  }
+  el.innerHTML = html;
+}
+function rowHTML(kind, name, cat, t, isOpen, d){
+  return `<button class="row ${kind}" data-key="${esc(d.key)}">
+    <span class="lbl"><span class="tgl ${isOpen?"open":""}">▶</span>
+      <span class="nm" title="${esc(name)}">${esc(name)}</span>
+      ${cat ? `<span class="cat">${esc(cat)}</span>` : ""}
+      <span class="cat num">${t.total}</span></span>
+    <span class="minibar">${barHTML(t)}</span>
+    <span class="rate">${pct(t.rate)}</span>
+  </button>`;
+}
+
+/* ---------- failures ---------- */
+function previousRun(run){
+  const before = withResults.filter(r => r.id < run.id);
+  for (let i = before.length-1; i >= 0; i--){
+    const shared = run.cases.filter(c => before[i].cases.includes(c));
+    if (shared.length < Math.min(5, run.cases.length)) continue;
+    if (tally(before[i], shared).verdicts > 0) return before[i];   // a run of all-skips is no baseline
+  }
+  return null;
+}
+function renderFails(run){
+  const prev = previousRun(run);
+  const bad = run.cases.filter(c => ["failed","blocked"].includes(statusOf(run,c)));
+  document.getElementById("fail-hint").textContent = prev
+    ? `Regressions are measured against run #${prev.id}${prev.build ? " (" + prev.build + ")" : ""}.`
+    : "No earlier run shares these cases.";
+  const el = document.getElementById("fails");
+  if (!bad.length){
+    el.innerHTML = `<div class="empty">${Object.keys(run.results).length
+      ? "No failures or blocks in this run." : "This run has no published results yet."}</div>`;
+    return;
+  }
+  el.innerHTML = bad.map(cid => {
+    const m = meta(cid), r = run.results[cid] || {}, s = statusOf(run, cid);
+    const regressed = prev && s==="failed" && statusOf(prev, cid)==="passed";
+    return `<div class="fail-item">
+      <div><span class="lid">${esc(m.linear || "—")}</span>
+        <div class="st s-${s}" style="text-align:left;margin-top:3px">${LABEL[s]}</div></div>
+      <div>
+        <div class="ft">${esc(m.title)}${regressed
+          ? `<span class="reg">REGRESSION — passed in #${prev.id}</span>` : ""}</div>
+        <div class="fs">${esc(m.area)} ▸ ${esc(m.feature || "—")} ▸ ${esc(m.cat || "—")}</div>
+        ${r.comment ? `<div class="fm">${esc(r.comment)}</div>` : ""}
+      </div></div>`;
+  }).join("");
+}
+
+/* ---------- cross-build matrix ---------- */
+function renderMatrix(){
+  const cols = withResults;
+  const keys = new Map();
+  cols.forEach(r => r.cases.forEach(cid => {
+    const k = featKey(cid);
+    if (!keys.has(k)) keys.set(k, new Set());
+    keys.get(k).add(cid);
+  }));
+  const rows = [...keys.keys()].sort();
+  let html = `<thead><tr><th>Feature</th>` + cols.map(r =>
+    `<th class="b">#${r.id}<small>${esc(r.build || "no build")}</small></th>`).join("") + `</tr></thead><tbody>`;
+  for (const k of rows){
+    const [area, feature, cat] = k.split(" ▸ ");
+    html += `<tr><th>${esc(feature)}<small>${esc(area)} · ${esc(cat)}</small></th>`;
+    let prevRate = null;
+    for (const r of cols){
+      const ids = r.cases.filter(c => featKey(c) === k);
+      if (!ids.length){ html += `<td class="cell na">—</td>`; continue; }
+      const t = tally(r, ids);
+      if (t.rate == null){ html += `<td class="cell na">—</td>`; continue; }
+      const bg = t.rate === 1 ? "var(--pass-bg)" : t.rate >= .8 ? "var(--skip-bg)" : "var(--fail-bg)";
+      const fg = t.rate === 1 ? "var(--pass)" : t.rate >= .8 ? "var(--skip)" : "var(--fail)";
+      const d = prevRate == null ? null : Math.round((t.rate - prevRate) * 100);
+      prevRate = t.rate;
+      html += `<td class="cell"><span style="background:${bg};color:${fg}">${pct(t.rate)}</span>
+        <span class="dl">${t.passed}/${t.verdicts}${d ? (d>0?" ▲+":" ▼")+d : ""}</span></td>`;
+    }
+    html += `</tr>`;
+  }
+  document.getElementById("matrix").innerHTML = html + `</tbody>`;
+}
+
+/* ---------- wiring ---------- */
+function paint(){
+  const run = runs.find(r => r.id === current);
+  renderRail(); renderRun(run); renderTree(run); renderFails(run);
+  document.querySelectorAll(".chip").forEach(b =>
+    b.onclick = () => { current = +b.dataset.run; open.clear(); paint(); });
+  document.querySelectorAll(".row.area,.row.feat").forEach(b =>
+    b.onclick = () => { const k = b.dataset.key; open.has(k) ? open.delete(k) : open.add(k);
+                        renderTree(run); wireRows(run); });
+}
+function wireRows(run){
+  document.querySelectorAll(".row.area,.row.feat").forEach(b =>
+    b.onclick = () => { const k = b.dataset.key; open.has(k) ? open.delete(k) : open.add(k);
+                        renderTree(run); wireRows(run); });
+}
+const firstRun = runs.find(r => r.id === current);
+firstRun.cases.forEach(cid => open.add(meta(cid).area));
+paint();
+renderMatrix();
+document.getElementById("snap").textContent = "Snapshot: " + DATA.snapshot;
+</script>

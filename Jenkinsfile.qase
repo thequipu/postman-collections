@@ -184,11 +184,26 @@ PY
         '''
       }
     }
+
+    stage('Build dashboard') {
+      steps {
+        // Last stage, so it picks up the results this build just published.
+        sh '''#!/usr/bin/env bash
+          set -euo pipefail
+          python3 tools/build-dashboard.py -o reports/dashboard.html
+        '''
+      }
+    }
   }
 
   post {
     always {
       archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+      // Jenkins' default CSP strips inline CSS/JS from published HTML, so this
+      // tab may render bare. Download the archived dashboard.html to view it.
+      publishHTML(target: [reportDir: 'reports', reportFiles: 'dashboard.html',
+                           reportName: 'QQA Run Console', keepAll: true,
+                           allowMissing: true, alwaysLinkToLastBuild: true])
     }
     success {
       script {
