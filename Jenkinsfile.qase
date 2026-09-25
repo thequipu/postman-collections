@@ -14,12 +14,9 @@
 // `id` is the external id; qase-case-map.json turns it into a Qase case id.
 
 pipeline {
-  agent {
-    docker {
-      image 'python:3.12-bookworm'
-      args  '-u root:root'
-    }
-  }
+  // This Jenkins has no Docker Pipeline plugin, so the agent runs the script
+  // directly. It needs python3 and curl on PATH.
+  agent any
 
   parameters {
     // --- passed in by Qase when it launches the run ---
@@ -40,7 +37,6 @@ pipeline {
 
   options {
     timestamps()
-    ansiColor('xterm')
     disableConcurrentBuilds()
     buildDiscarder(logRotator(numToKeepStr: '30'))
     timeout(time: 45, unit: 'MINUTES')
