@@ -127,6 +127,9 @@ pipeline {
           set -uo pipefail          # not -e: let every case run, gate on results instead
           mkdir -p reports
           rm -f "${RESULTS}"        # never publish a previous build's results
+          # The workspace is reused, so a report from a runner this build does not
+          # invoke would otherwise be recorded as if it belonged to this build.
+          rm -rf reports/junit
           echo ">> environment: ${ENVIRONMENT}"
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
           MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
