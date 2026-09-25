@@ -102,6 +102,7 @@
   "automated": true,
   "collection": "SMOKE-Platform-Health",
   "junit_suite": "Platform Health / Health: LLM Service",
+  "linear": "QTC-1904",
   "qase_id": 169,
   "runner": "postman",
   "test": "QAPI-108",

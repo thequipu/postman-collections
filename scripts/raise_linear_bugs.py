@@ -14,10 +14,11 @@ rather than stored anywhere: nothing here needs a database, and an issue someone
 moves or renames is still found.
 
 Where the bug is filed:
-  - a case mirrored from Linear (its key is a real issue, e.g. QTC-441) gets the
-    bug as a SUB-ISSUE of that test case, so the case and its defect stay linked
-  - a case that exists only in Qase (QAPI-*, QUI-*) gets a top-level issue in the
-    same team, since there is no parent to hang it from
+  - a case whose binding names a Linear test case ("linear": "QTC-1904", or a key
+    that is itself an issue) gets the bug as a SUB-ISSUE of that test case, so
+    the case and its defect stay linked
+  - a case with no Linear counterpart gets a top-level issue in the same team,
+    since there is nothing to hang it from
 
 Team, state and labels are resolved by name at run time, so no ids are baked in.
 """
@@ -85,10 +86,21 @@ def issue_by_identifier(ident):
     return nodes[0]["id"] if nodes else None
 
 
+def linear_key(key, entry):
+    """The Linear test case this case mirrors, if any."""
+    explicit = entry.get("linear")
+    if explicit:
+        return explicit
+    return key if key.startswith("QTC-") else None
+
+
 def context_lines(key, entry, result):
     run_url = f"https://app.qase.io/run/{PROJECT_CODE}/dashboard/{RUN_ID}" if RUN_ID else ""
     lines = [f"**Case** `{key}` — {entry.get('title', '')}",
              f"**Runner** `{entry.get('runner', '?')}`"]
+    tc = linear_key(key, entry)
+    if tc:
+        lines.append(f"**Test case** {tc}")
     if ENVIRONMENT:
         lines.append(f"**Environment** `{ENVIRONMENT}`")
     if BUILD:
@@ -107,6 +119,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true",
                     help="print what would be filed, touch nothing")
+    ap.add_argument("--only", action="append", metavar="KEY",
+                    help="file for these case keys only; repeatable. Without it, "
+                         "every failing case is filed.")
     args = ap.parse_args()
     if not KEY and not args.dry_run:
         sys.exit("LINEAR_API_KEY is not set")
@@ -114,6 +129,12 @@ def main():
     results = json.load(open(RESULTS))
     amap = json.load(open(os.path.join(ROOT, "automation-map.json")))
     failures = [r for r in results if r["status"] in ("failed", "blocked")]
+    if args.only:
+        wanted = set(args.only)
+        skipped = [r["id"] for r in failures if r["id"] not in wanted]
+        failures = [r for r in failures if r["id"] in wanted]
+        if skipped:
+            print(f">> --only: leaving {len(skipped)} other failing case(s) alone")
     if not failures:
         print(">> no failures — nothing to file")
         return 0
@@ -122,7 +143,7 @@ def main():
     if args.dry_run:
         for r in failures:
             e = amap.get(r["id"], {})
-            parent = r["id"] if r["id"].startswith("QTC-") else "(no parent — Qase-only case)"
+            parent = linear_key(r["id"], e) or "(no parent — no Linear test case)"
             print(f"   {r['id']:<10} {e.get('title','')[:40]:<42} parent: {parent}")
             print(f"      {(r.get('error') or r.get('reason') or '')[:90]}")
         return 0
@@ -165,10 +186,13 @@ def main():
         }
         if bug_label:
             payload["labelIds"] = [bug_label]
-        if key.startswith("QTC-"):
-            pid = issue_by_identifier(key)
+        tc = linear_key(key, entry)
+        if tc:
+            pid = issue_by_identifier(tc)
             if pid:
                 payload["parentId"] = pid          # the bug hangs off its test case
+            else:
+                print(f"   !! {key}: {tc} not found in Linear — filing without a parent")
         d = gql("""mutation($i:IssueCreateInput!){ issueCreate(input:$i){
                      success issue{ identifier url } } }""", {"i": payload})
         iss = d["issueCreate"]["issue"]
