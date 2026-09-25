@@ -62,6 +62,9 @@ def main():
 
     results = json.load(open(RESULTS))
     cmap = json.load(open(CASE_MAP))
+    # Written by raise_linear_bugs.py when it ran first; absent otherwise.
+    bugs_path = os.path.join(ROOT, "reports", "linear-bugs.json")
+    bugs = json.load(open(bugs_path)) if os.path.exists(bugs_path) else {}
     in_run = set(call("GET", f"/run/{CODE}/{RUN}?include=cases")["result"].get("cases") or [])
 
     payload, by_case = [], {}
@@ -72,6 +75,10 @@ def main():
         entry = {"case_id": cid, "status": STATUS.get(r["status"], "skipped"),
                  "time_ms": int(r.get("ms") or 0)}
         comment = r.get("error") or r.get("reason")
+        bug = bugs.get(r["id"])
+        if bug:
+            # Name the defect on the result, so the link works from Qase as well.
+            comment = f"Defect: {bug['identifier']} {bug['url']}\n{comment or ''}".strip()
         if comment:
             entry["comment"] = str(comment)[:5000]
         payload.append(entry)
