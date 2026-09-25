@@ -12,6 +12,14 @@
                [data-binary] @jenkins-job-qase-release-verification.xml   (use the data-binary flag)
 
   Prerequisite: a Secret text credential with id `qase-api-token` holding the Qase API token.
+
+  PARAMETERS ARE NOT MAINTAINED HERE. Jenkinsfile.qase declares them in its
+  `parameters {}` block, and a Pipeline-from-SCM job rewrites its own parameter set
+  from that block on every build. The subset below only bootstraps the first build;
+  duplicating the full list here would drift. Jenkinsfile.qase is authoritative.
+
+  For MODE=real the agent additionally needs node + npm (for `npm install -g newman`)
+  and a python3 able to run `playwright install --with-deps chromium`.
 -->
 <flow-definition plugin="workflow-job">
   <description>Release verification triggered from Qase. Runs a test script and publishes results to the Qase run that launched it.</description>
@@ -87,8 +95,8 @@
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
-          <url>git@github.com:thequipu/postman-collections.git</url>
-          <credentialsId>github-ssh</credentialsId>
+          <url>https://github.com/thequipu/postman-collections.git</url>
+          <credentialsId>Jenkins-token-classic</credentialsId>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
       <branches>

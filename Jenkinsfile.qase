@@ -31,8 +31,11 @@ pipeline {
            description: 'Target environment')
     string(name: 'SCRIPT', defaultValue: 'scripts/run_suite.sh',
            description: 'Test script to run, relative to the repo root')
-    choice(name: 'MODE', choices: ['smoke', 'simulate'],
-           description: 'smoke = real checks; simulate = deterministic sample results')
+    choice(name: 'MODE', choices: ['real', 'smoke', 'simulate'],
+           description: 'real = run the automation each case is bound to; smoke = one reachability probe; simulate = deterministic sample results')
+    string(name: 'UI_REPO_URL', defaultValue: 'https://github.com/thequipu/automation_fast_api.git',
+           description: 'Playwright repo, checked out only when the run holds pytest-bound cases')
+    string(name: 'UI_REPO_BRANCH', defaultValue: 'main', description: 'Branch of the Playwright repo')
     string(name: 'SEED', defaultValue: '1',
            description: 'Seed for simulate mode; the same seed reproduces the same results')
     string(name: 'BUILD_ENDPOINT', defaultValue: '',
@@ -59,6 +62,34 @@ pipeline {
       steps { checkout scm }
     }
 
+    stage('Prepare runners') {
+      when { expression { params.MODE == 'real' } }
+      steps {
+        sh '''#!/usr/bin/env bash
+          set -uo pipefail
+          command -v newman >/dev/null || npm install -g newman || \
+            echo "!! newman install failed - newman-bound cases will report blocked"
+          newman --version 2>/dev/null || true
+        '''
+        // Only clone the UI repo when a pytest-bound case is actually in scope.
+        sh '''#!/usr/bin/env bash
+          set -uo pipefail
+          python3 - <<'EOF' || exit 0
+import json, sys
+m = json.load(open("automation-map.json"))
+sys.exit(0 if any(v.get("runner") == "pytest" for v in m.values()) else 1)
+EOF
+          if [ ! -d ui-repo ]; then
+            git clone --depth 1 -b "${UI_REPO_BRANCH}" "${UI_REPO_URL}" ui-repo || {
+              echo "!! could not clone the UI repo - pytest cases will report blocked"; exit 0; }
+          fi
+          cd ui-repo && python3 -m pip install -q -r requirements.txt \
+            && python3 -m playwright install --with-deps chromium \
+            || echo "!! playwright setup failed - pytest cases will report blocked"
+        '''
+      }
+    }
+
     stage('Run tests') {
       steps {
         sh '''#!/usr/bin/env bash
@@ -68,6 +99,7 @@ pipeline {
           echo ">> environment: ${ENVIRONMENT}"
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
           MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
+          ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
             bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
@@ -126,7 +158,8 @@ for r in results:
     entry = {"case_id": cid,
              "status": STATUS.get(str(r.get("status", "")).lower(), "skipped")}
     if r.get("ms"):    entry["time_ms"] = int(r["ms"])
-    if r.get("error"): entry["comment"] = str(r["error"])[:5000]
+    c = r.get("error") or r.get("reason")   # a skip reason is worth reading in Qase too
+    if c: entry["comment"] = str(c)[:5000]
     payload.append(entry)
 
 if unmapped:
@@ -199,6 +232,7 @@ PY
   post {
     always {
       archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+      junit testResults: 'reports/junit/*.xml', allowEmptyResults: true
       // Jenkins' default CSP strips inline CSS/JS from published HTML, so this
       // tab may render bare. Download the archived dashboard.html to view it.
       publishHTML(target: [reportDir: 'reports', reportFiles: 'dashboard.html',

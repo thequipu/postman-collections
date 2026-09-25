@@ -1,932 +1,1131 @@
 {
+ "QAPI-001": {
+  "automated": true,
+  "collection": "FLOW-Qase-Basic",
+  "junit_suite": "Qase Basic / 00 Setup",
+  "qase_id": 156,
+  "runner": "newman",
+  "test": "QAPI-001",
+  "title": "Setup: security service reachable and healthy"
+ },
+ "QAPI-002": {
+  "automated": true,
+  "collection": "FLOW-Qase-Basic",
+  "junit_suite": "Qase Basic / 01 Admin Login",
+  "qase_id": 157,
+  "runner": "newman",
+  "test": "QAPI-002",
+  "title": "Admin login returns a valid token set"
+ },
+ "QAPI-003": {
+  "automated": true,
+  "collection": "FLOW-Qase-Basic",
+  "junit_suite": "Qase Basic / 02 Validate Tenant",
+  "qase_id": 158,
+  "runner": "newman",
+  "test": "QAPI-003",
+  "title": "Valid tenant is accepted"
+ },
+ "QAPI-004": {
+  "automated": true,
+  "collection": "FLOW-Qase-Basic",
+  "junit_suite": "Qase Basic / 03 List Schemas",
+  "qase_id": 159,
+  "runner": "newman",
+  "test": "QAPI-004",
+  "title": "Schema list is retrievable"
+ },
  "QTC-1593": {
   "automated": false,
   "qase_id": 141,
+  "runner": "none",
   "test": null,
   "title": "Foreign Key to Primary Key Validation In Metadata"
  },
  "QTC-1594": {
   "automated": false,
   "qase_id": 142,
+  "runner": "none",
   "test": null,
   "title": "Composite Foreign Key to Primary Key Validation in Metadata"
  },
  "QTC-1595": {
   "automated": false,
   "qase_id": 143,
+  "runner": "none",
   "test": null,
   "title": "Composite Foreign Key to Composite Primary Key Validation In Metadata"
  },
  "QTC-1596": {
   "automated": false,
   "qase_id": 144,
+  "runner": "none",
   "test": null,
   "title": "Foreign Key to Composite Primary key Validation In Metadata"
  },
  "QTC-1597": {
   "automated": false,
   "qase_id": 145,
+  "runner": "none",
   "test": null,
   "title": "Foreign Key to Unique Key Validation In Metadata"
  },
  "QTC-1598": {
   "automated": false,
   "qase_id": 146,
+  "runner": "none",
   "test": null,
   "title": "Primary key as Foreign Key to Foreign Key Validation In Metadata"
  },
  "QTC-1599": {
   "automated": false,
   "qase_id": 147,
+  "runner": "none",
   "test": null,
   "title": "Composite Primary Key as Composite Foreign Key to Composite Primary Key Validation In Meta"
  },
  "QTC-1600": {
   "automated": false,
   "qase_id": 148,
+  "runner": "none",
   "test": null,
   "title": "Self Referencing Table Validation In Metadata"
  },
  "QTC-1601": {
   "automated": false,
   "qase_id": 149,
+  "runner": "none",
   "test": null,
   "title": "Self Referencing Composite Key In Table Validation In Metadata"
  },
  "QTC-1602": {
   "automated": false,
   "qase_id": 150,
+  "runner": "none",
   "test": null,
   "title": "Composite Foreign Key to Composite Unique Key In Metadata"
  },
  "QTC-1603": {
   "automated": false,
   "qase_id": 151,
+  "runner": "none",
   "test": null,
   "title": "Multiple Foreign Key to A Table Verification In Metadata"
  },
  "QTC-1604": {
   "automated": false,
   "qase_id": 152,
+  "runner": "none",
   "test": null,
   "title": "Multiple Foreign Key to A Table Primary Key In Metadata"
  },
  "QTC-1605": {
   "automated": false,
   "qase_id": 153,
+  "runner": "none",
   "test": null,
   "title": "Relation Only Table Verification In Metadata"
  },
  "QTC-1606": {
   "automated": false,
   "qase_id": 154,
+  "runner": "none",
   "test": null,
   "title": "Many to Many Relationship Table Verification In Metadata"
  },
  "QTC-1818": {
   "automated": false,
   "qase_id": 44,
+  "runner": "none",
   "test": null,
   "title": "Access Management: user with fabric view should be able access the fabric and linked schem"
  },
  "QTC-1819": {
   "automated": false,
   "qase_id": 45,
+  "runner": "none",
   "test": null,
   "title": "Access Management: user with schema view should be able access only schema"
  },
  "QTC-1820": {
   "automated": false,
   "qase_id": 46,
+  "runner": "none",
   "test": null,
   "title": "Access Management: user with datacatlog view can only do test-connection view sample recor"
  },
  "QTC-1821": {
   "automated": false,
   "qase_id": 47,
+  "runner": "none",
   "test": null,
   "title": "Access Management: user with datacatlog edit/manage can only do test-connection view sampl"
  },
  "QTC-1864": {
   "automated": false,
   "qase_id": 155,
+  "runner": "none",
   "test": null,
   "title": "DataSource PDF need not to be part of schema creation as we doing it as part document link"
  },
  "QTC-383": {
   "automated": true,
   "qase_id": 116,
+  "runner": "none",
   "test": "SCHEMA_02",
   "title": "SCHEMA_02: Navigate to Schema page and click Add New"
  },
  "QTC-384": {
   "automated": true,
   "qase_id": 117,
+  "runner": "none",
   "test": "SCHEMA_03",
   "title": "SCHEMA_03: Fill Schema fields and create"
  },
  "QTC-385": {
   "automated": true,
   "qase_id": 125,
+  "runner": "none",
   "test": "SCHEMA_04",
   "title": "SCHEMA_04: Search entity with typeahead and select"
  },
  "QTC-386": {
   "automated": true,
   "qase_id": 126,
+  "runner": "none",
   "test": "SCHEMA_05",
   "title": "SCHEMA_05: Select all items on side panel and confirm"
  },
  "QTC-387": {
   "automated": true,
   "qase_id": 127,
+  "runner": "none",
   "test": "CANVAS_01",
   "title": "CANVAS_01: Detect graph library (Cytoscape/vis.js) and click first node programmatically"
  },
  "QTC-388": {
   "automated": true,
   "qase_id": 128,
+  "runner": "none",
   "test": "CANVAS_02",
   "title": "CANVAS_02: Click detected node via CDP coordinates"
  },
  "QTC-389": {
   "automated": true,
   "qase_id": 129,
+  "runner": "none",
   "test": "CANVAS_03",
   "title": "CANVAS_03: Close node details using 'Go back to Node Config Panel'"
  },
  "QTC-390": {
   "automated": true,
   "qase_id": 130,
+  "runner": "none",
   "test": "CANVAS_04",
   "title": "CANVAS_04: Create screenshots folder and save capture"
  },
  "QTC-391": {
   "automated": true,
   "qase_id": 131,
+  "runner": "none",
   "test": "CANVAS_05",
   "title": "CANVAS_05: Fallback: scan grid clicks until 2 panels captured"
  },
  "QTC-392": {
   "automated": false,
   "qase_id": 132,
+  "runner": "none",
   "test": "CANVAS_06",
   "title": "CANVAS_06: Wait for panel visibility with timeout"
  },
  "QTC-393": {
   "automated": true,
   "qase_id": 133,
+  "runner": "none",
   "test": "CANVAS_07",
   "title": "CANVAS_07: Close panel between captures and proceed to next"
  },
  "QTC-394": {
   "automated": true,
   "qase_id": 134,
+  "runner": "none",
   "test": "CANVAS_08",
   "title": "CANVAS_08: Graceful teardown"
  },
  "QTC-395": {
   "automated": true,
   "qase_id": 118,
+  "runner": "none",
   "test": "SCHEMA_VER_01",
   "title": "SCHEMA_VER_01: Open Schema Create Version tab"
  },
  "QTC-396": {
   "automated": true,
   "qase_id": 119,
+  "runner": "none",
   "test": "SCHEMA_VER_02",
   "title": "SCHEMA_VER_02: Select schema for versioning"
  },
  "QTC-397": {
   "automated": true,
   "qase_id": 120,
+  "runner": "none",
   "test": "SCHEMA_VER_03",
   "title": "SCHEMA_VER_03: Select base version"
  },
  "QTC-398": {
   "automated": true,
   "qase_id": 121,
+  "runner": "none",
   "test": "SCHEMA_VER_04",
   "title": "SCHEMA_VER_04: Enter new schema name"
  },
  "QTC-399": {
   "automated": true,
   "qase_id": 122,
+  "runner": "none",
   "test": "SCHEMA_VER_05",
   "title": "SCHEMA_VER_05: Enter description and version description"
  },
  "QTC-400": {
   "automated": true,
   "qase_id": 123,
+  "runner": "none",
   "test": "SCHEMA_VER_06",
   "title": "SCHEMA_VER_06: Save schema version"
  },
  "QTC-401": {
   "automated": true,
   "qase_id": 124,
+  "runner": "none",
   "test": "SCHEMA_VER_07",
   "title": "SCHEMA_VER_07: Cancel create version dialog (no save)"
  },
  "QTC-403": {
   "automated": true,
   "qase_id": 135,
+  "runner": "none",
   "test": "SCHEMA_EXPLORE_11",
   "title": "SCHEMA_EXPLORE_11: Click a node on canvas to open side panel; take screenshot and close"
  },
  "QTC-405": {
   "automated": true,
   "qase_id": 136,
+  "runner": "none",
   "test": "SCHEMA_INFER_01",
   "title": "SCHEMA_INFER_01: Enable 'Infer' mode and capture canvas node panel"
  },
  "QTC-406": {
   "automated": true,
   "qase_id": 137,
+  "runner": "none",
   "test": "SCHEMA_SETTINGS_01",
   "title": "SCHEMA_SETTINGS_01: Open Settings, adjust metrics, and click Ok"
  },
  "QTC-407": {
   "automated": true,
   "qase_id": 138,
+  "runner": "none",
   "test": "SCHEMA_SETTINGS_02",
   "title": "SCHEMA_SETTINGS_02: Open Settings and click Reset then Cancel"
  },
  "QTC-408": {
   "automated": true,
   "qase_id": 139,
+  "runner": "none",
   "test": "SCHEMA_VIEW_01",
   "title": "SCHEMA_VIEW_01: Switch to Similarity view and take screenshot"
  },
  "QTC-409": {
   "automated": true,
   "qase_id": 140,
+  "runner": "none",
   "test": "SCHEMA_VIEW_02",
   "title": "SCHEMA_VIEW_02: Switch to Schema view and take screenshot"
  },
  "QTC-413": {
   "automated": true,
   "qase_id": 106,
+  "runner": "none",
   "test": "SCHEMA_TAB_01",
   "title": "SCHEMA_TAB_01: Close current explore tab using X icon"
  },
  "QTC-414": {
   "automated": true,
   "qase_id": 107,
+  "runner": "none",
   "test": "SCHEMA_TILE_01",
   "title": "SCHEMA_TILE_01: Verify each schema tile shows Edit and Delete icons"
  },
  "QTC-415": {
   "automated": true,
   "qase_id": 108,
+  "runner": "none",
   "test": "SCHEMA_TILE_02",
   "title": "SCHEMA_TILE_02: Click Edit icon on a schema tile to open Add/Edit Schema"
  },
  "QTC-416": {
   "automated": true,
   "qase_id": 109,
+  "runner": "none",
   "test": "SCHEMA_TILE_03",
   "title": "SCHEMA_TILE_03: Update description and Save in Add/Edit Schema"
  },
  "QTC-417": {
   "automated": true,
   "qase_id": 110,
+  "runner": "none",
   "test": "SCHEMA_TILE_04",
   "title": "SCHEMA_TILE_04: Close Add/Edit Schema without saving keeps original values"
  },
  "QTC-418": {
   "automated": true,
   "qase_id": 111,
+  "runner": "none",
   "test": "SCHEMA_TILE_05",
   "title": "SCHEMA_TILE_05: Delete flow (Cancel): prompt appears and cancel keeps tile"
  },
  "QTC-419": {
   "automated": true,
   "qase_id": 112,
+  "runner": "none",
   "test": "SCHEMA_TILE_06",
   "title": "SCHEMA_TILE_06: Delete flow (Confirm): remove schema from grid"
  },
  "QTC-420": {
   "automated": true,
   "qase_id": 113,
+  "runner": "none",
   "test": "SCHEMA_TILE_07",
   "title": "SCHEMA_TILE_07: Validation: Name is required when editing"
  },
  "QTC-421": {
   "automated": true,
   "qase_id": 114,
+  "runner": "none",
   "test": "SCHEMA_TILE_08",
   "title": "SCHEMA_TILE_08: Version details section displays AWS Version and flags"
  },
  "QTC-422": {
   "automated": true,
   "qase_id": 115,
+  "runner": "none",
   "test": "SCHEMA_TILE_09",
   "title": "SCHEMA_TILE_09: Prefix URL format validation on Save"
  },
  "QTC-441": {
   "automated": true,
   "qase_id": 1,
+  "runner": "none",
   "test": "TC_LOGIN01",
   "title": "TC_LOGIN01: Valid Login redirects to dashboard"
  },
  "QTC-442": {
   "automated": true,
   "qase_id": 2,
+  "runner": "none",
   "test": "TC_LOGIN02",
   "title": "TC_LOGIN02: Login button disabled until credentials provided"
  },
  "QTC-443": {
   "automated": true,
   "qase_id": 3,
+  "runner": "none",
   "test": "TC_LOGIN03",
   "title": "TC_LOGIN03: Invalid Username shows error"
  },
  "QTC-444": {
   "automated": true,
   "qase_id": 4,
+  "runner": "none",
   "test": "TC_LOGIN04",
   "title": "TC_LOGIN04: Invalid Password shows error"
  },
  "QTC-445": {
   "automated": true,
   "qase_id": 5,
+  "runner": "none",
   "test": "TC_LOGIN05",
   "title": "TC_LOGIN05: Invalid Tenant is handled"
  },
  "QTC-446": {
   "automated": true,
   "qase_id": 6,
+  "runner": "none",
   "test": "TC_LOGIN06",
   "title": "TC_LOGIN06: Login page elements render correctly"
  },
  "QTC-447": {
   "automated": true,
   "qase_id": 7,
+  "runner": "none",
   "test": "TC_LOGIN07",
   "title": "TC_LOGIN07: Empty username/password validation"
  },
  "QTC-448": {
   "automated": false,
   "qase_id": 8,
+  "runner": "none",
   "test": "TC_LOGIN08",
   "title": "TC_LOGIN08: Whitespace handling in fields"
  },
  "QTC-449": {
   "automated": false,
   "qase_id": 9,
+  "runner": "none",
   "test": "TC_LOGIN09",
   "title": "TC_LOGIN09: Case sensitivity of username"
  },
  "QTC-450": {
   "automated": false,
   "qase_id": 10,
+  "runner": "none",
   "test": "TC_LOGIN10",
   "title": "TC_LOGIN10: Max/min length for username/password"
  },
  "QTC-451": {
   "automated": false,
   "qase_id": 11,
+  "runner": "none",
   "test": "TC_LOGIN11",
   "title": "TC_LOGIN11: Special characters in username/password"
  },
  "QTC-452": {
   "automated": true,
   "qase_id": 12,
+  "runner": "none",
   "test": "TC_LOGIN12",
   "title": "TC_LOGIN12: Password is masked"
  },
  "QTC-453": {
   "automated": false,
   "qase_id": 13,
+  "runner": "none",
   "test": "TC_LOGIN13",
   "title": "TC_LOGIN13: Show/Hide password toggle (if present)"
  },
  "QTC-454": {
   "automated": true,
   "qase_id": 14,
+  "runner": "none",
   "test": "TC_LOGIN14",
   "title": "TC_LOGIN14: Remember me / Keep me signed in"
  },
  "QTC-455": {
   "automated": false,
   "qase_id": 15,
+  "runner": "none",
   "test": "TC_LOGIN15",
   "title": "TC_LOGIN15: Keyboard navigation & Tab order"
  },
  "QTC-456": {
   "automated": false,
   "qase_id": 16,
+  "runner": "none",
   "test": "TC_LOGIN16",
   "title": "TC_LOGIN16: Accessible labels & roles"
  },
  "QTC-457": {
   "automated": false,
   "qase_id": 17,
+  "runner": "none",
   "test": "TC_LOGIN17",
   "title": "TC_LOGIN17: Screen reader announcements for errors"
  },
  "QTC-458": {
   "automated": false,
   "qase_id": 18,
+  "runner": "none",
   "test": "TC_LOGIN18",
   "title": "TC_LOGIN18: Forgot password link opens reset flow"
  },
  "QTC-459": {
   "automated": false,
   "qase_id": 19,
+  "runner": "none",
   "test": "TC_LOGIN19",
   "title": "TC_LOGIN19: Terms/Privacy links are correct"
  },
  "QTC-460": {
   "automated": false,
   "qase_id": 20,
+  "runner": "none",
   "test": "TC_LOGIN20",
   "title": "TC_LOGIN20: Account lockout after N failed attempts"
  },
  "QTC-461": {
   "automated": false,
   "qase_id": 21,
+  "runner": "none",
   "test": "TC_LOGIN21",
   "title": "TC_LOGIN21: Rate limiting / 429 for rapid attempts"
  },
  "QTC-462": {
   "automated": false,
   "qase_id": 22,
+  "runner": "none",
   "test": "TC_LOGIN22",
   "title": "TC_LOGIN22: Captcha/Challenge after multiple failures (if enabled)"
  },
  "QTC-463": {
   "automated": false,
   "qase_id": 23,
+  "runner": "none",
   "test": "TC_LOGIN23",
   "title": "TC_LOGIN23: Block XSS payloads in username/password"
  },
  "QTC-464": {
   "automated": false,
   "qase_id": 24,
+  "runner": "none",
   "test": "TC_LOGIN24",
   "title": "TC_LOGIN24: Block SQLi style inputs"
  },
  "QTC-465": {
   "automated": false,
   "qase_id": 25,
+  "runner": "none",
   "test": "TC_LOGIN25",
   "title": "TC_LOGIN25: Session created with secure cookies"
  },
  "QTC-466": {
   "automated": false,
   "qase_id": 26,
+  "runner": "none",
   "test": "TC_LOGIN26",
   "title": "TC_LOGIN26: Logout clears session"
  },
  "QTC-467": {
   "automated": false,
   "qase_id": 27,
+  "runner": "none",
   "test": "TC_LOGIN27",
   "title": "TC_LOGIN27: Back button after logout"
  },
  "QTC-468": {
   "automated": false,
   "qase_id": 28,
+  "runner": "none",
   "test": "TC_LOGIN28",
   "title": "TC_LOGIN28: Multiple tabs/windows behavior"
  },
  "QTC-469": {
   "automated": false,
   "qase_id": 29,
+  "runner": "none",
   "test": "TC_LOGIN29",
   "title": "TC_LOGIN29: Network failure during login"
  },
  "QTC-470": {
   "automated": false,
   "qase_id": 30,
+  "runner": "none",
   "test": "TC_LOGIN30",
   "title": "TC_LOGIN30: Server 500 during login"
  },
  "QTC-471": {
   "automated": false,
   "qase_id": 31,
+  "runner": "none",
   "test": "TC_LOGIN31",
   "title": "TC_LOGIN31: Maintenance/Read-only banner"
  },
  "QTC-472": {
   "automated": false,
   "qase_id": 32,
+  "runner": "none",
   "test": "TC_LOGIN32",
   "title": "TC_LOGIN32: MFA required after password"
  },
  "QTC-473": {
   "automated": false,
   "qase_id": 33,
+  "runner": "none",
   "test": "TC_LOGIN33",
   "title": "TC_LOGIN33: MFA invalid/expired code"
  },
  "QTC-474": {
   "automated": false,
   "qase_id": 34,
+  "runner": "none",
   "test": "TC_LOGIN34",
   "title": "TC_LOGIN34: SSO login via provider (e.g., Google/Azure)"
  },
  "QTC-475": {
   "automated": false,
   "qase_id": 35,
+  "runner": "none",
   "test": "TC_LOGIN35",
   "title": "TC_LOGIN35: i18n: labels and errors translate"
  },
  "QTC-476": {
   "automated": false,
   "qase_id": 36,
+  "runner": "none",
   "test": "TC_LOGIN36",
   "title": "TC_LOGIN36: RTL layout (if supported)"
  },
  "QTC-477": {
   "automated": false,
   "qase_id": 37,
+  "runner": "none",
   "test": "TC_LOGIN37",
   "title": "TC_LOGIN37: Cross-browser sanity"
  },
  "QTC-478": {
   "automated": false,
   "qase_id": 38,
+  "runner": "none",
   "test": "TC_LOGIN38",
   "title": "TC_LOGIN38: Mobile viewport responsiveness"
  },
  "QTC-479": {
   "automated": false,
   "qase_id": 39,
+  "runner": "none",
   "test": "TC_LOGIN39",
   "title": "TC_LOGIN39: CSRF protection on login POST"
  },
  "QTC-480": {
   "automated": false,
   "qase_id": 40,
+  "runner": "none",
   "test": "TC_LOGIN40",
   "title": "TC_LOGIN40: Security headers on auth responses"
  },
  "QTC-481": {
   "automated": false,
   "qase_id": 41,
+  "runner": "none",
   "test": "TC_LOGIN41",
   "title": "TC_LOGIN41: Copy/Paste allowed & safe in password"
  },
  "QTC-482": {
   "automated": true,
   "qase_id": 42,
+  "runner": "none",
   "test": "TC_LOGIN42",
   "title": "TC_LOGIN42: Auto-focus and Enter key behavior"
  },
  "QTC-483": {
   "automated": false,
   "qase_id": 43,
+  "runner": "none",
   "test": "TC_LOGIN43",
   "title": "TC_LOGIN43: Tenant field trims spaces"
  },
  "QTC-684": {
   "automated": true,
   "qase_id": 48,
+  "runner": "none",
   "test": "AM_001",
   "title": "AM_001: Verify login with valid tenant, username, and password redirects to dashboard."
  },
  "QTC-685": {
   "automated": true,
   "qase_id": 49,
+  "runner": "none",
   "test": "AM_002",
   "title": "AM_002: Open hamburger menu and navigate to Access Management page."
  },
  "QTC-686": {
   "automated": true,
   "qase_id": 50,
+  "runner": "none",
   "test": "AM_003",
   "title": "AM_003: Open 'Add New' permission dialog/panel from Access Management."
  },
  "QTC-687": {
   "automated": true,
   "qase_id": 51,
+  "runner": "none",
   "test": "AM_004",
   "title": "AM_004: Entity Type dropdown lists allowed entities and supports selection."
  },
  "QTC-688": {
   "automated": true,
   "qase_id": 52,
+  "runner": "none",
   "test": "AM_005",
   "title": "AM_005: Persist selected Entity Type after closing/reopening the form (if applicable)."
  },
  "QTC-689": {
   "automated": false,
   "qase_id": 53,
+  "runner": "none",
   "test": "AM_006",
   "title": "AM_006: Validation: 'User Identifier' is required before Save."
  },
  "QTC-690": {
   "automated": true,
   "qase_id": 54,
+  "runner": "none",
   "test": "AM_007",
   "title": "AM_007: Accept valid 'User Identifier' formats (username/email/UUID based on policy)."
  },
  "QTC-691": {
   "automated": true,
   "qase_id": 55,
+  "runner": "none",
   "test": "AM_008",
   "title": "AM_008: Reject invalid 'User Identifier' formats per policy."
  },
  "QTC-692": {
   "automated": true,
   "qase_id": 56,
+  "runner": "none",
   "test": "AM_009",
   "title": "AM_009: Validation: 'Permission' is required before Save."
  },
  "QTC-693": {
   "automated": true,
   "qase_id": 57,
+  "runner": "none",
   "test": "AM_010",
   "title": "AM_010: Permission accepts only allowed values (e.g., MANAGE/READ/WRITE per RBAC policy)."
  },
  "QTC-694": {
   "automated": true,
   "qase_id": 58,
+  "runner": "none",
   "test": "AM_011",
   "title": "AM_011: Successful Save creates an access rule entry for selected entity/user/permission."
  },
  "QTC-695": {
   "automated": true,
   "qase_id": 59,
+  "runner": "none",
   "test": "AM_012",
   "title": "AM_012: Prevent Save when required fields are missing (any combination)."
  },
  "QTC-696": {
   "automated": true,
   "qase_id": 60,
+  "runner": "none",
   "test": "AM_013",
   "title": "AM_013: Disable repeated clicks on Save to avoid duplicate entries."
  },
  "QTC-697": {
   "automated": true,
   "qase_id": 61,
+  "runner": "none",
   "test": "AM_014",
   "title": "AM_014: Network failure on Save displays friendly error and preserves form state."
  },
  "QTC-698": {
   "automated": true,
   "qase_id": 62,
+  "runner": "none",
   "test": "AM_015",
   "title": "AM_015: RBAC: Only authorized roles can open Add form and Save."
  },
  "QTC-699": {
   "automated": true,
   "qase_id": 63,
+  "runner": "none",
   "test": "AM_016",
   "title": "AM_016: Back navigation returns to previous page without losing global session."
  },
  "QTC-700": {
   "automated": true,
   "qase_id": 64,
+  "runner": "none",
   "test": "AM_017",
   "title": "AM_017: Keyboard-only: focus order and activation (dropdown, inputs, Save) work."
  },
  "QTC-701": {
   "automated": true,
   "qase_id": 65,
+  "runner": "none",
   "test": "AM_018",
   "title": "AM_018: Localization: labels, placeholders, errors reflect selected locale."
  },
  "QTC-702": {
   "automated": true,
   "qase_id": 66,
+  "runner": "none",
   "test": "AM_019",
   "title": "AM_019: Prevent duplicate access rules for the same (Entity Type, User, Permission)."
  },
  "QTC-703": {
   "automated": true,
   "qase_id": 67,
+  "runner": "none",
   "test": "AM_020",
   "title": "AM_020: Audit logging: creating an access rule writes an entry with user/time/context."
  },
  "QTC-704": {
   "automated": true,
   "qase_id": 68,
+  "runner": "none",
   "test": "AM_TOG_001",
   "title": "AM_TOG_001: Verify navigation to Access Management (toggle & pagination) page."
  },
  "QTC-705": {
   "automated": true,
   "qase_id": 69,
+  "runner": "none",
   "test": "AM_TOG_002",
   "title": "AM_TOG_002: Verify toggle for Entity Type Filter ON."
  },
  "QTC-706": {
   "automated": true,
   "qase_id": 70,
+  "runner": "none",
   "test": "AM_TOG_003",
   "title": "AM_TOG_003: Verify dropdown under Entity Type Filter opens and lists options."
  },
  "QTC-707": {
   "automated": true,
   "qase_id": 71,
+  "runner": "none",
   "test": "AM_TOG_004",
   "title": "AM_TOG_004: Verify selecting option SCHEMA from dropdown works."
  },
  "QTC-708": {
   "automated": true,
   "qase_id": 72,
+  "runner": "none",
   "test": "AM_TOG_005",
   "title": "AM_TOG_005: Verify pagination next button navigates to next page."
  },
  "QTC-709": {
   "automated": true,
   "qase_id": 73,
+  "runner": "none",
   "test": "AM_TOG_006",
   "title": "AM_TOG_006: Verify checkboxes in user rows can be selected."
  },
  "QTC-710": {
   "automated": true,
   "qase_id": 74,
+  "runner": "none",
   "test": "AM_TOG_007",
   "title": "AM_TOG_007: Verify Cancel button exits selection mode."
  },
  "QTC-711": {
   "automated": true,
   "qase_id": 75,
+  "runner": "none",
   "test": "AM_TOG_008",
   "title": "AM_TOG_008: Verify double click/cancel scenario on Cancel button does not crash UI."
  },
  "QTC-712": {
   "automated": true,
   "qase_id": 76,
+  "runner": "none",
   "test": "AM_TOG_009",
   "title": "AM_TOG_009: Validation: Toggle retains state until changed by user."
  },
  "QTC-713": {
   "automated": true,
   "qase_id": 77,
+  "runner": "none",
   "test": "AM_TOG_010",
   "title": "AM_TOG_010: Verify multiple checkboxes selection persists until Cancel is clicked."
  },
  "QTC-714": {
   "automated": true,
   "qase_id": 78,
+  "runner": "none",
   "test": "AM_ROLE_001",
   "title": "AM_ROLE_001: Verify login with tenant, username, password for role permissions flow."
  },
  "QTC-715": {
   "automated": true,
   "qase_id": 79,
+  "runner": "none",
   "test": "AM_ROLE_002",
   "title": "AM_ROLE_002: Navigate to Access Management -> Entity Resolution -> Role Permissions tab."
  },
  "QTC-716": {
   "automated": true,
   "qase_id": 80,
+  "runner": "none",
   "test": "AM_ROLE_003",
   "title": "AM_ROLE_003: Verify Data Source dropdown is visible under Role Permissions tab."
  },
  "QTC-717": {
   "automated": true,
   "qase_id": 81,
+  "runner": "none",
   "test": "AM_ROLE_004",
   "title": "AM_ROLE_004: Verify selecting a datasource option works."
  },
  "QTC-718": {
   "automated": true,
   "qase_id": 82,
+  "runner": "none",
   "test": "AM_ROLE_005",
   "title": "AM_ROLE_005: Validation: User Identifier field required before Save."
  },
  "QTC-719": {
   "automated": true,
   "qase_id": 83,
+  "runner": "none",
   "test": "AM_ROLE_006",
   "title": "AM_ROLE_006: Validation: Permission field required before Save."
  },
  "QTC-720": {
   "automated": true,
   "qase_id": 84,
+  "runner": "none",
   "test": "AM_ROLE_007",
   "title": "AM_ROLE_007: Verify Save/Update button persists role permissions entry."
  },
  "QTC-721": {
   "automated": true,
   "qase_id": 85,
+  "runner": "none",
   "test": "AM_USER_001",
   "title": "AM_USER_001: Verify navigation to Access Management -> Entity Resolution from hamburger me"
  },
  "QTC-722": {
   "automated": true,
   "qase_id": 86,
+  "runner": "none",
   "test": "AM_USER_002",
   "title": "AM_USER_002: Verify 'Users' grid is visible in Entity Resolution (User Permissions context"
  },
  "QTC-723": {
   "automated": true,
   "qase_id": 87,
+  "runner": "none",
   "test": "AM_USER_003",
   "title": "AM_USER_003: Open edit mode for first user entry from the grid."
  },
  "QTC-724": {
   "automated": true,
   "qase_id": 88,
+  "runner": "none",
   "test": "AM_USER_004",
   "title": "AM_USER_004: Data Source dropdown is present in the edit form and shows options."
  },
  "QTC-725": {
   "automated": true,
   "qase_id": 89,
+  "runner": "none",
   "test": "AM_USER_005",
   "title": "AM_USER_005: Select a specific data source option (option[2]) in the dropdown."
  },
  "QTC-726": {
   "automated": true,
   "qase_id": 90,
+  "runner": "none",
   "test": "AM_USER_006",
   "title": "AM_USER_006: Validation: 'User Identifier' is required before Update/Save."
  },
  "QTC-727": {
   "automated": true,
   "qase_id": 91,
+  "runner": "none",
   "test": "AM_USER_007",
   "title": "AM_USER_007: Validation: 'Permission' is required and must be valid before Update/Save."
  },
  "QTC-728": {
   "automated": true,
   "qase_id": 92,
+  "runner": "none",
   "test": "AM_USER_008",
   "title": "AM_USER_008: Update user permissions successfully with valid datasource, user identifier, "
  },
  "QTC-729": {
   "automated": true,
   "qase_id": 93,
+  "runner": "none",
   "test": "AM_USER_009",
   "title": "AM_USER_009: Prevent duplicate submissions by rapidly clicking Update/Save multiple times."
  },
  "QTC-730": {
   "automated": true,
   "qase_id": 94,
+  "runner": "none",
   "test": "AM_USER_010",
   "title": "AM_USER_010: Cancel/close edit form without saving; original values remain unchanged."
  },
  "QTC-731": {
   "automated": true,
   "qase_id": 95,
+  "runner": "none",
   "test": "AM_USER_011",
   "title": "AM_USER_011: Dropdown defaults/persistence when reopening the edit form after save."
  },
  "QTC-732": {
   "automated": true,
   "qase_id": 96,
+  "runner": "none",
   "test": "AM_USER_012",
   "title": "AM_USER_012: Error handling: Update fails due to network/server error; form state preserve"
  },
  "QTC-733": {
   "automated": true,
   "qase_id": 97,
+  "runner": "none",
   "test": "AM_RM_001",
   "title": "AM_RM_001: Login to Quipu and reach dashboard (prereq for Role Management)."
  },
  "QTC-734": {
   "automated": true,
   "qase_id": 98,
+  "runner": "none",
   "test": "AM_RM_002",
   "title": "AM_RM_002: Open hamburger menu and navigate to Entity Resolution area."
  },
  "QTC-735": {
   "automated": true,
   "qase_id": 99,
+  "runner": "none",
   "test": "AM_RM_003",
   "title": "AM_RM_003: Verify presence and clickability of 'Role Management' tab."
  },
  "QTC-736": {
   "automated": true,
   "qase_id": 100,
+  "runner": "none",
   "test": "AM_RM_004",
   "title": "AM_RM_004: Role Management landing UI renders key widgets (table/list, action controls)."
  },
  "QTC-737": {
   "automated": true,
   "qase_id": 101,
+  "runner": "none",
   "test": "AM_RM_005",
   "title": "AM_RM_005: Tab switch behavior: moving away and back preserves current Role Management sta"
  },
  "QTC-738": {
   "automated": true,
   "qase_id": 102,
+  "runner": "none",
   "test": "AM_RM_006",
   "title": "AM_RM_006: Permissions: Viewer cannot access Role Management actions (add/edit)."
  },
  "QTC-739": {
   "automated": true,
   "qase_id": 103,
+  "runner": "none",
   "test": "AM_RM_007",
   "title": "AM_RM_007: Resilience: Handle slow load of Role Management content gracefully."
  },
  "QTC-740": {
   "automated": true,
   "qase_id": 104,
+  "runner": "none",
   "test": "AM_RM_008",
   "title": "AM_RM_008: Error handling: Role Management content request returns 5xx/timeout."
  },
  "QTC-742": {
   "automated": true,
   "qase_id": 105,
+  "runner": "none",
   "test": "AM_RM_010",
   "title": "AM_RM_010: Localization: Role Management tab label and UI strings follow selected locale."
+ },
+ "QUI-001": {
+  "automated": true,
+  "nodeid": "tests/test_smoke.py::test_smoke",
+  "qase_id": 160,
+  "runner": "pytest",
+  "test": "QUI-001",
+  "title": "UI smoke: browser launches and a page loads"
  }
 }

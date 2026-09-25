@@ -29,6 +29,8 @@ QASE_API_TOKEN="${QASE_API_TOKEN:-}"
 BUILD_ENDPOINT="${BUILD_ENDPOINT:-}"
 BUILD="${BUILD:-}"
 BASE="${BASE_URL:-}"
+ENVIRONMENT="${ENVIRONMENT:-onprem}"
+UI_REPO="${UI_REPO:-$(cd .. 2>/dev/null && pwd)/automation_fast_api}"
 mkdir -p reports
 [ -f "$MAP" ] || { echo "!! $MAP not found — run from the repo root" >&2; exit 1; }
 
@@ -50,6 +52,7 @@ fi
 printf '%s' "${BUILD:-unknown}" > reports/build.txt
 
 echo ">> mode        : $MODE"
+echo ">> environment : $ENVIRONMENT"
 echo ">> build       : ${BUILD:-unknown}"
 
 # ---- which cases is this run asking for? ------------------------------------
@@ -82,6 +85,12 @@ fi
 # ---- execute ----------------------------------------------------------------
 # Each line: <linear-id> <passed|failed|skipped|blocked> <ms> [message]
 run_checks() {
+  if [ "$MODE" = "real" ]; then
+    # Runs the automation each case is bound to — newman for flows, pytest for UI.
+    ENVIRONMENT="$ENVIRONMENT" UI_REPO="$UI_REPO" python3 scripts/run_real.py "$SCOPE"
+    return
+  fi
+
   if [ "$MODE" = "simulate" ]; then
     python3 - "$SCOPE" "$SEED" <<'PY'
 import hashlib, json, sys
