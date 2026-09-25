@@ -153,63 +153,12 @@ pipeline {
         }
       }
       steps {
+        // Reads the run back and confirms each result landed. Qase's bulk
+        // endpoint has been seen accepting results with HTTP 200 and recording
+        // none, so a status code is not evidence of anything here.
         sh '''#!/usr/bin/env bash
           set -euo pipefail
-          python3 - <<'PY'
-import json, os, urllib.request
-
-base  = os.environ["QASE_API_BASE_URL"].rstrip("/")
-code  = os.environ["QASE_PROJECT_CODE"]
-run   = os.environ["QASE_RUN_ID"]
-token = os.environ["QASE_API_TOKEN"]
-
-results  = json.load(open(os.environ["RESULTS"]))
-case_map = json.load(open(os.environ["CASE_MAP"]))      # external id -> qase case id
-
-# Only report cases the run actually contains. Without this, a run scoped to one
-# suite silently grows to hold every case in the map.
-def _get(path):
-    rq = urllib.request.Request(f"{base}{path}", headers={"Token": token, "accept": "application/json"})
-    with urllib.request.urlopen(rq, timeout=60) as r:
-        return json.loads(r.read())
-try:
-    in_run = set(_get(f"/v1/run/{code}/{run}?include=cases")["result"]["cases"])
-    print(f">> run {run} holds {len(in_run)} cases")
-except Exception as e:
-    in_run = None
-    print(f"!! could not read the run's case list ({e}) - reporting everything")
-
-# our vocabulary -> Qase's
-STATUS = {"passed": "passed", "pass": "passed",
-          "failed": "failed", "fail": "failed",
-          "skipped": "skipped", "skip": "skipped",
-          "blocked": "blocked", "error": "failed"}
-
-payload, unmapped = [], []
-for r in results:
-    cid = case_map.get(r["id"])
-    if not cid:
-        unmapped.append(r["id"]); continue
-    if in_run is not None and cid not in in_run:
-        continue                                   # not part of this run
-    entry = {"case_id": cid,
-             "status": STATUS.get(str(r.get("status", "")).lower(), "skipped")}
-    if r.get("ms"):    entry["time_ms"] = int(r["ms"])
-    c = r.get("error") or r.get("reason")   # a skip reason is worth reading in Qase too
-    if c: entry["comment"] = str(c)[:5000]
-    payload.append(entry)
-
-if unmapped:
-    print(f"!! {len(unmapped)} results had no Qase case: {unmapped[:10]}")
-
-req = urllib.request.Request(
-    f"{base}/v1/result/{code}/{run}/bulk",
-    data=json.dumps({"results": payload}).encode(),
-    headers={"Token": token, "Content-Type": "application/json"},
-    method="POST")
-with urllib.request.urlopen(req, timeout=120) as resp:
-    print(f">> published {len(payload)} results for run {run}: HTTP {resp.status}")
-PY
+          python3 scripts/publish_results.py
         '''
       }
     }
