@@ -103,6 +103,42 @@ def postman(cases):
         report_suites(report, members, "junit_suite")
 
 
+def failure_message(ts):
+    """Why this request failed, root cause first.
+
+    A transport failure makes every assertion fail downstream, so reporting the
+    first assertion ("expected undefined to be a number or a date") describes a
+    symptom and hides the cause. The cause is in <system-err>:
+    "connect ECONNREFUSED 167.86.123.100:4038". Lead with that when present, then
+    name the assertions so the result still says what was being checked.
+    """
+    parts = []
+    se = ts.find("system-err")
+    if se is not None and (se.text or "").strip():
+        for line in se.text.strip().splitlines():
+            line = line.strip()
+            # Keep the thrown error, drop the stack frames and iteration banner.
+            if line and not line.startswith(("at ", "Iteration:", "---")):
+                parts.append(line)
+                break
+
+    failed = []
+    for tc in ts.iter("testcase"):
+        bad = tc.find("failure")
+        if bad is None:
+            bad = tc.find("error")
+        if bad is not None:
+            failed.append(f"{tc.get('name')}: {(bad.get('message') or '').strip()}")
+    if failed:
+        parts.append(f"{len(failed)} assertion(s) failed — " + "; ".join(failed[:4]))
+
+    if not parts:                      # nothing structured; fall back to whatever exists
+        node = ts.find(".//failure") or ts.find(".//error")
+        if node is not None:
+            parts.append((node.get("message") or node.text or "").strip())
+    return " | ".join(parts).replace("\n", " ")[:1500]
+
+
 def report_suites(report, members, locator_key):
     """Map JUnit <testsuite name=...> back onto the cases that named it."""
     try:
@@ -121,11 +157,7 @@ def report_suites(report, members, locator_key):
         skipped = bool(names) and all(n.startswith("SKIPPED:") for n in names)
         msg = ""
         if failures:
-            node = ts.find(".//failure")
-            if node is None:
-                node = ts.find(".//error")
-            if node is not None:
-                msg = (node.get("message") or node.text or "").strip().replace("\n", " ")[:300]
+            msg = failure_message(ts)
         elif skipped:
             msg = names[0][:300]
         found[ts.get("name")] = (failures, skipped, len(names),
