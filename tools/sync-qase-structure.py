@@ -19,7 +19,13 @@ And a case did not say which script runs it. Each description now carries the
 binding in a readable form, including the command that runs that case alone, so
 someone reading the case in Qase can reproduce the run without this repo's map.
 
-Idempotent: suites and descriptions are reconciled, never duplicated.
+It also maintains test plans. A plan is a saved selection of cases: a run is
+created FROM a plan instead of listing case ids, so "run the API health checks"
+stops being a list someone assembles by hand and becomes a name. Adding a case
+to a collection and re-running this puts it in the plan, and every future run
+made from that plan picks it up.
+
+Idempotent: suites, descriptions and plans are reconciled, never duplicated.
 """
 import argparse, json, os, sys, urllib.error, urllib.request
 
@@ -168,6 +174,31 @@ def main():
             described += "description" in payload
 
     print(f">> {moved} case(s) moved, {described} description(s) rewritten")
+
+    # --- test plans: a named selection, so a run needs a name, not a case list ---
+    plans = {
+        "API health": [k for k, v in bound.items()
+                       if v.get("collection") == "SMOKE-Platform-Health"],
+        "UI validation": [k for k, v in bound.items()
+                          if v.get("runner") in ("pytest", "suite")],
+        "Release verification": [k for k, v in bound.items()
+                                 if v.get("collection") == "SMOKE-Platform-Health"
+                                 or v.get("runner") in ("pytest", "suite")],
+    }
+    existing = {p["title"]: p for p in paged(f"/plan/{CODE}")}
+    for title, keys in plans.items():
+        ids = sorted(bound[k]["qase_id"] for k in keys)
+        if not ids:
+            continue
+        body = {"title": title,
+                "description": f"{len(ids)} case(s), maintained by tools/sync-qase-structure.py.",
+                "cases": ids}
+        if title in existing:
+            call("PATCH", f"/plan/{CODE}/{existing[title]['id']}", body)
+            print(f"   plan '{title}': {len(ids)} case(s) (updated)")
+        else:
+            call("POST", f"/plan/{CODE}", body)
+            print(f"   plan '{title}': {len(ids)} case(s) (created)")
     return 0
 
 

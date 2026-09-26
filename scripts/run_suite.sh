@@ -127,6 +127,7 @@ PY
 
 run_checks | python3 -c "
 import json, sys, collections
+scope = json.load(open('$SCOPE'))
 out=[]
 for line in sys.stdin:
     p=line.rstrip('\n').split(' ',3)
@@ -135,6 +136,17 @@ for line in sys.stdin:
     if len(p)==4 and p[3]: e['error' if p[1]=='failed' else 'reason']=p[3]
     out.append(e)
 json.dump(out, open('$OUT','w'), indent=1)
+
+# Print what Qase is about to be told, so a build log answers 'why did it fail?'
+# on its own instead of sending the reader to Qase for the reason.
+MARK={'passed':'PASS','failed':'FAIL','skipped':'SKIP','blocked':'BLOCK'}
+for o in out:
+    title=(scope.get(o['id'],{}).get('title') or '')[:38]
+    print('   [%-5s] %-10s %-40s %6dms' % (MARK.get(o['status'],o['status']), o['id'], title, o['ms']))
+    note=o.get('error') or o.get('reason')
+    if note and o['status'] != 'passed':
+        for chunk in str(note).split(' | '):
+            print('             %s' % chunk[:110])
 print('   %d results  %s' % (len(out), dict(collections.Counter(o['status'] for o in out))))
 "
 echo ">> wrote $OUT"
