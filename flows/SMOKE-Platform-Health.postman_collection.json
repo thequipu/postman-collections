@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "5m0ke-heal-th00-0000-000000000001",
-    "name": "SMOKE – Platform Health",
+    "name": "SMOKE \u2013 Platform Health",
     "description": "Onprem platform health via IP 167.86.123.100 (ports/schemes from docker-compose-onprem healthchecks).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -106,7 +106,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Tenant Service health via http://167.86.123.100:4031/admin/actuator/health."
+            "description": "Tenant Service health via http://167.86.123.100:4031/admin/actuator/health.\nQase case: QAPI-101 (id 162)"
           },
           "event": [
             {
@@ -114,10 +114,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Tenant Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tenant Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Tenant Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Tenant Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -142,7 +142,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Security Service health via http://167.86.123.100:4032/actuator/health."
+            "description": "Security Service health via http://167.86.123.100:4032/actuator/health.\nQase case: QAPI-102 (id 163)"
           },
           "event": [
             {
@@ -150,10 +150,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Security Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Security Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Security Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Security Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -178,7 +178,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Application Service health via http://167.86.123.100:4033/actuator/health."
+            "description": "Application Service health via http://167.86.123.100:4033/actuator/health.\nQase case: QAPI-103 (id 164)"
           },
           "event": [
             {
@@ -186,10 +186,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Application Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Application Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Application Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Application Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -214,7 +214,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Gateway health via https://167.86.123.100:5795/actuator/health."
+            "description": "Gateway health via https://167.86.123.100:5795/actuator/health.\nQase case: QAPI-104 (id 165)"
           },
           "event": [
             {
@@ -222,10 +222,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Gateway · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Gateway \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Gateway · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Gateway \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -250,7 +250,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Quipu Gateway health via https://167.86.123.100:5796/actuator/health."
+            "description": "Quipu Gateway health via https://167.86.123.100:5796/actuator/health.\nQase case: QAPI-105 (id 166)"
           },
           "event": [
             {
@@ -258,10 +258,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Quipu Gateway · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Quipu Gateway \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Quipu Gateway · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Quipu Gateway \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -286,7 +286,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Knowledge Graph Service health via http://167.86.123.100:4034/actuator/health."
+            "description": "Knowledge Graph Service health via http://167.86.123.100:4034/actuator/health.\nQase case: QAPI-106 (id 167)"
           },
           "event": [
             {
@@ -294,10 +294,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Knowledge Graph Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Knowledge Graph Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Knowledge Graph Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Knowledge Graph Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -322,7 +322,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Transformation Service health via http://167.86.123.100:4036/actuator/health."
+            "description": "Transformation Service health via http://167.86.123.100:4036/actuator/health.\nQase case: QAPI-107 (id 168)"
           },
           "event": [
             {
@@ -330,10 +330,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Transformation Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Transformation Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Transformation Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Transformation Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -358,7 +358,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "LLM Service health via https://167.86.123.100:4038/actuator/health."
+            "description": "LLM Service health via https://167.86.123.100:4038/actuator/health.\nQase case: QAPI-108 (id 169) \u00b7 Linear test case: QTC-1904"
           },
           "event": [
             {
@@ -366,10 +366,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('LLM Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('LLM Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('LLM Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('LLM Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -394,7 +394,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Instance Manager health via http://167.86.123.100:4035/actuator/health."
+            "description": "Instance Manager health via http://167.86.123.100:4035/actuator/health.\nQase case: QAPI-109 (id 170)"
           },
           "event": [
             {
@@ -402,10 +402,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Instance Manager · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Instance Manager \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Instance Manager · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Instance Manager \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -430,7 +430,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Load Balancer Service health via http://167.86.123.100:4040/actuator/health."
+            "description": "Load Balancer Service health via http://167.86.123.100:4040/actuator/health.\nQase case: QAPI-110 (id 171)"
           },
           "event": [
             {
@@ -438,10 +438,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Load Balancer Service · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Load Balancer Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Load Balancer Service · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Load Balancer Service \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -466,7 +466,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "NLP health via http://167.86.123.100:4055/actuator/health."
+            "description": "NLP health via http://167.86.123.100:4055/actuator/health.\nQase case: QAPI-111 (id 172)"
           },
           "event": [
             {
@@ -474,10 +474,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('NLP · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('NLP \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('NLP · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('NLP \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }
@@ -502,7 +502,7 @@
             "auth": {
               "type": "noauth"
             },
-            "description": "Nexus health via http://167.86.123.100:4057/actuator/health."
+            "description": "Nexus health via http://167.86.123.100:4057/actuator/health.\nQase case: QAPI-112 (id 173)"
           },
           "event": [
             {
@@ -510,10 +510,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Nexus · HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Nexus \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
-                  "  pm.test('Nexus · status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
+                  "  pm.test('Nexus \u00b7 status healthy', () => pm.expect(st).to.match(/UP|OK|HEALTHY|SERVING/)); } catch(e){}"
                 ]
               }
             }

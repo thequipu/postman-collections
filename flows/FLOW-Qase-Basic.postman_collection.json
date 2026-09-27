@@ -51,7 +51,8 @@
             },
             "auth": {
               "type": "noauth"
-            }
+            },
+            "description": "Qase case: QAPI-001 (id 156)"
           },
           "response": []
         },
@@ -124,7 +125,8 @@
             },
             "auth": {
               "type": "noauth"
-            }
+            },
+            "description": "Qase case: QAPI-002 (id 157)"
           },
           "response": []
         },
@@ -179,7 +181,8 @@
             },
             "auth": {
               "type": "noauth"
-            }
+            },
+            "description": "Qase case: QAPI-003 (id 158)"
           },
           "response": []
         },
@@ -239,7 +242,8 @@
             },
             "auth": {
               "type": "noauth"
-            }
+            },
+            "description": "Qase case: QAPI-004 (id 159)"
           },
           "response": []
         }
