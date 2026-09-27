@@ -37,7 +37,28 @@ body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:1
 .wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
 h1,h2{text-wrap:balance;margin:0}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-header{border-bottom:1px solid var(--line);background:var(--page)}
+header{border-bottom:1px solid var(--line);background:var(--page);position:sticky;
+       top:env(safe-area-inset-top, 0px);z-index:20}
+.tabs{max-width:1120px;margin:0 auto;padding:0 20px;display:flex;gap:2px;overflow-x:auto}
+.tab{flex:0 0 auto;padding:9px 15px 11px;border:0;background:none;font:inherit;font-weight:500;
+     color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.grid-scroll{overflow-x:auto}
+.hgrid{border-collapse:separate;border-spacing:0;min-width:640px}
+.hgrid th{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;
+          max-width:230px;font-weight:500;color:var(--ink)}
+.hgrid th small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.cell{width:26px;height:24px;padding:2px}
+.cell i{display:block;width:100%;height:100%;border-radius:3px;background:var(--none)}
+.cell i.ok{background:var(--pass)} .cell i.bad{background:var(--fail)}
+.cell i.skip{background:var(--skip)} .cell i.blk{background:var(--block)}
+.uptime{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.verdict{font-size:11px;font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:5px}
+.v-ready{color:var(--pass);background:var(--pass-bg)}
+.v-block{color:var(--fail);background:var(--fail-bg)}
 .head-in{max-width:1120px;margin:0 auto;padding:22px 20px 18px;display:flex;flex-wrap:wrap;
          align-items:baseline;gap:8px 14px}
 .brand{font-size:20px;font-weight:600;letter-spacing:-.015em}
@@ -108,9 +129,11 @@ footer code{font-family:var(--mono)}
     <div class="brand">QQA Project Health <span>· Quipu QA Pilot</span></div>
     <div class="head-meta" id="meta"></div>
   </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
 </header>
 
 <div class="wrap">
+  <div id="p-overview">
   <section>
     <div class="sec-head"><h2>Where the project stands</h2><span class="hint" id="stand-hint"></span></div>
     <div class="panel">
@@ -142,6 +165,33 @@ footer code{font-family:var(--mono)}
       <span class="hint">A saved selection; a run is created from one.</span></div>
     <div class="panel tscroll"><table id="plans"></table></div>
   </section>
+  </div>
+
+  <div id="p-readiness" hidden>
+    <section>
+      <div class="sec-head"><h2>Release readiness</h2>
+        <span class="hint">One row per build. A build is blocked while anything it covered is red.</span></div>
+      <div class="panel tscroll"><table id="readiness"></table></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>What is blocking</h2>
+        <span class="hint">Still failing in the most recent build that covered it.</span></div>
+      <div class="panel tscroll"><table id="blocking"></table></div>
+    </section>
+  </div>
+
+  <div id="p-services" hidden>
+    <section>
+      <div class="sec-head"><h2>Service health</h2>
+        <span class="hint">Every platform service, every run that checked it, oldest run on the left.</span></div>
+      <div class="panel grid-scroll"><table class="hgrid" id="services"></table></div>
+      <div class="legend" style="padding:0 18px 16px">
+        <span><b style="background:var(--pass)"></b>up</span>
+        <span><b style="background:var(--fail)"></b>down</span>
+        <span><b style="background:var(--none)"></b>not checked</span>
+      </div>
+    </section>
+  </div>
 
   <footer>
     <span>Source: Qase project <code>QQA</code> via <code>/v1</code></span>
@@ -269,6 +319,92 @@ document.getElementById("plans").innerHTML =
     <td>${esc(p.title)}</td><td class="mono">${p.cases_count}</td>
     <td class="mono">${p.runs ?? "—"}</td></tr>`).join("")
    : `<tr><td colspan="3" class="empty">No plans defined.</td></tr>`) + `</tbody>`;
+
+/* ---- release readiness: one row per build ---- */
+const scopeOf = k => (cases[k]?.suite || "").split(" \u25b8 ")[0];
+const builds = {};
+withVerdicts.filter(r => r.build).forEach(r => {
+  const b = builds[r.build] = builds[r.build] || {runs:[], scopes:{}, red:new Set()};
+  b.runs.push(r.id);
+  Object.entries(r.results).forEach(([k,x]) => {
+    if (!VERDICT.includes(x.status)) return;
+    const sc = scopeOf(k) || "Other";
+    const g = b.scopes[sc] = b.scopes[sc] || {pass:0, total:0};
+    g.total++;
+    if (x.status === "passed") g.pass++; else b.red.add(k);
+  });
+});
+const buildNames = Object.keys(builds).sort();
+const allScopes = [...new Set(buildNames.flatMap(b => Object.keys(builds[b].scopes)))].sort();
+
+document.getElementById("readiness").innerHTML =
+  `<thead><tr><th>Build</th>` + allScopes.map(sc => `<th>${esc(sc)}</th>`).join("") +
+  `<th>Runs</th><th>Verdict</th></tr></thead><tbody>` +
+  (buildNames.length ? buildNames.map(b => {
+    const d = builds[b];
+    const cells = allScopes.map(sc => {
+      const g = d.scopes[sc];
+      if (!g) return `<td class="mono" style="color:var(--none)">not covered</td>`;
+      const ok = g.pass === g.total;
+      return `<td class="mono" style="color:${ok?"var(--pass)":"var(--fail)"}">${g.pass}/${g.total}</td>`;
+    }).join("");
+    const ready = d.red.size === 0;
+    return `<tr><td class="mono">${esc(b)}</td>${cells}
+      <td class="mono" style="color:var(--muted)">${d.runs.length}</td>
+      <td><span class="verdict ${ready?"v-ready":"v-block"}">${ready?"READY":"BLOCKED"}</span></td></tr>`;
+  }).join("") : `<tr><td colspan="${allScopes.length+3}" class="empty">No build has been stamped on a run.</td></tr>`)
+  + `</tbody>`;
+
+// What is still red in the latest build that covered it.
+const latestState = {};
+withVerdicts.forEach(r => Object.entries(r.results).forEach(([k,x]) => {
+  if (VERDICT.includes(x.status)) latestState[k] = {status:x.status, comment:x.comment, run:r.id, build:r.build};
+}));
+const blocking = Object.entries(latestState).filter(([,v]) => v.status !== "passed");
+document.getElementById("blocking").innerHTML =
+  `<thead><tr><th>Case</th><th>Suite</th><th>Last seen</th><th>Why</th></tr></thead><tbody>` +
+  (blocking.length ? blocking.map(([k,v]) => {
+    const c = cases[k] || {};
+    return `<tr><td><span class="mono" style="color:var(--accent)">${esc(c.linear || k)}</span>
+      <div>${esc((c.title||"").slice(0,42))}</div></td>
+      <td style="color:var(--muted)">${esc((c.suite||"").split(" \u25b8 ").slice(-1)[0])}</td>
+      <td class="mono">#${v.run}${v.build?" · "+esc(v.build):""}</td>
+      <td class="mono" style="font-size:11.5px;color:var(--fail)">${esc((v.comment||"").split(" | ")[0].slice(0,56))}</td></tr>`;
+  }).join("") : `<tr><td colspan="4" class="empty">Nothing is failing.</td></tr>`) + `</tbody>`;
+
+/* ---- service health: service x run ---- */
+const svcKeys = Object.keys(cases).filter(k => (cases[k].suite||"").includes("SMOKE-Platform-Health"));
+const svcRuns = withVerdicts.filter(r => svcKeys.some(k => VERDICT.includes((r.results[k]||{}).status)));
+document.getElementById("services").innerHTML = svcKeys.length
+  ? `<thead><tr><th>Service</th>` + svcRuns.map(r =>
+      `<th class="cell mono" style="font-size:10px;color:var(--muted);writing-mode:vertical-rl">#${r.id}</th>`).join("")
+    + `<th class="uptime">Uptime</th></tr></thead><tbody>` +
+    svcKeys.sort((a,b) => (cases[a].title||"").localeCompare(cases[b].title||"")).map(k => {
+      let up = 0, seen = 0;
+      const cells = svcRuns.map(r => {
+        const st = (r.results[k] || {}).status;
+        if (!VERDICT.includes(st)) return `<td class="cell"><i title="#${r.id}: not checked"></i></td>`;
+        seen++; if (st === "passed") up++;
+        const cls = st === "passed" ? "ok" : st === "blocked" ? "blk" : "bad";
+        return `<td class="cell"><i class="${cls}" title="#${r.id}: ${st}"></i></td>`;
+      }).join("");
+      const pctUp = seen ? up/seen : null;
+      const col = pctUp === 1 ? "var(--pass)" : pctUp === 0 ? "var(--fail)" : "var(--skip)";
+      return `<tr><th>${esc((cases[k].title||"").replace("Health: ",""))}
+        <small>${esc(cases[k].linear || k)}</small></th>${cells}
+        <td class="uptime" style="color:${col}">${pct(pctUp)} <span style="color:var(--muted);font-weight:400">${up}/${seen}</span></td></tr>`;
+    }).join("") + `</tbody>`
+  : `<tbody><tr><td class="empty">No platform-health cases found.</td></tr></tbody>`;
+
+/* ---- tabs ---- */
+const TABS = [["overview","Overview"],["readiness","Release readiness"],["services","Service health"]];
+function renderTabs(active){
+  document.getElementById("tabs").innerHTML = TABS.map(([id,label]) =>
+    `<button class="tab" role="tab" data-tab="${id}" aria-selected="${id===active}">${label}</button>`).join("");
+  TABS.forEach(([id]) => document.getElementById("p-"+id).hidden = (id !== active));
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => renderTabs(b.dataset.tab));
+}
+renderTabs("overview");
 
 document.getElementById("snap").textContent = "Snapshot: " + DATA.snapshot;
 </script>
