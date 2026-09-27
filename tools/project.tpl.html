@@ -1,0 +1,274 @@
+<title>QQA Project Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --page:#fbfcfd; --panel:#ffffff; --sunk:#f1f5f8; --line:#dce5ea; --line-soft:#eaf0f4;
+  --ink:#101a21; --ink-2:#3d4f5a; --muted:#5f717d;
+  --accent:#0f6d87; --accent-soft:#e2f0f4;
+  --pass:#1d7a4d; --fail:#b3352b; --skip:#a8760f; --block:#6a4fa0; --none:#93a2ac;
+  --pass-bg:#e6f3eb; --fail-bg:#fbe9e7; --skip-bg:#fbf1dd; --none-bg:#eef2f5;
+  --shadow:0 1px 2px rgba(16,26,33,.06), 0 8px 24px -16px rgba(16,26,33,.24);
+  --sans:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#0c1418; --panel:#121d23; --sunk:#16232a; --line:#23343d; --line-soft:#1b2a32;
+  --ink:#e8f0f4; --ink-2:#bacad3; --muted:#8ba0ac;
+  --accent:#4bb4d0; --accent-soft:#12303a;
+  --pass:#4cc183; --fail:#f2776a; --skip:#e0ab45; --block:#a98fe0; --none:#7b8d98;
+  --pass-bg:#11301f; --fail-bg:#3a1712; --skip-bg:#33260c; --none-bg:#1b2930;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0c1418; --panel:#121d23; --sunk:#16232a; --line:#23343d; --line-soft:#1b2a32;
+  --ink:#e8f0f4; --ink-2:#bacad3; --muted:#8ba0ac;
+  --accent:#4bb4d0; --accent-soft:#12303a;
+  --pass:#4cc183; --fail:#f2776a; --skip:#e0ab45; --block:#a98fe0; --none:#7b8d98;
+  --pass-bg:#11301f; --fail-bg:#3a1712; --skip-bg:#33260c; --none-bg:#1b2930;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+h1,h2{text-wrap:balance;margin:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{border-bottom:1px solid var(--line);background:var(--page)}
+.head-in{max-width:1120px;margin:0 auto;padding:22px 20px 18px;display:flex;flex-wrap:wrap;
+         align-items:baseline;gap:8px 14px}
+.brand{font-size:20px;font-weight:600;letter-spacing:-.015em}
+.brand span{color:var(--muted);font-weight:500}
+.head-meta{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+section{margin-top:28px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.sec-head h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.sec-head .hint{font-size:12px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);
+       overflow:hidden}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:var(--line-soft)}
+.tile{background:var(--panel);padding:15px 16px 16px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:600;
+         line-height:1.15;margin-top:4px}
+.tile .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.v-pass{color:var(--pass)} .v-fail{color:var(--fail)} .v-none{color:var(--none)}
+.bar{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--sunk)}
+.bar i{display:block;height:100%}
+.b-pass{background:var(--pass)} .b-fail{background:var(--fail)} .b-skip{background:var(--skip)}
+.b-block{background:var(--block)} .b-none{background:var(--none)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend b{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+
+/* coverage rows */
+.cov{display:flex;flex-direction:column}
+.cov-row{display:grid;grid-template-columns:minmax(150px,1.1fr) 78px minmax(0,2fr) 96px;gap:14px;
+         align-items:center;padding:12px 18px;border-top:1px solid var(--line-soft)}
+.cov-row:first-child{border-top:0}
+.cov-name{font-weight:500}
+.cov-name small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+.cov-n{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600}
+.cov-tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;white-space:nowrap}
+
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:600px}
+th,td{padding:9px 12px;text-align:left;border-top:1px solid var(--line-soft);font-size:13px}
+thead th{border-top:0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+         font-weight:600;white-space:nowrap;padding-block:13px 9px;border-bottom:1px solid var(--line)}
+td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+.p-pass{color:var(--pass);background:var(--pass-bg)}
+.p-fail{color:var(--fail);background:var(--fail-bg)}
+.p-none{color:var(--none);background:var(--none-bg)}
+.rate{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px}
+.spark i{flex:1 1 0;min-width:5px;background:var(--pass);border-radius:1px 1px 0 0;display:block}
+.spark i.bad{background:var(--fail)}
+.empty{padding:26px 18px;text-align:center;color:var(--muted);font-size:13px}
+.note{padding:13px 18px;background:var(--skip-bg);color:var(--ink-2);font-size:12.5px;
+      border-top:1px solid var(--line-soft)}
+.note b{color:var(--skip)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);
+       display:flex;flex-wrap:wrap;gap:6px 18px}
+footer code{font-family:var(--mono)}
+@media (max-width:640px){
+  .wrap,.head-in{padding-inline:14px}
+  .cov-row{grid-template-columns:1fr 60px;gap:8px}
+  .cov-row .bar,.cov-tag{grid-column:1/-1}
+  .tiles{grid-template-columns:repeat(3,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="head-in">
+    <div class="brand">QQA Project Health <span>· Quipu QA Pilot</span></div>
+    <div class="head-meta" id="meta"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section>
+    <div class="sec-head"><h2>Where the project stands</h2><span class="hint" id="stand-hint"></span></div>
+    <div class="panel">
+      <div class="tiles" id="tiles"></div>
+      <div class="note" id="gap-note"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Automation coverage</h2>
+      <span class="hint">How much of each area is actually wired to a runner.</span></div>
+    <div class="panel cov" id="coverage"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Build history</h2>
+      <span class="hint">Every build that produced a verdict, oldest first.</span></div>
+    <div class="panel tscroll"><table id="builds"></table></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Cases that fail most</h2>
+      <span class="hint">Across every run, so a persistent failure outranks a one-off.</span></div>
+    <div class="panel tscroll"><table id="worst"></table></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Test plans</h2>
+      <span class="hint">A saved selection; a run is created from one.</span></div>
+    <div class="panel tscroll"><table id="plans"></table></div>
+  </section>
+
+  <footer>
+    <span>Source: Qase project <code>QQA</code> via <code>/v1</code></span>
+    <span id="snap"></span>
+    <span>Snapshot — rebuild with <code>tools/build-project-dashboard.py</code></span>
+  </footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const VERDICT = ["passed","failed","blocked"];
+const pct = v => v==null ? "—" : Math.round(v*100)+"%";
+
+const cases = DATA.cases, runs = DATA.runs, bound = DATA.bound;
+const withVerdicts = runs.filter(r => Object.values(r.results).some(x => VERDICT.includes(x.status)));
+
+/* ---- totals ---- */
+const t = {passed:0,failed:0,blocked:0,skipped:0};
+runs.forEach(r => Object.values(r.results).forEach(x => { if (x.status in t) t[x.status]++; }));
+const verdicts = t.passed + t.failed + t.blocked;
+const rate = verdicts ? t.passed/verdicts : null;
+const nBound = Object.keys(bound).length;
+const everRun = new Set();
+runs.forEach(r => Object.entries(r.results).forEach(([k,x]) => { if (VERDICT.includes(x.status)) everRun.add(k); }));
+
+document.getElementById("meta").textContent =
+  `${Object.keys(cases).length} cases · ${runs.length} runs · ${verdicts} verdicts`;
+document.getElementById("stand-hint").textContent =
+  `${withVerdicts.length} of ${runs.length} runs produced a verdict`;
+
+document.getElementById("tiles").innerHTML = [
+  ["Test cases", Object.keys(cases).length, ""],
+  ["Wired to a runner", nBound, `of ${Object.keys(cases).length}`, nBound ? "" : "v-none"],
+  ["Ever executed", everRun.size, "at least one verdict"],
+  ["Verdicts", verdicts, "passed + failed + blocked"],
+  ["Pass rate", pct(rate), `of ${verdicts}`, rate != null && rate < .9 ? "v-fail" : "v-pass"],
+  ["Builds", new Set(withVerdicts.map(r => r.build).filter(Boolean)).size, "with results"],
+].map(([k,v,s,cls]) =>
+  `<div class="tile"><div class="k">${k}</div><div class="v num ${cls||""}">${v}</div>
+   ${s?`<div class="s">${esc(s)}</div>`:""}</div>`).join("");
+
+const unwired = Object.keys(cases).length - nBound;
+document.getElementById("gap-note").innerHTML = unwired > 0
+  ? `<b>${unwired} case(s) run nowhere.</b> They exist in Qase and most are marked automated, but
+     nothing is bound to a script, so they never execute and never report. Only the
+     ${nBound} wired cases can pass or fail; the rest are inventory.`
+  : `Every case is wired to a runner.`;
+
+/* ---- coverage by area ---- */
+const areas = {};
+Object.entries(cases).forEach(([k,c]) => {
+  const a = c.suite.split(" ▸ ")[0];
+  areas[a] = areas[a] || {total:0, wired:0, run:0};
+  areas[a].total++;
+  if (bound[k]) areas[a].wired++;
+  if (everRun.has(k)) areas[a].run++;
+});
+document.getElementById("coverage").innerHTML = Object.entries(areas)
+  .sort((a,b) => b[1].total - a[1].total)
+  .map(([name, a]) => {
+    const wiredPct = a.total ? a.wired/a.total*100 : 0;
+    return `<div class="cov-row">
+      <div class="cov-name">${esc(name)}<small>${a.run} ever executed</small></div>
+      <div class="cov-n">${a.total}</div>
+      <div class="bar">
+        <i class="b-pass" style="width:${wiredPct.toFixed(1)}%" title="wired: ${a.wired}"></i>
+        <i class="b-none" style="width:${(100-wiredPct).toFixed(1)}%" title="not wired: ${a.total-a.wired}"></i>
+      </div>
+      <div class="cov-tag">${a.wired}/${a.total} wired</div>
+    </div>`;
+  }).join("");
+
+/* ---- build history ---- */
+const byBuild = [];
+withVerdicts.forEach(r => {
+  const s = {passed:0,failed:0,blocked:0,skipped:0};
+  Object.values(r.results).forEach(x => { if (x.status in s) s[x.status]++; });
+  const v = s.passed + s.failed + s.blocked;
+  byBuild.push({id:r.id, build:r.build, title:r.title, ...s, verdicts:v,
+                rate: v ? s.passed/v : null, end:r.end || r.start});
+});
+document.getElementById("builds").innerHTML =
+  `<thead><tr><th>Run</th><th>Build</th><th>Scope</th><th>Pass</th><th>Fail</th><th>Block</th>
+    <th>Rate</th><th>Finished</th></tr></thead><tbody>` +
+  (byBuild.length ? byBuild.map(b => `<tr>
+    <td class="mono">#${b.id}</td><td class="mono">${esc(b.build || "—")}</td>
+    <td class="mono">${b.verdicts}</td>
+    <td class="mono" style="color:var(--pass)">${b.passed}</td>
+    <td class="mono" style="color:var(--fail)">${b.failed || ""}</td>
+    <td class="mono" style="color:var(--block)">${b.blocked || ""}</td>
+    <td><span class="rate" style="color:${b.rate===1?"var(--pass)":b.rate>=.8?"var(--skip)":"var(--fail)"}">${pct(b.rate)}</span></td>
+    <td class="mono">${esc(b.end || "—")}</td></tr>`).join("")
+   : `<tr><td colspan="8" class="empty">No run has produced a verdict.</td></tr>`) + `</tbody>`;
+
+/* ---- worst offenders ---- */
+const tally = {};
+runs.forEach(r => Object.entries(r.results).forEach(([k,x]) => {
+  if (!VERDICT.includes(x.status)) return;
+  tally[k] = tally[k] || {ran:0, failed:0, last:""};
+  tally[k].ran++;
+  if (x.status !== "passed") { tally[k].failed++; tally[k].last = x.comment || ""; }
+}));
+const worst = Object.entries(tally).filter(([,v]) => v.failed > 0)
+  .sort((a,b) => (b[1].failed/b[1].ran) - (a[1].failed/a[1].ran) || b[1].failed - a[1].failed)
+  .slice(0, 12);
+document.getElementById("worst").innerHTML =
+  `<thead><tr><th>Case</th><th>Suite</th><th>Failed</th><th>Rate</th><th>Last reason</th></tr></thead><tbody>` +
+  (worst.length ? worst.map(([k,v]) => {
+    const c = cases[k] || {};
+    return `<tr>
+      <td><span class="mono" style="color:var(--accent)">${esc(c.linear || k)}</span>
+        <div>${esc((c.title||"").slice(0,44))}</div></td>
+      <td style="color:var(--muted)">${esc((c.suite||"").split(" ▸ ").slice(-1)[0])}</td>
+      <td class="mono">${v.failed}/${v.ran}</td>
+      <td><span class="pill ${v.failed===v.ran?"p-fail":"p-none"}">${pct(v.failed/v.ran)}</span></td>
+      <td class="mono" style="font-size:11.5px;color:var(--muted)">${esc(v.last.split(" | ")[0].slice(0,52))}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="5" class="empty">Nothing has failed.</td></tr>`) + `</tbody>`;
+
+/* ---- plans ---- */
+document.getElementById("plans").innerHTML =
+  `<thead><tr><th>Plan</th><th>Cases</th><th>Runs made from it</th></tr></thead><tbody>` +
+  (DATA.plans.length ? DATA.plans.map(p => `<tr>
+    <td>${esc(p.title)}</td><td class="mono">${p.cases_count}</td>
+    <td class="mono">${p.runs ?? "—"}</td></tr>`).join("")
+   : `<tr><td colspan="3" class="empty">No plans defined.</td></tr>`) + `</tbody>`;
+
+document.getElementById("snap").textContent = "Snapshot: " + DATA.snapshot;
+</script>
