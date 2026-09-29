@@ -124,6 +124,8 @@ def failure_message(ts):
 
     failed = []
     for tc in ts.iter("testcase"):
+        if (tc.get("name") or "").startswith("qase:"):
+            continue
         bad = tc.find("failure")
         if bad is None:
             bad = tc.find("error")
@@ -151,7 +153,10 @@ def report_suites(report, members, locator_key):
     found = {}
     for ts in root.iter("testsuite"):
         failures = int(ts.get("failures") or 0) + int(ts.get("errors") or 0)
-        names = [tc.get("name") or "" for tc in ts.iter("testcase")]
+        # "qase:<key>" is a label the request carries so the report names its case;
+        # it asserts nothing and must not count as evidence the step ran.
+        names = [tc.get("name") or "" for tc in ts.iter("testcase")
+                 if not (tc.get("name") or "").startswith("qase:")]
         # The flows' skip guard emits a PASSING assertion named "SKIPPED: ..." when an
         # earlier step failed. Zero failures there means "never ran", not "passed".
         skipped = bool(names) and all(n.startswith("SKIPPED:") for n in names)

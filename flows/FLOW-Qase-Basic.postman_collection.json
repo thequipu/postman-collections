@@ -29,6 +29,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-001\", function () {});",
                   "const code = pm.response.code;",
                   "pm.test('00 security service reachable', () => { if (code !== 200) { pm.collectionVariables.set('_flow_failed','true');pm.collectionVariables.set('_flow_failed_at','00 Setup'); } pm.expect(code).to.eql(200); });",
                   "pm.test('00 health reports UP', () => { let b={}; try{b=pm.response.json();}catch(e){} pm.expect(String(b.status||'')).to.match(/UP/i); });"
@@ -77,6 +78,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-002\", function () {});",
                   "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
@@ -151,6 +153,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-003\", function () {});",
                   "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",
@@ -207,6 +210,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-004\", function () {});",
                   "if (pm.collectionVariables.get('_flow_failed') === 'true') {",
                   "  pm.test('SKIPPED: ' + pm.info.requestName + ' (failed at: ' + (pm.collectionVariables.get('_flow_failed_at')||'?') + ')', function() {});",
                   "  return;",

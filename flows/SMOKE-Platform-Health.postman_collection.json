@@ -114,6 +114,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-101\", function () {});",
                   "pm.test('Tenant Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -150,6 +151,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-102\", function () {});",
                   "pm.test('Security Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -186,6 +188,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-103\", function () {});",
                   "pm.test('Application Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -222,6 +225,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-104\", function () {});",
                   "pm.test('Gateway \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -258,6 +262,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-105\", function () {});",
                   "pm.test('Quipu Gateway \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -294,6 +299,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-106\", function () {});",
                   "pm.test('Knowledge Graph Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -330,6 +336,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-107\", function () {});",
                   "pm.test('Transformation Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -366,6 +373,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-108\", function () {});",
                   "pm.test('LLM Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -402,6 +410,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-109\", function () {});",
                   "pm.test('Instance Manager \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -438,6 +447,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-110\", function () {});",
                   "pm.test('Load Balancer Service \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -474,6 +484,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-111\", function () {});",
                   "pm.test('NLP \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",
@@ -510,6 +521,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"qase:QAPI-112\", function () {});",
                   "pm.test('Nexus \u00b7 HTTP 200', () => pm.response.to.have.status(200));",
                   "pm.test('responds under threshold', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
                   "try { const j=pm.response.json(); const st=String(j.status||j.state||'').toUpperCase();",

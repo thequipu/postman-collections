@@ -7,9 +7,13 @@ automation-map.json already says which script runs a case. This is the other
 direction: open a collection or a suite file and see which case each step
 serves, without going through the map.
 
-  Postman   the request's `description` gains a "Qase case" line. Deliberately
-            NOT the request name — that name is the JUnit testsuite, and every
-            binding in the map matches on it, so renaming would unbind all 16.
+  Postman   the request's `description` gains a "Qase case" line, and its test
+            script gains `pm.test("qase:<key>", ...)` so the case id appears in
+            the JUnit report itself — the same way run_suite.py carries it in a
+            case's tags. Deliberately NOT the request name: that name is the
+            JUnit testsuite every binding matches on, so renaming would unbind
+            all 16. The label is placed first, before the flows' skip guard
+            returns, so a skipped step still names its case.
   run_suite the case's `tags` gain `qase:<key>`. tags is the one per-case field
             the runner carries as a label and keeps out of the login payload;
             any other key would be passed to perform_login as a credential field.
@@ -64,6 +68,19 @@ def stamp_postman(bound, dry):
                 new = (kept + "\n" + stamp_line(key, v)).strip() if kept else stamp_line(key, v)
                 if new != old:
                     req["description"] = new
+                    touched += 1
+
+                # ... and into the test script, so the report itself names the case.
+                label = f'pm.test("qase:{key}", function () {{}});'
+                ev = next((e for e in it.setdefault("event", [])
+                           if e.get("listen") == "test"), None)
+                if ev is None:
+                    ev = {"listen": "test", "script": {"type": "text/javascript", "exec": []}}
+                    it["event"].append(ev)
+                exec_ = ev.setdefault("script", {}).setdefault("exec", [])
+                body = [l for l in exec_ if not l.strip().startswith('pm.test("qase:')]
+                if exec_ != [label] + body:
+                    ev["script"]["exec"] = [label] + body
                     touched += 1
         walk(doc["item"])
 
