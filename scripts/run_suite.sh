@@ -133,6 +133,11 @@ for line in sys.stdin:
     p=line.rstrip('\n').split(' ',3)
     if len(p)<3: continue
     e={'id':p[0],'status':p[1],'ms':int(p[2] or 0)}
+    # Record which case this was reported against, so the file stands on its own:
+    # it is archived on every build and read later, when the map may have moved on.
+    b=scope.get(p[0]) or {}
+    if b.get('qase_id'): e['qase_id']=b['qase_id']
+    if b.get('linear'):  e['linear']=b['linear']
     if len(p)==4 and p[3]: e['error' if p[1]=='failed' else 'reason']=p[3]
     out.append(e)
 json.dump(out, open('$OUT','w'), indent=1)

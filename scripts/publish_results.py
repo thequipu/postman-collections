@@ -69,7 +69,9 @@ def main():
 
     payload, by_case = [], {}
     for r in results:
-        cid = cmap.get(r["id"])
+        # Prefer the id the run itself recorded; fall back to the map for results
+        # produced before that was written.
+        cid = r.get("qase_id") or cmap.get(r["id"])
         if not cid or (in_run and cid not in in_run):
             continue                      # never publish outside the run's own scope
         entry = {"case_id": cid, "status": STATUS.get(r["status"], "skipped"),
