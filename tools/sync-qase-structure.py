@@ -158,8 +158,12 @@ def main():
             human = existing.split(MARKER)[0].strip()
             # Earlier tools wrote their own generated line; it is not human text
             # and it names the runner we no longer use.
+            # Everything this tool writes is generated, so none of it counts as
+            # human text — including the bare [key] line the block now starts
+            # with. Treating it as human made re-running duplicate it.
             human = "\n".join(l for l in human.splitlines()
-                               if not l.startswith(f"[{k}] Bound to")).strip()
+                               if l.strip() not in (f"[{k}]",)
+                               and not l.startswith(f"[{k}] Bound to")).strip()
             desc = (human + "\n\n" + body).strip() if human else body
 
             payload = {}
