@@ -38,6 +38,8 @@ pipeline {
     string(name: 'UI_REPO_BRANCH', defaultValue: 'main', description: 'Branch of the Playwright repo')
     string(name: 'UI_REPO_CREDENTIALS', defaultValue: 'Jenkins-token-classic',
            description: 'Jenkins credential id used to clone the Playwright repo (it is private)')
+    string(name: 'ADMIN_CREDENTIALS', defaultValue: '',
+           description: 'Jenkins username/password credential for the platform admin login (FLOW-Qase-Basic only; the Release verification plan does not use it). Blank runs without it, and the admin login case then fails 401. Naming a credential id that does not exist fails the build, so leave it blank until the credential exists.')
     string(name: 'APP_URL', defaultValue: 'https://app-onprem.thequipu.in',
            description: 'Application the UI tests point at. Must match ENVIRONMENT.')
     string(name: 'SEED', defaultValue: '1',
@@ -134,23 +136,43 @@ pipeline {
 
     stage('Run tests') {
       steps {
-        sh '''#!/usr/bin/env bash
-          set -uo pipefail          # not -e: let every case run, gate on results instead
-          mkdir -p reports
-          rm -f "${RESULTS}"        # never publish a previous build's results
-          # The workspace is reused, so a report from a runner this build does not
-          # invoke would otherwise be recorded as if it belonged to this build.
-          rm -rf reports/junit
-          echo ">> environment: ${ENVIRONMENT}"
-          echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
-          MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
-          ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
-          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL:-}" \
-            bash "${SCRIPT}" \
-            || echo ">> script exited non-zero — results still published"
-          test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
-          echo ">> $(python3 -c "import json;print(len(json.load(open('${RESULTS}'))))") results"
-        '''
+        // run_real.py maps adminUsername/adminPassword to ADMIN_USERNAME/ADMIN_PASSWORD
+        // and passes them to the collection as --env-var. Nothing used to set them, so
+        // the login request went out with unresolved {{adminUsername}} and the server
+        // answered 401 — which then skipped every step behind the flow's token guard.
+        // Blank ADMIN_CREDENTIALS runs without them, as a local check does.
+        script {
+          def runTests = {
+            sh '''#!/usr/bin/env bash
+              set -uo pipefail          # not -e: let every case run, gate on results instead
+              mkdir -p reports
+              rm -f "${RESULTS}"        # never publish a previous build's results
+              # The workspace is reused, so a report from a runner this build does not
+              # invoke would otherwise be recorded as if it belonged to this build.
+              rm -rf reports/junit
+              echo ">> environment: ${ENVIRONMENT}"
+              echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
+              MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
+              ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
+              UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL:-}" \
+              ADMIN_USERNAME="${ADMIN_USERNAME:-}" ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
+                bash "${SCRIPT}" \
+                || echo ">> script exited non-zero — results still published"
+              test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
+              echo ">> $(python3 -c "import json;print(len(json.load(open('${RESULTS}'))))") results"
+            '''
+          }
+          if (params.ADMIN_CREDENTIALS?.trim()) {
+            withCredentials([usernamePassword(credentialsId: params.ADMIN_CREDENTIALS,
+                                              usernameVariable: 'ADMIN_USERNAME',
+                                              passwordVariable: 'ADMIN_PASSWORD')]) {
+              runTests()
+            }
+          } else {
+            echo '>> ADMIN_CREDENTIALS is blank - the admin login case will fail with 401'
+            runTests()
+          }
+        }
       }
     }
 
@@ -195,24 +217,6 @@ pipeline {
       }
     }
 
-    stage('Complete run') {
-      when {
-        allOf {
-          expression { params.QASE_RUN_COMPLETE }
-          expression { params.QASE_RUN_ID?.trim() }
-        }
-      }
-      steps {
-        sh '''#!/usr/bin/env bash
-          set -euo pipefail
-          curl -sS -X POST \
-            -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
-            "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}/complete"
-          echo ""
-        '''
-      }
-    }
-
     stage('Build dashboard') {
       steps {
         // Last stage, so it picks up the results this build just published.
@@ -233,6 +237,22 @@ pipeline {
       publishHTML(target: [reportDir: 'reports', reportFiles: 'dashboard.html',
                            reportName: 'QQA Run Console', keepAll: true,
                            allowMissing: true, alwaysLinkToLastBuild: true])
+      // Completing the run belongs here, not in a stage. As a stage it never ran
+      // when preflight or the test stage failed, so the Qase run sat in_progress
+      // forever and the failure was invisible from Qase. post runs regardless,
+      // and never masks the real build result: a failure to complete only warns.
+      script {
+        if (params.QASE_RUN_COMPLETE && params.QASE_RUN_ID?.trim()) {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            curl -sS -X POST \
+              -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
+              "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}/complete" \
+              || echo "!! could not complete run ${QASE_RUN_ID}"
+            echo ""
+          '''
+        }
+      }
     }
     success {
       script {
