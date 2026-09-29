@@ -82,7 +82,9 @@ def find_plan(want):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plan", required=True, help="plan title or id, e.g. 'Release verification'")
+    src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--plan", help="plan title or id, e.g. 'Release verification'")
+    src.add_argument("--run", type=int, help="start an existing run instead of creating one")
     ap.add_argument("--title", help="run title (default: '<plan> — <today>')")
     ap.add_argument("--job", default="qase-release-verification")
     ap.add_argument("--environment", default="onprem")
@@ -96,21 +98,27 @@ def main():
     if not TOKEN:
         sys.exit("QASE_API_TOKEN is not set")
 
-    plan = find_plan(args.plan)
-    title = args.title or f"{plan['title']} — {date.today().isoformat()}"
-    print(f">> plan {plan['id']}: {plan['title']} ({plan.get('cases_count', '?')} cases)")
+    if args.run:
+        run = qase("GET", f"/run/{CODE}/{args.run}")["result"]
+        run_id, total = run["id"], run["stats"]["total"]
+        print(f">> run {run_id}: {run['title']} ({total} cases, {run.get('status_text')})")
+        if args.dry_run:
+            print(f">> would trigger {args.job} (env={args.environment} mode={args.mode})")
+            return 0
+    else:
+        plan = find_plan(args.plan)
+        title = args.title or f"{plan['title']} — {date.today().isoformat()}"
+        print(f">> plan {plan['id']}: {plan['title']} ({plan.get('cases_count', '?')} cases)")
+        if args.dry_run:
+            print(f">> would create run {title!r} and trigger {args.job} "
+                  f"(env={args.environment} mode={args.mode})")
+            return 0
+        run_id = qase("POST", f"/run/{CODE}", {"title": title, "plan_id": plan["id"]})["result"]["id"]
+        total = qase("GET", f"/run/{CODE}/{run_id}")["result"]["stats"]["total"]
+        print(f">> created run {run_id}: {title} ({total} cases)")
 
-    if args.dry_run:
-        print(f">> would create run {title!r} and trigger {args.job} "
-              f"(env={args.environment} mode={args.mode})")
-        return 0
-
-    run_id = qase("POST", f"/run/{CODE}", {"title": title, "plan_id": plan["id"]})["result"]["id"]
-    run = qase("GET", f"/run/{CODE}/{run_id}")["result"]
-    total = run["stats"]["total"]
-    print(f">> created run {run_id}: {title} ({total} cases)")
     if not total:
-        sys.exit(f"!! run {run_id} holds no cases - it would execute nothing. Check the plan.")
+        sys.exit(f"!! run {run_id} holds no cases - it would execute nothing.")
 
     if not (JUSER and JTOKEN):
         sys.exit("JENKINS_USER and JENKINS_TOKEN are not set - run created but not started")
