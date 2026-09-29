@@ -13,6 +13,13 @@
 //    {"id": "TC_LOGIN02", "status": "failed", "ms": 900, "error": "expected 400, got 500"}]
 // `id` is the external id; qase-case-map.json turns it into a Qase case id.
 
+// QASE_REPORT and QASE_RUN_COMPLETE arrive as strings (see the parameters block).
+// Groovy calls any non-empty string true, and "1".toBoolean() is false, so neither
+// the bare value nor toBoolean() is safe here: Qase sends "1" for a true boolean.
+boolean truthy(v) {
+  v?.toString()?.trim()?.toLowerCase() in ['true', '1', 'yes', 'on']
+}
+
 pipeline {
   // This Jenkins has no Docker Pipeline plugin, so the agent runs the script
   // directly. It needs python3 and curl on PATH.
@@ -22,8 +29,17 @@ pipeline {
     // --- passed in by Qase when it launches the run ---
     string(name: 'QASE_PROJECT_CODE', defaultValue: '',  description: 'Qase project code, e.g. AM')
     string(name: 'QASE_RUN_ID',       defaultValue: '',  description: 'Qase run id to report against')
-    booleanParam(name: 'QASE_REPORT',        defaultValue: true,  description: 'Publish results to Qase')
-    booleanParam(name: 'QASE_RUN_COMPLETE',  defaultValue: true,  description: 'Complete the Qase run afterwards')
+    // Strings, not booleanParam: Qase's automated-run wizard omits its own QASE_*
+    // parameters from the payload it posts and then reads QASE_REPORT back out of
+    // it, failing with "Undefined array key". It does send other boolean-valued
+    // parameters (FAIL_ON_TEST_FAILURE arrives as "1"), so declaring these as
+    // strings gets them rendered and submitted like any other field.
+    // Read them through truthy() below - a non-empty string is truthy in Groovy,
+    // so `if (params.QASE_REPORT)` would be true even for "false".
+    string(name: 'QASE_REPORT',       defaultValue: 'true',
+           description: 'Publish results to Qase: true/false (1/0 and yes/no also accepted)')
+    string(name: 'QASE_RUN_COMPLETE', defaultValue: 'true',
+           description: 'Complete the Qase run afterwards: true/false (1/0 and yes/no also accepted)')
     string(name: 'QASE_API_BASE_URL', defaultValue: 'https://api.qase.io', description: 'Qase API base URL')
 
     // --- ours ---
@@ -157,7 +173,7 @@ pipeline {
     stage('Publish to Qase') {
       when {
         allOf {
-          expression { params.QASE_REPORT }
+          expression { truthy(params.QASE_REPORT) }
           expression { params.QASE_RUN_ID?.trim() }
         }
       }
@@ -220,7 +236,7 @@ pipeline {
       // forever and the failure was invisible from Qase. post runs regardless,
       // and never masks the real build result: a failure to complete only warns.
       script {
-        if (params.QASE_RUN_COMPLETE && params.QASE_RUN_ID?.trim()) {
+        if (truthy(params.QASE_RUN_COMPLETE) && params.QASE_RUN_ID?.trim()) {
           sh '''#!/usr/bin/env bash
             set -uo pipefail
             curl -sS -X POST \
