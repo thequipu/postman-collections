@@ -14,6 +14,18 @@
 # Without QASE_RUN_ID it falls back to the whole map, which is what a local
 # smoke check wants.
 #
+# Without any Qase variables it falls back to the whole map, which is how to run
+# and see case ids without a Qase run existing at all:
+#
+#   MODE=real ENVIRONMENT=onprem bash scripts/run_suite.sh
+#      >> the whole map (no run scope given): 180 cases
+#      >> runners in scope: postman, pytest, suite
+#         [PASS ] QAPI-101   Health: Tenant Service      335ms
+#         [FAIL ] QAPI-108   Health: LLM Service           0ms
+#
+# Narrow it with MAP=<file> to a trimmed copy of automation-map.json when you
+# want one collection rather than everything.
+#
 #   MODE=simulate SEED=7 bash scripts/run_suite.sh
 #   QASE_RUN_ID=10 QASE_API_TOKEN=… bash scripts/run_suite.sh
 set -uo pipefail
