@@ -152,6 +152,8 @@ def main():
             return None, "no token/project in env — results will not be published"
         import urllib.request, urllib.error
         base = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/")
+        if base.endswith("/v1"):        # Qase sends .../api/v1; /v1 is appended below
+            base = base[:-3].rstrip("/")
         req = urllib.request.Request(f"{base}/v1/project/{code}",
                                      headers={"Token": token, "accept": "application/json"})
         try:

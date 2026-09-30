@@ -16,7 +16,12 @@ code. Exits non-zero if any result could not be confirmed.
 """
 import json, os, sys, time, urllib.error, urllib.request
 
-BASE = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/") + "/v1"
+_base = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/")
+# Qase sends its own base as https://app.qase.io/api/v1, and every caller here
+# appends /v1 itself - without this the URL ends up .../api/v1/v1/...
+if _base.endswith("/v1"):
+    _base = _base[:-3].rstrip("/")
+BASE = _base + "/v1"
 CODE = os.environ.get("QASE_PROJECT_CODE", "")
 RUN = os.environ.get("QASE_RUN_ID", "")
 TOKEN = os.environ.get("QASE_API_TOKEN", "")

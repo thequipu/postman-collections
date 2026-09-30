@@ -26,6 +26,7 @@ import argparse, base64, http.cookiejar, json, os, sys
 import urllib.error, urllib.parse, urllib.request
 from datetime import date
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QASE = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/") + "/v1"
 CODE = os.environ.get("QASE_PROJECT_CODE", "QQA")
 TOKEN = os.environ.get("QASE_API_TOKEN") or ""
@@ -85,6 +86,8 @@ def main():
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--plan", help="plan title or id, e.g. 'Release verification'")
     src.add_argument("--run", type=int, help="start an existing run instead of creating one")
+    src.add_argument("--cases", help="comma-separated case keys or Qase ids to run, "
+                                     "e.g. QAPI-101,QAPI-102,QUI-001")
     ap.add_argument("--title", help="run title (default: '<plan> — <today>')")
     ap.add_argument("--job", default="qase-release-verification")
     ap.add_argument("--environment", default="onprem")
@@ -105,6 +108,32 @@ def main():
         if args.dry_run:
             print(f">> would trigger {args.job} (env={args.environment} mode={args.mode})")
             return 0
+    elif args.cases:
+        # qase-case-map.json is the key -> Qase id map the pipeline already uses.
+        cmap = json.load(open(os.path.join(ROOT, "qase-case-map.json")))
+        ids, unknown = [], []
+        for tok in (t.strip() for t in args.cases.split(",")):
+            if not tok:
+                continue
+            if tok.isdigit():
+                ids.append(int(tok))
+            elif tok in cmap:
+                ids.append(cmap[tok])
+            else:
+                unknown.append(tok)
+        if unknown:
+            sys.exit(f"!! not in qase-case-map.json: {', '.join(unknown)}")
+        if not ids:
+            sys.exit("!! --cases matched nothing")
+        title = args.title or f"Selected cases — {date.today().isoformat()}"
+        print(f">> {len(ids)} case(s) selected: {', '.join(map(str, ids))}")
+        if args.dry_run:
+            print(f">> would create run {title!r} and trigger {args.job} "
+                  f"(env={args.environment} mode={args.mode})")
+            return 0
+        run_id = qase("POST", f"/run/{CODE}", {"title": title, "cases": ids})["result"]["id"]
+        total = qase("GET", f"/run/{CODE}/{run_id}")["result"]["stats"]["total"]
+        print(f">> created run {run_id}: {title} ({total} cases)")
     else:
         plan = find_plan(args.plan)
         title = args.title or f"{plan['title']} — {date.today().isoformat()}"

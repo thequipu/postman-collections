@@ -56,6 +56,11 @@ pipeline {
            description: 'Jenkins credential id used to clone the Playwright repo (it is private)')
     string(name: 'APP_URL', defaultValue: 'https://app-onprem.thequipu.in',
            description: 'Application the UI tests point at. Must match ENVIRONMENT.')
+    // Qase's automated run type offers no case picker - it creates the run empty and
+    // expects the automation to decide. Qase does render every non-QASE_* parameter,
+    // so this is the picker: it applies only when the run itself holds no cases.
+    string(name: 'CASES', defaultValue: '',
+           description: 'Cases to run when the Qase run holds none. Comma-separated keys or Qase ids, e.g. QAPI-101,QAPI-102,QUI-001. Blank runs everything bound.')
     string(name: 'SEED', defaultValue: '1',
            description: 'Seed for simulate mode; the same seed reproduces the same results')
     string(name: 'BUILD_ENDPOINT', defaultValue: '',
@@ -91,7 +96,7 @@ pipeline {
           def runners = sh(returnStdout: true, script: '''#!/usr/bin/env bash
             set -uo pipefail
             mkdir -p reports
-            python3 scripts/resolve_scope.py
+            CASES="${CASES:-}" python3 scripts/resolve_scope.py
           ''').trim().split('\n').findAll { it }
           env.SCOPE_RUNNERS = runners.join(',')
           env.SCOPE_RESOLVED = '1'
@@ -161,7 +166,7 @@ pipeline {
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
           MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
           ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
-          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL:-}" \
+          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL:-}" CASES="${CASES:-}" \
             bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
@@ -198,13 +203,15 @@ pipeline {
       steps {
         sh '''#!/usr/bin/env bash
           set -euo pipefail
+          # Qase sends .../api/v1; the paths below add /v1 themselves.
+          QASE_BASE="${QASE_API_BASE_URL%/}"; QASE_BASE="${QASE_BASE%/v1}"
           BUILD=$(cat reports/build.txt)
           if [ "$BUILD" = "unknown" ] || [ -z "$BUILD" ]; then
             echo ">> no build reported by the service - leaving the run's Build field alone"
             exit 0
           fi
           curl -sS -X PATCH -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
-            "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}" \
+            "${QASE_BASE}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}" \
             -d "{\"custom_field\":{\"3\":\"${BUILD}\"}}" >/dev/null || true
           echo ">> stamped run ${QASE_RUN_ID} with build ${BUILD}"
         '''
@@ -239,9 +246,11 @@ pipeline {
         if (truthy(params.QASE_RUN_COMPLETE) && params.QASE_RUN_ID?.trim()) {
           sh '''#!/usr/bin/env bash
             set -uo pipefail
+            # Qase sends .../api/v1; the paths below add /v1 themselves.
+            QASE_BASE="${QASE_API_BASE_URL%/}"; QASE_BASE="${QASE_BASE%/v1}"
             curl -sS -X POST \
               -H "Token: ${QASE_API_TOKEN}" -H "Content-Type: application/json" \
-              "${QASE_API_BASE_URL%/}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}/complete" \
+              "${QASE_BASE}/v1/run/${QASE_PROJECT_CODE}/${QASE_RUN_ID}/complete" \
               || echo "!! could not complete run ${QASE_RUN_ID}"
             echo ""
           '''
