@@ -11,7 +11,7 @@ run) — so it is resolved once, here, rather than separately in each.
 Without a run id it falls back to the whole map, which is what a local check
 wants. Prints the runners in scope, one per line, on stdout.
 """
-import json, os, sys, urllib.request
+import json, os, sys, urllib.parse, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -61,6 +61,21 @@ def _suite_cases(name):
     return {c["id"] for c in _paged(f"/case/{CODE}") if c.get("suite_id") in wanted}
 
 
+def _query_cases(qql):
+    """Qase ids matching a QQL expression - the automated stand-in for a saved query."""
+    if "project" not in qql.lower():        # never let a query reach across projects
+        qql = f'{qql} and project = "{CODE}"'
+    ids, offset = set(), 0
+    while True:
+        res = _get("/search?" + urllib.parse.urlencode(
+            {"query": qql, "limit": 100, "offset": offset}))
+        ents = res.get("entities", [])
+        ids |= {e["id"] for e in ents if e.get("id")}
+        offset += len(ents)
+        if len(ents) < 100 or offset >= (res.get("total") or 0):
+            return ids
+
+
 def _plan_cases(name):
     plans = _paged(f"/plan/{CODE}")
     hit = next((p for p in plans if (p.get("title") or "").lower() == name.lower()), None)
@@ -94,7 +109,8 @@ def main():
         # empty scope and the build runs nothing, so take the selection from CASES when
         # the job was given one, and otherwise run everything that is bound.
         picked = [t.strip() for t in os.environ.get("CASES", "").split(",") if t.strip()]
-        if picked:
+        qql = os.environ.get("QUERY", "").strip()
+        if picked or qql:
             by_key = {k: v["qase_id"] for k, v in amap.items()}
             ids, unknown = set(), []
             for t in picked:
@@ -123,12 +139,23 @@ def main():
                 print(f"!! CASES: no such case, suite or plan: {', '.join(unknown)}",
                       file=sys.stderr)
                 return 1
+            if qql:
+                try:
+                    found = _query_cases(qql)
+                except Exception as e:
+                    print(f"!! could not run QUERY {qql!r}: {e}", file=sys.stderr)
+                    return 1
+                if not found:
+                    print(f"!! QUERY matched no cases: {qql}", file=sys.stderr)
+                    return 1
+                print(f">>   query: {len(found)} case(s)", file=sys.stderr)
+                ids |= found
             in_run = ids
-            print(f">> run {RUN} holds no cases; CASES selects {len(ids)}", file=sys.stderr)
+            print(f">> run {RUN} holds no cases; selection is {len(ids)} case(s)", file=sys.stderr)
         else:
             in_run = None
-            print(f">> run {RUN} holds no cases and CASES is empty; running everything bound",
-                  file=sys.stderr)
+            print(f">> run {RUN} holds no cases and no CASES/QUERY given; "
+                  f"running everything bound", file=sys.stderr)
 
     sel = {k: v for k, v in amap.items() if in_run is None or v["qase_id"] in in_run}
     json.dump(sel, open(SCOPE, "w"), indent=1, sort_keys=True)

@@ -60,7 +60,9 @@ pipeline {
     // expects the automation to decide. Qase does render every non-QASE_* parameter,
     // so this is the picker: it applies only when the run itself holds no cases.
     string(name: 'CASES', defaultValue: '',
-           description: 'Cases to run when the Qase run holds none. Comma-separated keys or Qase ids, e.g. QAPI-101,QAPI-102,QUI-001. Blank runs everything bound.')
+           description: 'Cases to run when the Qase run holds none. Comma-separated: case keys or Qase ids (QAPI-101), suite:<name>, plan:<name>. Blank runs everything bound.')
+    string(name: 'QUERY', defaultValue: '',
+           description: 'QQL selecting cases, the automated stand-in for a saved query, e.g. entity = \"case\" and automation = \"automated\". Combined with CASES when both are given; project is scoped automatically.')
     string(name: 'SEED', defaultValue: '1',
            description: 'Seed for simulate mode; the same seed reproduces the same results')
     string(name: 'BUILD_ENDPOINT', defaultValue: '',
@@ -96,7 +98,7 @@ pipeline {
           def runners = sh(returnStdout: true, script: '''#!/usr/bin/env bash
             set -uo pipefail
             mkdir -p reports
-            CASES="${CASES:-}" python3 scripts/resolve_scope.py
+            CASES="${CASES:-}" QUERY="${QUERY:-}" python3 scripts/resolve_scope.py
           ''').trim().split('\n').findAll { it }
           env.SCOPE_RUNNERS = runners.join(',')
           env.SCOPE_RESOLVED = '1'
@@ -166,7 +168,7 @@ pipeline {
           echo ">> script:      ${SCRIPT}   (mode=${MODE:-smoke} seed=${SEED:-1})"
           MODE="${MODE:-smoke}" SEED="${SEED:-1}" BUILD_ENDPOINT="${BUILD_ENDPOINT:-}" \
           ENVIRONMENT="${ENVIRONMENT}" UI_REPO="${WORKSPACE}/ui-repo" \
-          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL:-}" CASES="${CASES:-}" \
+          UI_DOCKER_IMAGE="${UI_DOCKER_IMAGE}" APP_URL="${APP_URL:-}" CASES="${CASES:-}" QUERY="${QUERY:-}" \
             bash "${SCRIPT}" \
             || echo ">> script exited non-zero — results still published"
           test -f "${RESULTS}" || { echo "!! ${RESULTS} not produced"; exit 1; }
