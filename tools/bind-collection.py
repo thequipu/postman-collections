@@ -14,7 +14,12 @@ Re-run it after adding requests to a collection and only the new ones appear.
 """
 import argparse, json, os, re, sys, urllib.error, urllib.request
 
-BASE = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/") + "/v1"
+_base = os.environ.get("QASE_API_BASE_URL", "https://api.qase.io").rstrip("/")
+# Qase passes its base as https://app.qase.io/api/v1 and /v1 is appended here,
+# which would give .../api/v1/v1/...
+if _base.endswith("/v1"):
+    _base = _base[:-3].rstrip("/")
+BASE = _base + "/v1"
 CODE = os.environ.get("QASE_PROJECT_CODE", "QQA")
 TOKEN = os.environ.get("QASE_API_TOKEN") or ""
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
