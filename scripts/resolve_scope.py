@@ -28,6 +28,47 @@ RUN = os.environ.get("QASE_RUN_ID", "")
 TOKEN = os.environ.get("QASE_API_TOKEN", "")
 
 
+def _get(path):
+    req = urllib.request.Request(f"{BASE}/v1{path}",
+                                 headers={"Token": TOKEN, "accept": "application/json"})
+    return json.loads(urllib.request.urlopen(req, timeout=30).read())["result"]
+
+
+def _paged(path):
+    out, offset = [], 0
+    while True:
+        sep = "&" if "?" in path else "?"
+        batch = _get(f"{path}{sep}limit=100&offset={offset}")["entities"]
+        out += batch
+        if len(batch) < 100:
+            return out
+        offset += 100
+
+
+def _suite_cases(name):
+    """Qase ids of every case under the suite titled `name`, descendants included."""
+    suites = _paged(f"/suite/{CODE}")
+    roots = [s["id"] for s in suites if (s.get("title") or "").lower() == name.lower()]
+    if not roots:
+        return None
+    wanted, frontier = set(roots), list(roots)
+    while frontier:                       # a parent selects everything beneath it
+        parent = frontier.pop()
+        for s in suites:
+            if s.get("parent_id") == parent and s["id"] not in wanted:
+                wanted.add(s["id"])
+                frontier.append(s["id"])
+    return {c["id"] for c in _paged(f"/case/{CODE}") if c.get("suite_id") in wanted}
+
+
+def _plan_cases(name):
+    plans = _paged(f"/plan/{CODE}")
+    hit = next((p for p in plans if (p.get("title") or "").lower() == name.lower()), None)
+    if not hit:
+        return None
+    return {c["case_id"] for c in _get(f"/plan/{CODE}/{hit['id']}")["cases"]}
+
+
 def main():
     if not MAP.exists():
         print(f"!! {MAP.name} not found — run from the repo root", file=sys.stderr)
@@ -57,14 +98,29 @@ def main():
             by_key = {k: v["qase_id"] for k, v in amap.items()}
             ids, unknown = set(), []
             for t in picked:
-                if t.isdigit():
+                low = t.lower()
+                if low.startswith("suite:") or low.startswith("plan:"):
+                    kind, _, name = t.partition(":")
+                    name = name.strip()
+                    try:
+                        found = (_suite_cases(name) if kind.lower() == "suite"
+                                 else _plan_cases(name))
+                    except Exception as e:
+                        print(f"!! could not read {kind.lower()} {name!r}: {e}", file=sys.stderr)
+                        return 1
+                    if found is None:
+                        unknown.append(t)
+                    else:
+                        print(f">>   {kind.lower()} {name!r}: {len(found)} case(s)", file=sys.stderr)
+                        ids |= found
+                elif t.isdigit():
                     ids.add(int(t))
                 elif t in by_key:
                     ids.add(by_key[t])
                 else:
                     unknown.append(t)
             if unknown:
-                print(f"!! CASES names cases absent from {MAP.name}: {', '.join(unknown)}",
+                print(f"!! CASES: no such case, suite or plan: {', '.join(unknown)}",
                       file=sys.stderr)
                 return 1
             in_run = ids
